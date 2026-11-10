@@ -1,0 +1,125 @@
+/**
+ * Idempotent seed: safe to run many times (upserts by unique key).
+ * Creates permissions, default roles, payment methods, delivery zones, settings,
+ * and (when SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD are set) the Super Admin user.
+ */
+import { PrismaPg } from '@prisma/adapter-pg';
+import argon2 from 'argon2';
+import { PrismaClient } from '../apps/api/src/generated/prisma/client';
+import { DEFAULT_ROLES, PERMISSIONS, SUPER_ADMIN_ROLE } from '../packages/shared/src/permissions';
+
+const url = process.env.DATABASE_URL;
+if (!url) throw new Error('DATABASE_URL is required');
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+
+async function seedPermissionsAndRoles() {
+  for (const p of PERMISSIONS) {
+    await prisma.permission.upsert({
+      where: { key: p.key },
+      update: { module: p.module, description: p.description },
+      create: { key: p.key, module: p.module, description: p.description },
+    });
+  }
+  const all = await prisma.permission.findMany();
+  const idByKey = new Map(all.map((p) => [p.key, p.id]));
+
+  for (const [name, def] of Object.entries(DEFAULT_ROLES)) {
+    const isSystem = name === SUPER_ADMIN_ROLE;
+    const role = await prisma.role.upsert({
+      where: { name },
+      update: isSystem ? { description: def.description, isSystem } : {},
+      create: { name, description: def.description, isSystem },
+    });
+    // Roles are editable in the admin UI, so only fill permissions the first time a role is created.
+    const existing = await prisma.rolePermission.count({ where: { roleId: role.id } });
+    if (existing === 0) {
+      const keys = def.permissions === 'ALL' ? PERMISSIONS.map((p) => p.key) : def.permissions;
+      await prisma.rolePermission.createMany({
+        data: keys.map((k) => ({ roleId: role.id, permissionId: idByKey.get(k)! })),
+        skipDuplicates: true,
+      });
+    }
+  }
+}
+
+async function seedPaymentMethods() {
+  await prisma.paymentMethod.upsert({
+    where: { code: 'COD' },
+    update: {},
+    create: { code: 'COD', name: 'Cash on Delivery', isActive: true, sortOrder: 1, config: { scope: 'DHAKA_ONLY' } },
+  });
+  await prisma.paymentMethod.upsert({
+    where: { code: 'UDDOKTAPAY' },
+    update: {},
+    create: { code: 'UDDOKTAPAY', name: 'Online Payment', isActive: true, sortOrder: 2 },
+  });
+}
+
+async function seedDeliveryZones() {
+  // Charges are placeholders: the owner sets real values in the admin panel.
+  await prisma.deliveryZone.upsert({
+    where: { code: 'inside-dhaka' },
+    update: {},
+    create: { code: 'inside-dhaka', name: 'Inside Dhaka', districts: ['Dhaka'], charge: '60.00', estimatedDays: '1-2 days', sortOrder: 1 },
+  });
+  await prisma.deliveryZone.upsert({
+    where: { code: 'outside-dhaka' },
+    update: {},
+    create: { code: 'outside-dhaka', name: 'Outside Dhaka', districts: [], charge: '120.00', estimatedDays: '3-5 days', isDefault: true, sortOrder: 2 },
+  });
+}
+
+async function seedSettings() {
+  const defaults: { key: string; value: unknown; group: string; isPublic: boolean }[] = [
+    { key: 'store.name', value: 'My Food Store', group: 'store', isPublic: true },
+    { key: 'store.logo', value: null, group: 'store', isPublic: true },
+    { key: 'store.phone', value: '', group: 'store', isPublic: true },
+    { key: 'store.email', value: '', group: 'store', isPublic: true },
+    { key: 'store.address', value: '', group: 'store', isPublic: true },
+    { key: 'seo.defaultTitle', value: 'My Food Store', group: 'seo', isPublic: true },
+    { key: 'seo.defaultDescription', value: '', group: 'seo', isPublic: true },
+    { key: 'gtm.containerId', value: '', group: 'tracking', isPublic: true },
+    { key: 'review.autoApprove', value: false, group: 'reviews', isPublic: false },
+    { key: 'notifications.adminEmail', value: '', group: 'notifications', isPublic: false },
+    { key: 'shipping.steadfastEnabled', value: false, group: 'shipping', isPublic: false },
+  ];
+  for (const s of defaults) {
+    await prisma.setting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: { key: s.key, value: s.value as never, group: s.group, isPublic: s.isPublic },
+    });
+  }
+}
+
+async function seedSuperAdmin() {
+  const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log('SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set: skipping Super Admin user');
+    return;
+  }
+  const role = await prisma.role.findUniqueOrThrow({ where: { name: SUPER_ADMIN_ROLE } });
+  const exists = await prisma.adminUser.findUnique({ where: { email } });
+  if (exists) return;
+  await prisma.adminUser.create({
+    data: { name: 'Super Admin', email, passwordHash: await argon2.hash(password, { type: argon2.argon2id }), roleId: role.id },
+  });
+  console.log(`Created Super Admin ${email}`);
+}
+
+async function main() {
+  await seedPermissionsAndRoles();
+  await seedPaymentMethods();
+  await seedDeliveryZones();
+  await seedSettings();
+  await seedSuperAdmin();
+  console.log('Seed complete');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
