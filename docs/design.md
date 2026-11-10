@@ -15,7 +15,7 @@ Browser -> Cloudflare (CDN, WAF) -> Traefik (Dokploy, TLS)
 ```
 
 - `web` renders the storefront (SSR/ISR) and the admin UI (`/admin`, client-heavy, behind login).
-- `api` is the only thing that touches the database. `web` talks to `api` over HTTPS (server-side fetches use the internal URL where possible).
+- `api` is the only thing that touches the database. The browser calls `/api/v1/*` on the web origin, and Next.js rewrites it to `api` (same-origin, first-party auth cookies; see `auth.md`). Server-side fetches use the internal URL (`API_INTERNAL_URL`).
 - The worker runs queue jobs: emails, Steadfast booking and sync, payment expiry, low-stock alerts, sitemap/cache revalidation.
 
 ## 2. Repository layout (monorepo, pnpm workspaces)
@@ -41,18 +41,22 @@ API layout: `routes -> controllers -> services -> repositories`. Controllers par
 
 ## 3. Authentication and sessions
 
-- Customers and admins authenticate separately (different endpoints, cookie names, token audiences).
-- Short-lived **access token** (about 15 min) and rotating **refresh token** (about 30 days customers, 7 days admin) in `httpOnly`, `Secure`, `SameSite=Lax` cookies. Refresh tokens are stored hashed in `refresh_tokens` and revocable; reuse of a rotated token revokes the session family.
-- Passwords: argon2id.
-- Login field accepts email or phone; detect by format, normalize, then look up. Responses never reveal whether the identifier exists.
-- Lockout: progressive delay after repeated failures, tracked in Redis per identifier and IP.
-- Email verification and password reset use single-use hashed tokens in `verification_tokens` (expiry 24 h and 1 h).
-- Admin: optional TOTP 2FA (`twoFactorSecret` encrypted); strongly recommended for Super Admin.
-- CSRF: state-changing requests with cookie auth require a custom header (`X-Requested-With` or a double-submit token) plus strict CORS to the known origins.
+Full design in **`auth.md`**. Summary:
+
+- **Better Auth**, two instances: `customerAuth` (`/api/v1/auth`, cookie prefix `shop_c`) and `adminAuth` (`/api/v1/admin/auth`, prefix `shop_a`), with separate tables (`customer_*` and `admin_*`).
+- Database-backed sessions (customers 30 days, admins 7 days, refreshed daily) in `httpOnly`, `Secure` (production), `SameSite=Lax` cookies, mirrored in Redis secondary storage. Sessions are revocable.
+- Passwords: Better Auth default (scrypt), stored in `*_accounts.password`.
+- Login field accepts email or phone through our own `/auth/login` endpoint: detect by format, normalize, look up, then call Better Auth's email sign-in. Responses never reveal whether the identifier exists.
+- Lockout: Better Auth rate limits (Redis) plus our own progressive delay per identifier and IP on `/login` and `/register`.
+- Email verification and password reset use Better Auth verification records (expiry 24 h and 1 h); emails go through the `email.send` queue.
+- Admin: sign-up disabled; optional TOTP 2FA (`twoFactor` plugin), strongly recommended for Super Admin.
+- Same origin: Next.js rewrites `/api/v1/*` to the API, so auth cookies are first-party.
+- CSRF: Better Auth checks `Origin` against trusted origins; our state-changing routes also require a custom header (`X-Requested-With`) plus strict CORS to the known origins.
 
 ## 4. Authorization (dynamic RBAC)
 
 - Permission keys are constants in `packages/shared`; the seed upserts them into `permissions`.
+- RBAC is ours (Better Auth's admin and organization plugins are not used). The admin session comes from `adminAuth.api.getSession()`.
 - Middleware `requirePermission('orders.update_status')` loads the admin's role permissions (cached in Redis, invalidated when a role changes) and rejects with 403.
 - Super Admin (`roles.isSystem`) bypasses checks in code.
 - Customer routes enforce ownership (`order.customerId === req.user.id`); guest tracking requires order number plus phone.
@@ -138,6 +142,7 @@ See `integrations.md`. Summary:
 
 - HTTPS only, HSTS, Helmet headers, strict CORS, Cloudflare WAF and bot protection.
 - Zod validation on all inputs, reject unknown fields; Prisma only (no string-built SQL).
+- Auth via Better Auth (`auth.md`); real client IP from `cf-connecting-ip` only, and the origin accepts traffic only from Cloudflare so that header cannot be spoofed.
 - Redis-backed rate limits: login, register, forgot-password, verify-email resend, coupon check, order create, review submit, search suggest.
 - Server-side pricing, stock and coupon logic; idempotency on orders; signed or token-verified webhooks.
 - No secrets in Git; credentials only in environment variables; separate values per environment.
@@ -164,12 +169,12 @@ See `integrations.md`. Summary:
 |---|---|
 | Core | `NODE_ENV`, `APP_URL`, `API_URL`, `COOKIE_DOMAIN`, `CORS_ORIGINS` |
 | Database | `DATABASE_URL`, `REDIS_URL` |
-| Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ENCRYPTION_KEY` (admin 2FA secrets) |
+| Auth | `BETTER_AUTH_SECRET` (signs cookies, encrypts 2FA secrets; at least 32 chars), `BETTER_AUTH_URL` (public web origin) |
 | Mail | `MAIL_PROVIDER` (`mailgun` or `smtp`), `MAIL_FROM`, `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_BASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` |
 | Steadfast | `STEADFAST_BASE_URL`, `STEADFAST_API_KEY`, `STEADFAST_SECRET_KEY`, `STEADFAST_WEBHOOK_TOKEN` |
 | UddoktaPay | `UDDOKTAPAY_BASE_URL`, `UDDOKTAPAY_API_KEY`, `UDDOKTAPAY_WEBHOOK_SECRET` |
 | Files | `UPLOAD_DIR`, `PUBLIC_MEDIA_URL` |
-| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `REVALIDATE_SECRET` |
+| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` |
 | Optional | `SENTRY_DSN`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
 
 Keep `.env.example` in sync with this table.

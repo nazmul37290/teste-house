@@ -83,6 +83,7 @@ interface MailTransport {
 ```
 
 - Factory picks the transport from `MAIL_PROVIDER`. Mailgun is the default; SMTP goes through Nodemailer.
+- Verification and password-reset emails are triggered from Better Auth callbacks (`sendVerificationEmail`, `sendResetPassword`). The callbacks only enqueue `email.send` jobs (no await on delivery), and skip placeholder `@phone.invalid` addresses. See `auth.md`.
 - Always send through the `email.send` queue job. Write a `notification_logs` row (QUEUED, then SENT or FAILED). Retry with backoff.
 - Templates (HTML + plain text, shared layout using store name and logo from settings): `email-verify`, `password-reset`, `order-placed`, `order-confirmed`, `order-shipped`, `order-delivered`, `order-cancelled`, `admin-new-order`, `admin-low-stock`.
 - DNS for the sending domain: SPF, DKIM, DMARC.

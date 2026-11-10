@@ -9,7 +9,8 @@ Before starting any task, read the docs that apply. They are the source of truth
 | File | Purpose |
 |---|---|
 | `docs/requirements.md` | What to build: features, rules, decisions already made |
-| `docs/design.md` | How it is built: architecture, auth, checkout flow, security, SEO, GTM, files, deployment |
+| `docs/design.md` | How it is built: architecture, auth summary, checkout flow, security, SEO, GTM, files, deployment |
+| `docs/auth.md` | Better Auth design: two instances, login by email or phone, sessions, cookies, rate limits, guest linking, 2FA |
 | `docs/database.md` | Table reference, business rules, indexes, seed data, ERD |
 | `prisma/schema.prisma` | The actual schema (single source of truth for the DB) |
 | `docs/pricing.md` | Price, discount, delivery and total rules; read before touching anything money-related |
@@ -36,9 +37,10 @@ Before starting any task, read the docs that apply. They are the source of truth
 
 - **Money:** `Decimal(12,2)` in the DB, integer paisa in calculations, never floats. The server calculates every price, discount, delivery charge and total with `calculateOrderTotals()` from `packages/shared` (see `docs/pricing.md`). The client sends only variant IDs, quantities, coupon code, address, payment method and an idempotency key. Never accept or use a price, total, discount or delivery amount from the client; the order schema is `.strict()` and a test enforces it.
 - **Secrets:** only in environment variables. Never commit `.env`; keep `.env.example` current (names only, no values). Steadfast, UddoktaPay and Mailgun credentials come from env.
+- **Authentication:** Better Auth only (`docs/auth.md`), pinned to a stable version; two instances (`customerAuth`, `adminAuth`). Never write password hashes or session tokens yourself; go through Better Auth's API or internal adapter. Admin sign-up stays disabled.
 - **Authorization:** enforce permissions on the API with `requirePermission('module.action')`. Hiding buttons in the UI is not security. Customers can only read their own data.
 - **Phone numbers:** always normalize with the shared `normalizePhone()` helper before saving or comparing (`01XXXXXXXXX`).
-- **Guest orders:** link a guest order to an account only after the matching **email is verified**. Never link by phone alone.
+- **Guest orders:** link a guest order to an account only after the matching **email is verified** (Better Auth after-verification hook). Never link by phone alone. Placeholder `@phone.invalid` emails are never verified or mailed.
 - **Stock and orders:** create orders inside a DB transaction, with an idempotency key; decrement stock and write a `StockMovement` row in the same transaction.
 - **Payments:** the gateway webhook/verify call is the source of truth, never the browser redirect.
 - **Third-party APIs (Steadfast, UddoktaPay, Mailgun):** do not guess endpoints or payloads. Fetch the official documentation first, then implement behind the adapter interface in `docs/integrations.md`.
@@ -69,7 +71,7 @@ pnpm build
 
 ## Status
 
-Phase 1 (schema) and Phase 2 (foundation) are scaffolded. `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. Note: `prisma/seed.ts` is not covered by `pnpm typecheck` and was never run (the Prisma client could not be generated in the setup sandbox); verify it first. Next: first migration (plus the raw SQL constraints from `docs/database.md` section 4), then Phase 3. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
+Phase 1 (schema) and Phase 2 (foundation) are scaffolded. Step 0 (switch auth to Better Auth 1.7.20: docs, schema, env) is done; the seed no longer creates the Super Admin (Phase 3 does, through Better Auth). `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. Note: `prisma/seed.ts` is not covered by `pnpm typecheck` and was never run (the Prisma client could not be generated in the setup sandbox); verify it first. Next: first migration (plus the raw SQL constraints from `docs/database.md` section 4), then Phase 3. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
 
 ## Open items (do not decide silently)
 

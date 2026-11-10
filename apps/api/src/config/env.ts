@@ -15,9 +15,10 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
 
-  JWT_ACCESS_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32),
-  ENCRYPTION_KEY: z.string().min(32),
+  // Better Auth (docs/auth.md): secret signs cookies and encrypts 2FA secrets; at least 32 chars.
+  BETTER_AUTH_SECRET: z.string().min(32),
+  // Public origin the browser uses (the web app, which rewrites /api/v1/* to the API).
+  BETTER_AUTH_URL: z.url().default('http://localhost:3000'),
 
   MAIL_PROVIDER: z.enum(['mailgun', 'smtp']).default('smtp'),
   MAIL_FROM: z.string().default('Shop <no-reply@localhost>'),

@@ -16,6 +16,7 @@ Out of scope for v1: blog, Bangla language, multi-currency, multi-vendor, mobile
 | Payments | COD + UddoktaPay. Each method can be toggled on/off in admin. COD scope switchable in admin: inside Dhaka only, or all of Bangladesh |
 | Customers | Accounts and guest checkout both. Phone mandatory; email optional for guests |
 | Login | One identifier field accepting email or phone, plus password |
+| Auth library | Better Auth (two instances: customers and admins). Details in `auth.md` |
 | Guest-order linking | Guest orders attach to an account only after **verified email** match. No SMS OTP for now |
 | Admin roles | Created dynamically (manager, salesman, ...). `permissions` table, assigned to roles |
 | Reviews / wishlist | Needed. No blog |
@@ -50,10 +51,10 @@ Out of scope for v1: blog, Bangla language, multi-currency, multi-vendor, mobile
 
 ## 5. Accounts
 
-- **ACC-1 (M)** Sign up: name, phone (mandatory), password, email optional (recommended).
-- **ACC-2 (M)** Login with email or phone + password.
+- **ACC-1 (M)** Sign up: name, phone (mandatory), password, email optional (recommended). Phone-only accounts get an internal placeholder email that is never verified or mailed.
+- **ACC-2 (M)** Login with email or phone + password. Customers may log in before verifying their email.
 - **ACC-3 (M)** Phone normalized to a single format so matching is reliable.
-- **ACC-4 (M)** Forgot/reset password by email.
+- **ACC-4 (M)** Forgot/reset password by email. Phone-only customers must add and verify a real email first (SMS reset is a future item).
 - **ACC-5 (M)** Profile, multiple saved addresses with a default, change password.
 - **ACC-6 (M)** Order history with status timeline, reorder, invoice PDF.
 - **ACC-7 (M)** Wishlist; guest wishlist merges into the account on login.
@@ -133,7 +134,7 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 
 ## 12. Roles and permissions (RBAC)
 
-- Tables: `Role`, `Permission`, `RolePermission`; each `AdminUser` has one role (upgradeable to many later).
+- Tables: `Role`, `Permission`, `RolePermission`; each `AdminUser` has one role (upgradeable to many later). RBAC is our own code; Better Auth only authenticates admins (sign-up disabled, optional TOTP 2FA).
 - Permission key convention `module.action`: `products.view|create|update|delete`, `orders.view|update_status|book_courier|cancel`, `inventory.adjust`, `customers.view|block`, `coupons.manage`, `reviews.moderate`, `payments.toggle`, `shipping.manage`, `settings.manage`, `roles.manage`, `users.manage`, `reports.view`.
 - Keys are declared in `packages/shared` and seeded by migration; roles and assignments are edited in the admin UI.
 - **Super Admin** is a system role: always has every permission; cannot be edited or deleted.

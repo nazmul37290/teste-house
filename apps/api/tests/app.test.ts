@@ -6,9 +6,7 @@ import { loadEnv } from '../src/config/env';
 const env = loadEnv({
   NODE_ENV: 'test',
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
-  JWT_ACCESS_SECRET: 'a'.repeat(32),
-  JWT_REFRESH_SECRET: 'b'.repeat(32),
-  ENCRYPTION_KEY: 'c'.repeat(32),
+  BETTER_AUTH_SECRET: 'a'.repeat(32),
 });
 
 describe('app', () => {
@@ -38,8 +36,9 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ NODE_ENV: 'test' })).toThrow(/DATABASE_URL/);
   });
   it('rejects short secrets', () => {
-    expect(() =>
-      loadEnv({ DATABASE_URL: 'x', JWT_ACCESS_SECRET: 'short', JWT_REFRESH_SECRET: 'b'.repeat(32), ENCRYPTION_KEY: 'c'.repeat(32) }),
-    ).toThrow(/JWT_ACCESS_SECRET/);
+    expect(() => loadEnv({ DATABASE_URL: 'x', BETTER_AUTH_SECRET: 'short' })).toThrow(/BETTER_AUTH_SECRET/);
+  });
+  it('requires BETTER_AUTH_SECRET', () => {
+    expect(() => loadEnv({ DATABASE_URL: 'x' })).toThrow(/BETTER_AUTH_SECRET/);
   });
 });

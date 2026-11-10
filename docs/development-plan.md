@@ -21,6 +21,10 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] ERD and rules (`database.md`)
 - [x] Review schema with the owner (approved, including units, attributes and price snapshots)
 
+## Step 0: Switch auth to Better Auth (docs, schema, env)
+
+- [x] `docs/auth.md`; schema reconciled with `npx auth@1.7.20 generate`; JWT, refresh-token and argon2 design removed; `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` env
+
 ## Phase 2: Foundation
 
 - [x] pnpm monorepo, TypeScript strict, ESLint, Prettier
@@ -36,9 +40,11 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 3: Auth, RBAC, admin shell
 
-- [ ] Customer register, login (email or phone), refresh rotation, logout, rate limits and lockout
-- [ ] Email verification and password reset (Mailgun transport behind `MailTransport`, queue)
-- [ ] Admin login, optional 2FA, separate cookies
+- [ ] Spike: two Better Auth instances (`customerAuth`, `adminAuth`) side by side with the Prisma adapter, separate tables, base paths and cookie prefixes, mounted before `express.json()` (fallback: one instance with a `type` field)
+- [ ] API foundation: Redis client, BullMQ, `/health/ready`, `MailTransport` (Mailgun and SMTP), `email.send` job with `notification_logs`, worker entry, `email-verify` and `password-reset` templates
+- [ ] Customer auth: `customerAuth` config (Redis secondary storage, rate-limit rules, IP header), our `/auth/register` and `/auth/login` (email or phone, placeholder email, Redis lockout), sessions, logout, email verification, password reset
+- [ ] Guest-order linking in the after-email-verification hook (verified email only, never phone)
+- [ ] Admin auth: `adminAuth` config, sign-up disabled, optional TOTP 2FA, 7-day sessions; Super Admin seeded through Better Auth
 - [ ] `requirePermission` middleware with Redis cache; roles, permissions, users CRUD
 - [ ] Admin UI shell: layout, navigation filtered by permissions, roles and users screens
 - [ ] Audit logging helper

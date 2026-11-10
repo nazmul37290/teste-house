@@ -1,6 +1,6 @@
 # Database
 
-PostgreSQL, accessed with Prisma. The schema in `prisma/schema.prisma` is the source of truth (45 tables). This file explains the rules around it, what Prisma cannot express, seed data, and the ERD.
+PostgreSQL, accessed with Prisma. The schema in `prisma/schema.prisma` is the source of truth (50 tables). This file explains the rules around it, what Prisma cannot express, seed data, and the ERD.
 
 ## 1. Conventions
 
@@ -34,7 +34,8 @@ The client is generated to `apps/api/src/generated/prisma` (see the generator bl
 
 | Module | Tables | Notes |
 |---|---|---|
-| Identity | `customers`, `customer_addresses`, `admin_users`, `roles`, `permissions`, `role_permissions`, `refresh_tokens`, `verification_tokens` | Customer phone unique and mandatory, email optional unique. Admin has one role |
+| Identity | `customers`, `customer_addresses`, `admin_users`, `roles`, `permissions`, `role_permissions` | Customer phone unique and mandatory. Customer email unique and required by Better Auth: phone-only customers get `<phone>@phone.invalid` (never verified or mailed). Admin has one role |
+| Auth (Better Auth, see `auth.md`) | `customer_sessions`, `customer_accounts`, `customer_verifications`, `admin_sessions`, `admin_accounts`, `admin_verifications`, `admin_two_factors` | Columns follow Better Auth's core schema. Passwords (scrypt) live in `*_accounts.password` with `providerId = 'credential'`. Sessions and verification records are stored in Postgres and mirrored in Redis |
 | Media | `media` | Base path plus alt text; derived sizes are generated on disk |
 | Catalog | `categories`, `brands`, `products`, `product_variants`, `product_images`, `tags`, `product_tags`, `attributes`, `attribute_values`, `variant_attribute_values` | Price lives on variants. Categories nest through `parentId`. Variants carry a structured net content (`unit` + `unitValue`) and optional attributes |
 | Inventory | `inventory_batches`, `stock_movements` | Batches optional. Every stock change writes a movement |
@@ -121,7 +122,7 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 **Cancel or failed payment.** Restore stock (`CANCEL_RELEASE` movements), restore coupon usage, write status history.
 
-**Guest linking.** When a customer verifies an email, run `UPDATE orders SET customerId = ? WHERE customerId IS NULL AND contactEmail = ?`. Never link by phone alone.
+**Guest linking.** Only in Better Auth's after-email-verification hook (and after a verified email change), run `UPDATE orders SET customerId = ? WHERE customerId IS NULL AND contactEmail = ?` with the verified email. Never link by phone alone. Placeholder `@phone.invalid` emails are never verified, so they never link. See `auth.md` section 4.
 
 **Ratings.** After a review is approved, rejected or deleted, recompute `products.ratingAvg` and `ratingCount` from approved reviews.
 
@@ -140,6 +141,8 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 **Payment methods:** `COD` (`config: { "scope": "DHAKA_ONLY" }`, active), `UDDOKTAPAY` (active).
 
 **Delivery zones:** `inside-dhaka` (districts `["Dhaka"]`), `outside-dhaka` (default zone). Charges are placeholders until the owner sets them in admin. "Inside Dhaka" means the district `Dhaka` for now; refine by upazila or area later if needed.
+
+**Super Admin user:** created through `adminAuth`'s internal adapter and password hasher, never by writing a hash. In development the seed does this from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (from Phase 3). Production uses a one-off command with different values.
 
 **Settings keys:** `store.name`, `store.logo`, `store.phone`, `store.email`, `store.address`, `seo.defaultTitle`, `seo.defaultDescription`, `gtm.containerId`, `review.autoApprove`, `notifications.adminEmail`, `shipping.steadfastEnabled`.
 
@@ -160,14 +163,16 @@ erDiagram
     Customer ||--o{ Order : places
     Customer ||--o{ Review : writes
     Customer ||--o{ WishlistItem : saves
-    Customer ||--o{ RefreshToken : sessions
-    Customer ||--o{ VerificationToken : verifies
+    Customer ||--o{ CustomerSession : sessions
+    Customer ||--o{ CustomerAccount : credentials
     Customer ||--o{ CouponUsage : uses
 
     Role ||--o{ AdminUser : assigned
     Role ||--o{ RolePermission : grants
     Permission ||--o{ RolePermission : in
-    AdminUser ||--o{ RefreshToken : sessions
+    AdminUser ||--o{ AdminSession : sessions
+    AdminUser ||--o{ AdminAccount : credentials
+    AdminUser ||--o{ AdminTwoFactor : totp
     AdminUser ||--o{ AuditLog : acts
     AdminUser ||--o{ OrderNote : writes
     AdminUser ||--o{ OrderStatusHistory : changes
@@ -224,9 +229,20 @@ erDiagram
         uuid id PK
         string phone UK
         string email UK
-        string passwordHash
-        datetime emailVerifiedAt
+        bool emailVerified
         enum status
+    }
+    CustomerSession {
+        uuid id PK
+        uuid userId FK
+        string token UK
+        datetime expiresAt
+    }
+    CustomerAccount {
+        uuid id PK
+        uuid userId FK
+        string providerId
+        string password
     }
     CustomerAddress {
         uuid id PK
@@ -255,18 +271,23 @@ erDiagram
         uuid roleId FK
         bool isActive
     }
-    RefreshToken {
+    AdminSession {
         uuid id PK
-        string tokenHash UK
-        uuid customerId FK
-        uuid adminUserId FK
+        uuid userId FK
+        string token UK
         datetime expiresAt
     }
-    VerificationToken {
+    AdminAccount {
         uuid id PK
-        uuid customerId FK
-        enum purpose
-        string tokenHash UK
+        uuid userId FK
+        string providerId
+        string password
+    }
+    AdminTwoFactor {
+        uuid id PK
+        uuid userId FK
+        string secret
+        string backupCodes
     }
     Media {
         uuid id PK

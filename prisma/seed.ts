@@ -1,10 +1,10 @@
 /**
  * Idempotent seed: safe to run many times (upserts by unique key).
- * Creates permissions, default roles, payment methods, delivery zones, settings,
- * and (when SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD are set) the Super Admin user.
+ * Creates permissions, default roles, payment methods, delivery zones and settings.
+ * The Super Admin user is NOT created here yet: Phase 3 adds it through Better Auth's internal
+ * adapter and password hasher (docs/auth.md), never by writing password hashes directly.
  */
 import { PrismaPg } from '@prisma/adapter-pg';
-import argon2 from 'argon2';
 import { PrismaClient } from '../apps/api/src/generated/prisma/client';
 import { DEFAULT_ROLES, PERMISSIONS, SUPER_ADMIN_ROLE } from '../packages/shared/src/permissions';
 
@@ -92,28 +92,11 @@ async function seedSettings() {
   }
 }
 
-async function seedSuperAdmin() {
-  const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD;
-  if (!email || !password) {
-    console.log('SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set: skipping Super Admin user');
-    return;
-  }
-  const role = await prisma.role.findUniqueOrThrow({ where: { name: SUPER_ADMIN_ROLE } });
-  const exists = await prisma.adminUser.findUnique({ where: { email } });
-  if (exists) return;
-  await prisma.adminUser.create({
-    data: { name: 'Super Admin', email, passwordHash: await argon2.hash(password, { type: argon2.argon2id }), roleId: role.id },
-  });
-  console.log(`Created Super Admin ${email}`);
-}
-
 async function main() {
   await seedPermissionsAndRoles();
   await seedPaymentMethods();
   await seedDeliveryZones();
   await seedSettings();
-  await seedSuperAdmin();
   console.log('Seed complete');
 }
 

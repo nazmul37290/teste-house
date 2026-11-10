@@ -38,7 +38,7 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 - Timestamps in ISO 8601 UTC.
 - `POST /orders` requires the `Idempotency-Key` header (UUID). Same key returns the original order.
 - `POST /orders` body (strict schema, unknown or money fields are rejected): `items[{variantId, quantity}]` (or the server cart), `couponCode?`, `address` or `addressId`, `contact{name, phone, email?}` for guests, `paymentMethodCode`, `customerNote?`, `expectedGrandTotal?` (comparison only). The response returns the full server-calculated breakdown (lines, subtotal, discount, delivery, grand total). See `pricing.md`.
-- Cookies: `access_token`, `refresh_token` (customer); `admin_access_token`, `admin_refresh_token` (admin). State-changing calls need the CSRF header.
+- Auth is Better Auth (`auth.md`). Cookies: `shop_c.session_token`, `shop_c.session_data` (customer); `shop_a.session_token`, `shop_a.session_data`, `shop_a.two_factor` (admin). The browser calls the API through the web origin (`/api/v1/*` rewrite), so cookies are first-party. State-changing calls need the CSRF header (Better Auth routes are protected by its `Origin` check).
 - Permission is declared per admin route in the router file, next to the handler.
 - Every admin write calls the audit logger.
 - Webhooks live under `/webhooks/*`, are excluded from CSRF, and are authenticated by token or by calling the provider's verify API.
@@ -71,11 +71,16 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/auth/register` | Name, phone, password, optional email |
-| POST | `/auth/login` | `identifier` (email or phone) + password |
-| POST | `/auth/refresh`, `/auth/logout` | Token rotation, revoke |
-| POST | `/auth/verify-email`, `/auth/resend-verification` | Email verification (triggers guest-order linking) |
-| POST | `/auth/forgot-password`, `/auth/reset-password` | By email |
+| POST | `/auth/register` | Ours. Name, phone, password, optional email (placeholder email for phone-only) |
+| POST | `/auth/login` | Ours. `identifier` (email or phone) + password, then Better Auth email sign-in |
+| GET | `/auth/get-session` | Better Auth. Current session |
+| POST | `/auth/sign-out` | Better Auth. Revoke the session |
+| GET | `/auth/verify-email?token=` | Better Auth. Email verification (the after-verification hook links guest orders) |
+| POST | `/auth/send-verification-email` | Better Auth. Resend verification |
+| POST | `/auth/request-password-reset`, `/auth/reset-password` | Better Auth. By email |
+| POST | `/auth/change-email` | Better Auth. Add or change email (verification to the new address) |
+
+Better Auth paths above are its standard endpoints under `basePath`. Confirm the exact names against the pinned version in Phase 3. Our `/auth/login` and `/auth/register` are mounted before Better Auth's catch-all.
 | GET/PATCH | `/me` | Profile |
 | POST | `/me/change-password` | |
 | GET/POST/PATCH/DELETE | `/me/addresses`, `/me/addresses/:id` | Saved addresses |
@@ -96,7 +101,7 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 
 | Area | Routes |
 |---|---|
-| Auth | `POST /admin/auth/login`, `refresh`, `logout`, `GET /admin/auth/me` (returns permissions), 2FA setup/verify |
+| Auth | Better Auth (`adminAuth`, sign-up disabled): `POST /admin/auth/sign-in/email`, `POST /admin/auth/sign-out`, `GET /admin/auth/get-session`, 2FA `POST /admin/auth/two-factor/enable|verify-totp|verify-backup-code|disable`. Ours: `GET /admin/auth/me` (profile, role, permission keys) |
 | Dashboard | `GET /admin/dashboard` [`reports.view`] |
 | Products | CRUD `/admin/products`, nested `/variants`, `/images` [`products.*`]; bulk status; CSV import/export |
 | Taxonomy | CRUD `/admin/categories`, `/admin/brands`, `/admin/tags` [`categories.manage`, `brands.manage`] |
