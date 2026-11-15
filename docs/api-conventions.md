@@ -105,7 +105,7 @@ Better Auth paths above are its standard endpoints under `basePath` (names confi
 | Dashboard | `GET /admin/dashboard` [`reports.view`] |
 | Products | CRUD `/admin/products`, nested `/variants`, `/images` [`products.*`]; bulk status; CSV import/export |
 | Taxonomy | CRUD `/admin/categories`, `/admin/brands`, `/admin/tags` [`categories.manage`, `brands.manage`] |
-| Media | `POST /admin/media`, `DELETE /admin/media/:id` [`media.upload`] |
+| Media | `POST /admin/media` (multipart: `file` + `altText`), `PATCH /admin/media/:id` (alt text), `DELETE /admin/media/:id` (`409 MEDIA_IN_USE` while used) [`media.upload`]; `GET /admin/media?q=&page=` (library) [`media.upload` or `products.view`]. Each item carries `urls` for every width |
 | Inventory | `GET /admin/inventory`, `POST /admin/inventory/adjust`, batches CRUD [`inventory.*`] |
 | Orders | `GET /admin/orders`, `GET /:id`, `PATCH /:id` (edit), `POST /:id/status`, `POST /:id/notes`, `POST /:id/book-courier`, `POST /bulk/book-courier`, `GET /:id/invoice`, `GET /:id/packing-slip` [`orders.*`] |
 | Customers | `GET /admin/customers`, `GET /:id`, `POST /:id/block` [`customers.*`] |

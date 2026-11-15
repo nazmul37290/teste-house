@@ -342,6 +342,7 @@ Changing the database schema:
 | `Cannot find module .../generated/prisma/client`   | Run `pnpm db:generate`.                                                                                                                                                                 |
 | Strange "Cannot find package" errors after pulling | The install is broken or out of date. Delete `node_modules` (`CI=true pnpm install` reinstalls cleanly).                                                                                |
 | Port 3000 or 4000 in use                           | An old `pnpm dev` is still running. Close that terminal, or end the `node` process in Task Manager.                                                                                     |
+| Where are uploaded images? | Locally in `apps/api/uploads/` (`UPLOAD_DIR=./uploads`, relative to the API folder; ignored by Git). In production in the `/data/uploads` volume. |
 | Want a clean database                              | `docker compose -f docker/compose.dev.yml down -v`, then `pnpm db:up`, `pnpm db:deploy`, `pnpm db:seed`. **Deletes all local data.**                                                    |
 
 ---

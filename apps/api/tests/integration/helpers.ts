@@ -1,3 +1,6 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import request from 'supertest';
 import { createApp } from '../../src/app';
 import { loadEnv } from '../../src/config/env';
@@ -14,6 +17,9 @@ export function createTestContext() {
     BETTER_AUTH_SECRET: 'integration-test-secret-'.padEnd(40, 'x'),
     BETTER_AUTH_URL: WEB_ORIGIN,
     CORS_ORIGINS: WEB_ORIGIN,
+    // A fresh folder per test file: uploads never land in the real uploads/ directory.
+    UPLOAD_DIR: mkdtempSync(path.join(tmpdir(), 'shop-test-uploads-')),
+    PUBLIC_MEDIA_URL: 'http://localhost:4000/media',
   });
   const deps: Deps = createDeps(env);
   const app = createApp(deps);
@@ -45,3 +51,32 @@ export function freshIp(): string {
 export function ourRouteHeaders(ip = freshIp()): Record<string, string> {
   return { Origin: WEB_ORIGIN, 'X-Requested-With': 'XMLHttpRequest', 'X-Forwarded-For': ip };
 }
+
+/** Signs in a new admin with the given role (by name) and returns their id and cookie. */
+export async function adminSession(
+  ctx: ReturnType<typeof createTestContext>,
+  roleName: string,
+  password = 'Admin-Password-2026',
+) {
+  const { createAdminUserWithPassword } = await import('../../src/auth/admin-users');
+  const role = await ctx.deps.prisma.role.findUniqueOrThrow({ where: { name: roleName } });
+  const email = `admin${Date.now()}${Math.floor(Math.random() * 1e6)}@example.com`;
+  const user = await createAdminUserWithPassword(ctx.deps.adminAuth, {
+    name: `${roleName} Tester`,
+    email,
+    password,
+    roleId: role.id,
+  });
+  const login = await request(ctx.app)
+    .post('/api/v1/admin/auth/sign-in/email')
+    .set('Origin', WEB_ORIGIN)
+    .send({ email, password });
+  return { id: user.id, email, cookie: cookiesFrom(login) };
+}
+
+/** Headers for admin API calls (session cookie, Origin, CSRF header). */
+export const adminHeaders = (cookie: string) => ({
+  Cookie: cookie,
+  Origin: WEB_ORIGIN,
+  'X-Requested-With': 'XMLHttpRequest',
+});

@@ -5,3 +5,5 @@ export * from './permissions';
 export * from './schemas';
 export * from './admin-schemas';
 export * from './settings';
+export * from './media';
+export * from './catalog-schemas';

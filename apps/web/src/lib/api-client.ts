@@ -19,3 +19,14 @@ export async function api<T>(
   });
   return parseEnvelope<T>(res);
 }
+
+/** Multipart upload (FormData) through the same-origin rewrite; the browser sets the boundary. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(`/api/v1${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: form,
+  });
+  return parseEnvelope<T>(res);
+}

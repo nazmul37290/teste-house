@@ -1,4 +1,5 @@
 import { toNodeHandler } from 'better-auth/node';
+import path from 'node:path';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
@@ -31,6 +32,17 @@ export function createApp(deps: Deps): Express {
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 
   app.use(healthRouter(deps));
+
+  // Uploaded images: random names, immutable. cross-origin CORP so the web origin can show them
+  // (helmet's default same-origin would block <img> from the API host).
+  app.use(
+    '/media',
+    (_req, res, next) => {
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    },
+    express.static(path.resolve(env.UPLOAD_DIR), { immutable: true, maxAge: '1y', index: false, dotfiles: 'deny' }),
+  );
 
   // docs/auth.md section 7: our own auth routes first (route-level JSON parser), then the Better Auth
   // catch-alls, and only then the global JSON parser, which would otherwise consume their bodies.

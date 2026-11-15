@@ -53,7 +53,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 4: Catalog management (admin)
 
-- [ ] Media upload pipeline (validation, sharp sizes, alt text required)
+- [x] Media upload pipeline (validation, sharp sizes, alt text required)
 - [ ] Categories (tree), brands, tags
 - [ ] Products and variants CRUD with SEO fields, food fields, images, status, flags
 - [ ] Inventory: adjustments, movement log, optional batches and expiry, low-stock threshold

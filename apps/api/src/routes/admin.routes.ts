@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { updateSettingsSchema } from '@shop/shared';
+import { mediaController } from '../controllers/media.controller';
 import { staffController } from '../controllers/staff.controller';
 import type { Deps } from '../deps';
 import { requireAdmin } from '../middleware/require-admin';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import { requirePermission } from '../middleware/require-permission';
+import { singleUpload } from '../middleware/upload';
 import { actorFrom } from '../services/audit.service';
 import { getAllSettings, updateSettings } from '../services/settings.service';
 
@@ -31,6 +33,12 @@ export function adminRouter(deps: Deps): Router {
   router.get('/users/:id', requirePermission('users.manage'), staff.getUser);
   router.patch('/users/:id', requirePermission('users.manage'), staff.updateUser);
   router.put('/users/:id/password', requirePermission('users.manage'), staff.setUserPassword);
+
+  const media = mediaController(deps);
+  router.get('/media', requirePermission('media.upload', 'products.view'), media.list);
+  router.post('/media', requirePermission('media.upload'), singleUpload('file'), media.upload);
+  router.patch('/media/:id', requirePermission('media.upload'), media.update);
+  router.delete('/media/:id', requirePermission('media.upload'), media.remove);
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });

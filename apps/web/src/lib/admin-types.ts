@@ -20,3 +20,14 @@ export type StaffMember = {
   createdAt: string;
   role: { id: string; name: string; isSystem: boolean };
 };
+
+export type MediaItem = {
+  id: string;
+  path: string;
+  altText: string;
+  width: number | null;
+  height: number | null;
+  sizeBytes: number;
+  createdAt: string;
+  urls: Record<'200' | '500' | '1000' | '1600', string>;
+};

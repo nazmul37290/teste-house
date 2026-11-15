@@ -46,3 +46,30 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ DATABASE_URL: 'x' })).toThrow(/BETTER_AUTH_SECRET/);
   });
 });
+
+describe('error handler', () => {
+  const app = createApp(
+    createDeps(
+      loadEnv({
+        NODE_ENV: 'test',
+        DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
+        BETTER_AUTH_SECRET: 'a'.repeat(32),
+      }),
+    ),
+  );
+
+  it('answers malformed JSON with 400, not 500', async () => {
+    const res = await request(app)
+      .post('/api/v1/admin/roles')
+      .set('Content-Type', 'application/json')
+      .send('{"broken":');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('answers a missing media file with 404', async () => {
+    const res = await request(app).get('/media/products/2026/11/nope-500.webp');
+    expect(res.status).toBe(404);
+    expect(res.headers['cross-origin-resource-policy']).toBe('cross-origin');
+  });
+});

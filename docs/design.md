@@ -138,8 +138,9 @@ See `integrations.md`. Summary:
 ## 11. File handling
 
 - Volume mounted at `/data/uploads`; configured by `UPLOAD_DIR`.
-- Flow: admin uploads (multipart, memory storage limited to 5 MB) -> validate magic bytes (jpg, png, webp only) -> sharp strips EXIF, resizes to 200, 500, 1000, 1600 px widths as WebP (and AVIF optional) -> write to `products/YYYY/MM/<uuid>-<size>.webp` -> insert `media` row with alt text (required).
-- Public files are served by the API's static handler with `Cache-Control: public, max-age=31536000, immutable` (Cloudflare caches them). Private files (invoices) are generated on demand behind auth.
+- Flow: admin uploads (multipart, memory storage limited to 5 MB, one file) -> validate magic bytes ourselves (JPEG, PNG, WebP only; the decoder must agree with the bytes; SVG, GIF, HEIC rejected) -> sharp applies the EXIF orientation, strips all metadata (EXIF, GPS, ICC), refuses decompression bombs (40 MP) and images under 100 px, and writes WebP (quality 82) at 200, 500, 1000 and 1600 px wide -> files `products/YYYY/MM/<uuid>-<width>.webp` (the uploaded name is never used) -> insert `media` row with alt text (required, 3 to 200 characters). Images are never upscaled: a 1200 px upload still gets a `-1600` file, at 1200 px, so every width always exists and `mediaUrl(base, path, width)` (`packages/shared`) never has to check. AVIF is not generated for now. If the database insert fails, the written files are deleted.
+- `media` stores `path` (the base, without width), `mime` (`image/webp`), the original upload size, the oriented width and height, and the alt text. Deleting is refused (`409 MEDIA_IN_USE`) while a product image, OG image, category, brand, banner or review photo uses it; the row goes first, then the files.
+- Public files are served by the API's static handler at `/media/*` with `Cache-Control: public, max-age=31536000, immutable` (Cloudflare caches them) and `Cross-Origin-Resource-Policy: cross-origin`, because the web origin shows them (Helmet's default `same-origin` would block them). Private files (invoices) are generated on demand behind auth.
 - Storage is behind a `StorageDriver` interface (`put`, `delete`, `url`) so it can move to S3/R2 later.
 - Orphan cleanup job removes media with no references after 7 days.
 

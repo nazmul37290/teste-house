@@ -2,6 +2,8 @@ import type { Redis } from 'ioredis';
 import { createAdminAuth, type AdminAuth } from './auth/admin-auth';
 import { createCustomerAuth, type CustomerAuth } from './auth/customer-auth';
 import type { Env } from './config/env';
+import { createLocalStorage } from './integrations/storage/local-storage';
+import type { StorageDriver } from './integrations/storage/storage-driver';
 import { createEmailQueue, type EmailQueue } from './jobs/queues';
 import { createPrisma, type Db } from './lib/prisma';
 import { createRedis } from './lib/redis';
@@ -15,6 +17,9 @@ export type Deps = {
   adminAuth: AdminAuth;
   /** Created on first use, so building the app never opens a BullMQ connection. */
   emailQueue: () => EmailQueue;
+  /** Uploaded files (UPLOAD_DIR), served at PUBLIC_MEDIA_URL. */
+  storage: StorageDriver;
+  publicMediaUrl: string;
   /** Closes every connection this bundle opened. */
   close: () => Promise<void>;
 };
@@ -31,6 +36,8 @@ export function createDeps(env: Env): Deps {
     customerAuth: createCustomerAuth({ env, prisma, redis, emailQueue }),
     adminAuth: createAdminAuth({ env, prisma, redis }),
     emailQueue,
+    storage: createLocalStorage(env.UPLOAD_DIR, env.PUBLIC_MEDIA_URL),
+    publicMediaUrl: env.PUBLIC_MEDIA_URL,
     close: async () => {
       await Promise.allSettled([prisma.$disconnect(), redis.quit(), queue?.close()]);
     },
