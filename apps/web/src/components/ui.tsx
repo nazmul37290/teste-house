@@ -1,10 +1,4 @@
-import type {
-  ButtonHTMLAttributes,
-  InputHTMLAttributes,
-  ReactNode,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from 'react';
+import type { ComponentProps, ButtonHTMLAttributes, ReactNode } from 'react';
 
 /** Small, unstyled-library building blocks (Tailwind only). Server-safe: no hooks here. */
 
@@ -33,15 +27,16 @@ export function Button({ variant = 'primary', className, ...props }: ButtonProps
 const fieldClass =
   'block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 disabled:bg-neutral-100';
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+// ComponentProps includes `ref` (React 19 passes it as a normal prop).
+export function Input({ className, ...props }: ComponentProps<'input'>) {
   return <input {...props} className={cx(fieldClass, className)} />;
 }
 
-export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return <textarea {...props} className={cx(fieldClass, className)} />;
 }
 
-export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({ className, ...props }: ComponentProps<'select'>) {
   return <select {...props} className={cx(fieldClass, className)} />;
 }
 

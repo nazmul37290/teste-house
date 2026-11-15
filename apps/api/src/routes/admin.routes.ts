@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { updateSettingsSchema } from '@shop/shared';
 import { mediaController } from '../controllers/media.controller';
 import { staffController } from '../controllers/staff.controller';
+import { taxonomyController } from '../controllers/taxonomy.controller';
 import type { Deps } from '../deps';
 import { requireAdmin } from '../middleware/require-admin';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
@@ -39,6 +40,51 @@ export function adminRouter(deps: Deps): Router {
   router.post('/media', requirePermission('media.upload'), singleUpload('file'), media.upload);
   router.patch('/media/:id', requirePermission('media.upload'), media.update);
   router.delete('/media/:id', requirePermission('media.upload'), media.remove);
+
+  // Catalog taxonomy. Reading is also open to products.view: the product editor needs these lists.
+  const tax = taxonomyController(deps);
+  router.get(
+    '/categories',
+    requirePermission('categories.manage', 'products.view'),
+    tax.listCategories,
+  );
+  router.post('/categories', requirePermission('categories.manage'), tax.createCategory);
+  router.patch('/categories/:id', requirePermission('categories.manage'), tax.updateCategory);
+  router.delete('/categories/:id', requirePermission('categories.manage'), tax.deleteCategory);
+
+  router.get('/brands', requirePermission('brands.manage', 'products.view'), tax.listBrands);
+  router.post('/brands', requirePermission('brands.manage'), tax.createBrand);
+  router.patch('/brands/:id', requirePermission('brands.manage'), tax.updateBrand);
+  router.delete('/brands/:id', requirePermission('brands.manage'), tax.deleteBrand);
+
+  router.get('/tags', requirePermission('brands.manage', 'products.view'), tax.listTags);
+  router.post('/tags', requirePermission('brands.manage'), tax.createTag);
+  router.patch('/tags/:id', requirePermission('brands.manage'), tax.updateTag);
+  router.delete('/tags/:id', requirePermission('brands.manage'), tax.deleteTag);
+
+  router.get(
+    '/attributes',
+    requirePermission('categories.manage', 'products.view'),
+    tax.listAttributes,
+  );
+  router.post('/attributes', requirePermission('categories.manage'), tax.createAttribute);
+  router.patch('/attributes/:id', requirePermission('categories.manage'), tax.updateAttribute);
+  router.delete('/attributes/:id', requirePermission('categories.manage'), tax.deleteAttribute);
+  router.post(
+    '/attributes/:id/values',
+    requirePermission('categories.manage'),
+    tax.addAttributeValue,
+  );
+  router.patch(
+    '/attribute-values/:id',
+    requirePermission('categories.manage'),
+    tax.updateAttributeValue,
+  );
+  router.delete(
+    '/attribute-values/:id',
+    requirePermission('categories.manage'),
+    tax.deleteAttributeValue,
+  );
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });

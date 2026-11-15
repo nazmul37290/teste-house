@@ -124,6 +124,8 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 **Guest linking.** Only in Better Auth's after-email-verification hook (and after a verified email change), run `UPDATE orders SET customerId = ? WHERE customerId IS NULL AND contactEmail = ?` with the verified email. Never link by phone alone. Placeholder `@phone.invalid` emails are never verified, so they never link. See `auth.md` section 4.
 
+**Slugs and redirects.** Slugs are generated from the name when left empty (`slugify()` in `packages/shared`; names without Latin letters need a typed slug) and never change on rename. An explicit slug change inserts a `redirects` row (`/category/old` -> `/category/new`, 301; products use `/product/...`), points earlier redirects at the new path so there are no chains, and removes any redirect from the new path (it is a live page again). Phase 5 serves them.
+
 **Ratings.** After a review is approved, rejected or deleted, recompute `products.ratingAvg` and `ratingCount` from approved reviews.
 
 **Reviews allowed** only when the customer has an order item for the product whose order is `DELIVERED`; set `isVerifiedPurchase` and `orderItemId`.

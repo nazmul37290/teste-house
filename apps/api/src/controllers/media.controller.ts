@@ -26,14 +26,12 @@ export function mediaController(deps: Deps) {
           { path: 'altText', message: altText.error.issues[0]?.message ?? 'Required' },
         ]);
       }
-      res
-        .status(201)
-        .json({
-          data: await media.uploadMedia(deps, actor(req), {
-            body: req.file.buffer,
-            altText: altText.data,
-          }),
-        });
+      res.status(201).json({
+        data: await media.uploadMedia(deps, actor(req), {
+          body: req.file.buffer,
+          altText: altText.data,
+        }),
+      });
     }) satisfies RequestHandler,
 
     list: (async (req, res) => {

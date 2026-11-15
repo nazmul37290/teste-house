@@ -41,7 +41,12 @@ export function createApp(deps: Deps): Express {
       res.set('Cross-Origin-Resource-Policy', 'cross-origin');
       next();
     },
-    express.static(path.resolve(env.UPLOAD_DIR), { immutable: true, maxAge: '1y', index: false, dotfiles: 'deny' }),
+    express.static(path.resolve(env.UPLOAD_DIR), {
+      immutable: true,
+      maxAge: '1y',
+      index: false,
+      dotfiles: 'deny',
+    }),
   );
 
   // docs/auth.md section 7: our own auth routes first (route-level JSON parser), then the Better Auth

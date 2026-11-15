@@ -17,6 +17,7 @@ import {
   findCustomerProfile,
   touchLastLogin,
 } from '../repositories/customer.repository';
+import { isUniqueViolation } from '../lib/prisma-errors';
 
 export type CustomerAuthServiceDeps = { prisma: Db; redis: Redis; customerAuth: CustomerAuth };
 /** Request headers for Better Auth (IP, user agent) plus the client IP for our lockout. */
@@ -45,10 +46,6 @@ async function profile(prisma: Db, id: string): Promise<CustomerProfile> {
 function throwIfLocked(...decisions: LockoutDecision[]): void {
   const waits = decisions.flatMap((d) => (d.allowed ? [] : [d.retryAfterSec]));
   if (waits.length) throw rateLimited(Math.max(...waits));
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 'P2002';
 }
 
 export async function registerCustomer(

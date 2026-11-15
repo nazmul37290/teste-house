@@ -5,6 +5,7 @@ import { invalidateRolePermissions } from '../lib/permission-cache';
 import type { Db } from '../lib/prisma';
 import * as repo from '../repositories/role.repository';
 import { recordAudit, type Actor } from './audit.service';
+import { isUniqueViolation } from '../lib/prisma-errors';
 
 export type RoleServiceDeps = { prisma: Db; redis: Redis };
 
@@ -46,10 +47,6 @@ async function editableRole(prisma: Db, id: string) {
   if (role.isSystem)
     throw businessRule('SYSTEM_ROLE', 'The Super Admin role cannot be changed or deleted');
   return role;
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 'P2002';
 }
 
 export const listPermissions = (prisma: Db) => repo.listPermissions(prisma);

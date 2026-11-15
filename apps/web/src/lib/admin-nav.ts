@@ -6,6 +6,9 @@ export type NavItem = { href: string; label: string; permission?: PermissionKey 
 /** Admin menu. Later phases add their modules here (products, orders, ...). */
 export const ADMIN_NAV: NavItem[] = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/categories', label: 'Categories', permission: 'categories.manage' },
+  { href: '/admin/brands', label: 'Brands and tags', permission: 'brands.manage' },
+  { href: '/admin/attributes', label: 'Attributes', permission: 'categories.manage' },
   { href: '/admin/media', label: 'Media', permission: 'media.upload' },
   { href: '/admin/staff', label: 'Staff', permission: 'users.manage' },
   { href: '/admin/roles', label: 'Roles', permission: 'roles.manage' },

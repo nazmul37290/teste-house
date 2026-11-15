@@ -1,15 +1,20 @@
 'use client';
 
 import { MEDIA_MAX_BYTES } from '@shop/shared';
-import { useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Alert, Button, Field, Input } from '@/components/ui';
 import { apiUpload } from '@/lib/api-client';
 import type { MediaItem } from '@/lib/admin-types';
 import { ApiError } from '@/lib/api-types';
 
-/** File + required alt text. The server checks the real file type and re-encodes it. */
+/**
+ * File + required alt text. The server checks the real file type and re-encodes it.
+ * Not a <form>: it is also used inside other forms (the media picker), and forms cannot nest.
+ */
 export function MediaUploader({ onUploaded }: { onUploaded: (media: MediaItem) => void }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const ids = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const altRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -22,13 +27,20 @@ export function MediaUploader({ onUploaded }: { onUploaded: (media: MediaItem) =
     setPreview(URL.createObjectURL(file));
   }
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function upload() {
+    const file = fileRef.current?.files?.[0];
+    const altText = altRef.current?.value.trim() ?? '';
+    if (!file) return setError('Choose an image first.');
+    if (altText.length < 3) return setError('Describe the image in a few words (alt text).');
+    const form = new FormData();
+    form.set('file', file);
+    form.set('altText', altText);
     setBusy(true);
     setError(null);
     try {
-      const media = await apiUpload<MediaItem>('/admin/media', new FormData(e.currentTarget));
-      formRef.current?.reset();
+      const media = await apiUpload<MediaItem>('/admin/media', form);
+      if (fileRef.current) fileRef.current.value = '';
+      if (altRef.current) altRef.current.value = '';
       onFile(undefined);
       onUploaded(media);
     } catch (err) {
@@ -39,19 +51,18 @@ export function MediaUploader({ onUploaded }: { onUploaded: (media: MediaItem) =
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
+    <div className="space-y-4">
       {error ? <Alert>{error}</Alert> : null}
       <Field
         label="Image"
-        htmlFor="media-file"
+        htmlFor={`${ids}-file`}
         hint="JPEG, PNG or WebP, up to 5 MB, at least 100 px. Stored as WebP."
       >
         <Input
-          id="media-file"
-          name="file"
+          ref={fileRef}
+          id={`${ids}-file`}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          required
           onChange={(e) => onFile(e.target.files?.[0])}
         />
       </Field>
@@ -61,21 +72,19 @@ export function MediaUploader({ onUploaded }: { onUploaded: (media: MediaItem) =
       ) : null}
       <Field
         label="Alt text"
-        htmlFor="media-alt"
+        htmlFor={`${ids}-alt`}
         hint="What the image shows, for screen readers and search engines."
       >
         <Input
-          id="media-alt"
-          name="altText"
-          required
-          minLength={3}
+          ref={altRef}
+          id={`${ids}-alt`}
           maxLength={200}
           placeholder="Jar of Sundarbans honey, 500 g"
         />
       </Field>
-      <Button type="submit" disabled={busy}>
+      <Button type="button" disabled={busy} onClick={upload}>
         {busy ? 'Uploading…' : 'Upload'}
       </Button>
-    </form>
+    </div>
   );
 }
