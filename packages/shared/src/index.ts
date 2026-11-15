@@ -7,3 +7,4 @@ export * from './admin-schemas';
 export * from './settings';
 export * from './media';
 export * from './catalog-schemas';
+export * from './product';

@@ -1,6 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import type { Attribute, Brand, Category, Tag } from './admin-types';
 import { ApiError, parseEnvelope, parseFullEnvelope, type ListMeta } from './api-types';
 
 const API = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
@@ -89,3 +90,14 @@ export const getCustomer = cache(async (): Promise<CustomerSessionUser | null> =
   const body = (await res.json().catch(() => null)) as { user?: CustomerSessionUser } | null;
   return body?.user ?? null;
 });
+
+/** Everything the product editor's dropdowns need, in one go. */
+export async function getCatalogLookups() {
+  const [categories, brands, tags, attributes] = await Promise.all([
+    apiServer<Category[]>('/admin/categories'),
+    apiServer<Brand[]>('/admin/brands'),
+    apiServer<Tag[]>('/admin/tags'),
+    apiServer<Attribute[]>('/admin/attributes'),
+  ]);
+  return { categories, brands, tags, attributes };
+}

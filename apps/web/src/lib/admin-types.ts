@@ -73,3 +73,77 @@ export type Attribute = {
   sortOrder: number;
   values: { id: string; value: string; slug: string; sortOrder: number; variantCount: number }[];
 };
+
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export type ProductListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  status: ProductStatus;
+  updatedAt: string;
+  category: string;
+  brand: string | null;
+  image: ImageRef;
+  variantCount: number;
+  priceFrom: string | null;
+  priceTo: string | null;
+  totalStock: number;
+};
+
+export type Variant = {
+  id: string;
+  sku: string;
+  name: string;
+  unit: string | null;
+  unitValue: string | null;
+  price: string;
+  salePrice: string | null;
+  stockQty: number;
+  lowStockThreshold: number;
+  weightGrams: number | null;
+  barcode: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  attributeValueIds: string[];
+  hasHistory: boolean;
+};
+
+export type ProductDetail = {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string | null;
+  description: string | null;
+  categoryId: string;
+  brandId: string | null;
+  status: ProductStatus;
+  isFeatured: boolean;
+  isNewArrival: boolean;
+  isBestSeller: boolean;
+  ingredients: string | null;
+  nutritionFacts: { name: string; amount: string }[] | null;
+  shelfLife: string | null;
+  origin: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  ogImageId: string | null;
+  ogImage: ImageRef;
+  tags: { id: string; name: string }[];
+  images: {
+    mediaId: string;
+    isPrimary: boolean;
+    altText: string;
+    urls: Record<'200' | '500' | '1000' | '1600', string>;
+  }[];
+  variants: Variant[];
+};
+
+/** Lists the product editor needs (categories, brands, tags, attributes). */
+export type CatalogLookups = {
+  categories: Category[];
+  brands: Brand[];
+  tags: Tag[];
+  attributes: Attribute[];
+};

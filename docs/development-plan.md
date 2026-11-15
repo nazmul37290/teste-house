@@ -55,7 +55,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 - [x] Media upload pipeline (validation, sharp sizes, alt text required)
 - [x] Categories (tree), brands, tags (plus attributes and values)
-- [ ] Products and variants CRUD with SEO fields, food fields, images, status, flags
+- [x] Products and variants CRUD with SEO fields, food fields, images, status, flags
 - [ ] Inventory: adjustments, movement log, optional batches and expiry, low-stock threshold
 - [ ] CSV import and export
 - [ ] Enter the first 50 products

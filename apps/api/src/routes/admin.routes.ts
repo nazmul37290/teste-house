@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { updateSettingsSchema } from '@shop/shared';
 import { mediaController } from '../controllers/media.controller';
+import { productController } from '../controllers/product.controller';
 import { staffController } from '../controllers/staff.controller';
 import { taxonomyController } from '../controllers/taxonomy.controller';
 import type { Deps } from '../deps';
@@ -85,6 +86,19 @@ export function adminRouter(deps: Deps): Router {
     requirePermission('categories.manage'),
     tax.deleteAttributeValue,
   );
+
+  const products = productController(deps);
+  router.get('/products', requirePermission('products.view'), products.list);
+  router.post('/products', requirePermission('products.create'), products.create);
+  // Declared before /products/:id so "bulk-status" is never read as an id.
+  router.post('/products/bulk-status', requirePermission('products.update'), products.bulkStatus);
+  router.get('/products/:id', requirePermission('products.view'), products.get);
+  router.patch('/products/:id', requirePermission('products.update'), products.update);
+  router.delete('/products/:id', requirePermission('products.delete'), products.remove);
+  router.put('/products/:id/images', requirePermission('products.update'), products.setImages);
+  router.post('/products/:id/variants', requirePermission('products.update'), products.addVariant);
+  router.patch('/variants/:id', requirePermission('products.update'), products.updateVariant);
+  router.delete('/variants/:id', requirePermission('products.update'), products.deleteVariant);
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });
