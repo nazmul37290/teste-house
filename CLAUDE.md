@@ -71,7 +71,7 @@ pnpm build
 
 ## Status
 
-Phase 1 (schema) and Phase 2 (foundation) are scaffolded. Step 0 (switch auth to Better Auth 1.7.20: docs, schema, env) is done; the seed no longer creates the Super Admin (Phase 3 does, through Better Auth). `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. The first two migrations (init, plus the raw SQL constraints from `docs/database.md` section 4) are written but not yet applied; `prisma/seed.ts` is now covered by `pnpm typecheck` but has never run. Next: `pnpm db:up`, `pnpm db:deploy`, `pnpm db:seed`, then Phase 3. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
+Phase 1 (schema) and Phase 2 (foundation) are scaffolded. Step 0 (switch auth to Better Auth 1.7.20: docs, schema, env) is done; the seed no longer creates the Super Admin (Phase 3 does, through Better Auth). `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. The first two migrations (init, plus the raw SQL constraints from `docs/database.md` section 4) are applied and the seed runs locally; `prisma/seed.ts` is covered by `pnpm typecheck`. Setup and deployment walkthrough: `docs/setup-guide.md`. Next: Phase 3. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
 
 ## Open items (do not decide silently)
 

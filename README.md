@@ -4,16 +4,18 @@ Monorepo for a Bangladesh food store: Next.js storefront and admin (`apps/web`),
 
 ## First run
 
-Requirements: Node 22+, pnpm 10 (`corepack enable`), Docker.
+New to monorepos or Docker? Read [docs/setup-guide.md](docs/setup-guide.md): it explains every command, local Docker, and going live with Dokploy.
+
+Requirements: Node 22+, pnpm 10 (`corepack enable`), Docker Desktop.
 
 ```bash
 pnpm install
-cp .env.example .env                 # then replace the three secrets (openssl rand -base64 48)
-cp apps/web/.env.example apps/web/.env.local
+cp .env.example .env                 # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
+# create apps/web/.env.local with the "Frontend" variables from .env
 pnpm db:up                           # Postgres, Redis, Mailpit (mail UI: http://localhost:8025)
 pnpm db:generate                     # generate the Prisma client
-pnpm db:migrate --name init          # first migration (then add the SQL from docs/database.md section 4)
-pnpm db:seed                         # permissions, roles, payment methods, zones, settings, Super Admin
+pnpm db:deploy                       # apply the migrations in prisma/migrations
+pnpm db:seed                         # permissions, roles, payment methods, zones, settings
 pnpm dev                             # web http://localhost:3000, api http://localhost:4000/health
 ```
 
