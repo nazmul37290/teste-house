@@ -150,6 +150,7 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 - `prisma migrate dev` locally; commit migrations; `prisma migrate deploy` in the production container start-up step (before the API starts).
 - Never edit an applied migration. Destructive changes need a two-step migration.
+- The partial unique indexes and trigram indexes from section 4 are not in the Prisma schema. When `migrate dev` generates a new migration, check that it does not add `DROP INDEX` for them; remove any such lines before applying.
 - Seed is idempotent (upserts by unique key). Run it with `pnpm db:seed` (it builds and runs the seed bundled with the API, so it can use the API's dependencies).
 
 ## 8. ERD

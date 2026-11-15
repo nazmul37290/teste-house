@@ -33,7 +33,8 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] `packages/shared`: `normalizePhone()`, permission keys, base Zod schemas
 - [x] `packages/shared`: `calculateOrderTotals()` (integer paisa) with unit and property tests (58 tests)
 - [x] Prisma config and idempotent seed written
-- [ ] Generate the client, create the first migration, add the raw SQL migration for constraints and indexes (`docs/database.md` section 4), run the seed against local Postgres
+- [x] Generate the client; first migration (`20261115000000_init`, from `prisma migrate diff`) and the raw SQL migration for constraints and indexes (`20261115000100_constraints_and_search`, `docs/database.md` section 4); seed typechecked (now in `pnpm typecheck`) and bundled
+- [ ] Apply both migrations and run the seed against local Postgres (blocked: Docker Desktop needs the WSL2 kernel, `wsl --update`)
 - [x] Docker: `Dockerfile.api`, `Dockerfile.web`, `compose.dev.yml` (Postgres, Redis, Mailpit); [ ] verify both images build on a machine with Docker
 - [x] GitHub Actions: lint, typecheck, test, build
 - [ ] Dokploy staging project: services, domains, env vars, auto-deploy
