@@ -5,7 +5,7 @@
  * adapter and password hasher (docs/auth.md), never by writing password hashes directly.
  */
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../apps/api/src/generated/prisma/client';
+import { Prisma, PrismaClient } from '../apps/api/src/generated/prisma/client';
 import { DEFAULT_ROLES, PERMISSIONS, SUPER_ADMIN_ROLE } from '../packages/shared/src/permissions';
 
 const url = process.env.DATABASE_URL;
@@ -46,7 +46,13 @@ async function seedPaymentMethods() {
   await prisma.paymentMethod.upsert({
     where: { code: 'COD' },
     update: {},
-    create: { code: 'COD', name: 'Cash on Delivery', isActive: true, sortOrder: 1, config: { scope: 'DHAKA_ONLY' } },
+    create: {
+      code: 'COD',
+      name: 'Cash on Delivery',
+      isActive: true,
+      sortOrder: 1,
+      config: { scope: 'DHAKA_ONLY' },
+    },
   });
   await prisma.paymentMethod.upsert({
     where: { code: 'UDDOKTAPAY' },
@@ -60,19 +66,39 @@ async function seedDeliveryZones() {
   await prisma.deliveryZone.upsert({
     where: { code: 'inside-dhaka' },
     update: {},
-    create: { code: 'inside-dhaka', name: 'Inside Dhaka', districts: ['Dhaka'], charge: '60.00', estimatedDays: '1-2 days', sortOrder: 1 },
+    create: {
+      code: 'inside-dhaka',
+      name: 'Inside Dhaka',
+      districts: ['Dhaka'],
+      charge: '60.00',
+      estimatedDays: '1-2 days',
+      sortOrder: 1,
+    },
   });
   await prisma.deliveryZone.upsert({
     where: { code: 'outside-dhaka' },
     update: {},
-    create: { code: 'outside-dhaka', name: 'Outside Dhaka', districts: [], charge: '120.00', estimatedDays: '3-5 days', isDefault: true, sortOrder: 2 },
+    create: {
+      code: 'outside-dhaka',
+      name: 'Outside Dhaka',
+      districts: [],
+      charge: '120.00',
+      estimatedDays: '3-5 days',
+      isDefault: true,
+      sortOrder: 2,
+    },
   });
 }
 
 async function seedSettings() {
-  const defaults: { key: string; value: unknown; group: string; isPublic: boolean }[] = [
+  const defaults: {
+    key: string;
+    value: Prisma.InputJsonValue | typeof Prisma.JsonNull;
+    group: string;
+    isPublic: boolean;
+  }[] = [
     { key: 'store.name', value: 'My Food Store', group: 'store', isPublic: true },
-    { key: 'store.logo', value: null, group: 'store', isPublic: true },
+    { key: 'store.logo', value: Prisma.JsonNull, group: 'store', isPublic: true },
     { key: 'store.phone', value: '', group: 'store', isPublic: true },
     { key: 'store.email', value: '', group: 'store', isPublic: true },
     { key: 'store.address', value: '', group: 'store', isPublic: true },
@@ -87,7 +113,7 @@ async function seedSettings() {
     await prisma.setting.upsert({
       where: { key: s.key },
       update: {},
-      create: { key: s.key, value: s.value as never, group: s.group, isPublic: s.isPublic },
+      create: { key: s.key, value: s.value, group: s.group, isPublic: s.isPublic },
     });
   }
 }

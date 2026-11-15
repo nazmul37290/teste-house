@@ -1,5 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["node"], "noEmit": true },
-  "include": ["src", "tests"]
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true,
+    // prisma/seed.ts lives outside this package; point its one external import at our node_modules.
+    "paths": { "@prisma/adapter-pg": ["./node_modules/@prisma/adapter-pg"] }
+  },
+  "include": ["src", "tests", "../../prisma/seed.ts"]
 }
