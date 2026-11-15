@@ -26,7 +26,7 @@ export function createApp(deps: Deps): Express {
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 
-  app.use(healthRouter());
+  app.use(healthRouter(deps));
 
   // docs/auth.md section 7: our own auth routes first (route-level JSON parser), then the Better Auth
   // catch-alls, and only then the global JSON parser, which would otherwise consume their bodies.

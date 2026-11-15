@@ -16,3 +16,10 @@ export function assertTestDatabase(url: string): void {
     );
   }
 }
+
+// Mailpit from docker/compose.dev.yml (and the CI service): SMTP in, HTTP API to read what arrived.
+export const TEST_SMTP = {
+  host: process.env.SMTP_HOST_TEST ?? 'localhost',
+  port: Number(process.env.SMTP_PORT_TEST ?? 1025),
+};
+export const TEST_MAILPIT_URL = process.env.MAILPIT_URL_TEST ?? 'http://localhost:8025';

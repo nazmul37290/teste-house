@@ -28,7 +28,7 @@ The store is made of five running pieces:
 | **redis**    | Fast in-memory store: sessions, rate limits, job queue        | 6379                          | In Docker                    |
 | **mailpit**  | Fake email server that catches every email so you can read it | 1025 (SMTP), 8025 (web inbox) | In Docker                    |
 
-Later phases add a **worker** (the same API code started with a different command) that sends emails and talks to the courier in the background.
+There is also a **worker**: the same API code started with a different command (`src/worker.ts`). It runs background jobs from the Redis queue: today it sends emails; later phases add courier booking and other jobs. `pnpm dev` starts it together with the API and web, so locally you never start it by hand.
 
 ```
 Your browser ──> web (localhost:3000) ──> api (localhost:4000) ──> postgres, redis
@@ -261,7 +261,7 @@ All commands run from the repo root.
 | Command        | What it does                                                                                    |
 | -------------- | ----------------------------------------------------------------------------------------------- |
 | `pnpm db:up`   | Starts the Docker services (Postgres, Redis, Mailpit). Safe to run if they are already running. |
-| `pnpm dev`     | Starts the API (port 4000) and web (port 3000) with hot reload.                                 |
+| `pnpm dev`     | Starts the API (port 4000), the worker and web (port 3000) with hot reload.                                 |
 | `pnpm db:down` | Stops the Docker services. Data in Postgres is kept.                                            |
 
 ### Database
@@ -476,7 +476,7 @@ In the Dokploy dashboard:
 5. **Domain:** `yourshop.com.bd` (and `www`), container port `3000`, HTTPS on.
 6. **Deploy.**
 
-From Phase 3 onwards a **worker** application is added the same way (same `Dockerfile.api`, same env vars, a different start command, no domain, `RUN_MIGRATIONS` not set). The exact command arrives with the worker code.
+Then add a **worker** application the same way: same repo, same `docker/Dockerfile.api`, the same environment variables as `api`, but with the **command overridden to `node dist/worker.js`**, no domain, no volume needed yet, and `RUN_MIGRATIONS` not set (only the api runs migrations). Without the worker, no emails are sent: they wait in the queue, and each attempt is recorded in `notification_logs`.
 
 ### Step 7: Seed and create the Super Admin
 

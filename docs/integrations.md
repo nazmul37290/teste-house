@@ -82,7 +82,9 @@ interface MailTransport {
 }
 ```
 
-- Factory picks the transport from `MAIL_PROVIDER`. Mailgun is the default; SMTP goes through Nodemailer.
+- Factory picks the transport from `MAIL_PROVIDER` (`apps/api/src/integrations/mail/`). Production uses `mailgun`; development uses `smtp` (Nodemailer to Mailpit), which is also the env default.
+- Mailgun, from the official docs (checked 2026-11-16): `POST {MAILGUN_BASE_URL}/v3/{MAILGUN_DOMAIN}/messages`, HTTP basic auth with user `api` and the API key, form fields `from`, `to`, `subject`, `text`, `html`, repeated `o:tag`; success returns `{ id, message }`. `MAILGUN_BASE_URL` is `https://api.mailgun.net` (US, the default) or `https://api.eu.mailgun.net` (EU).
+- Each email is tagged with its template name.
 - Verification and password-reset emails are triggered from Better Auth callbacks (`sendVerificationEmail`, `sendResetPassword`). The callbacks only enqueue `email.send` jobs (no await on delivery), and skip placeholder `@phone.invalid` addresses. See `auth.md`.
 - Always send through the `email.send` queue job. Write a `notification_logs` row (QUEUED, then SENT or FAILED). Retry with backoff.
 - Templates (HTML + plain text, shared layout using store name and logo from settings): `email-verify`, `password-reset`, `order-placed`, `order-confirmed`, `order-shipped`, `order-delivered`, `order-cancelled`, `admin-new-order`, `admin-low-stock`.

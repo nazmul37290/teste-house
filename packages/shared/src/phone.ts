@@ -30,3 +30,15 @@ export function parseLoginIdentifier(input: string): LoginIdentifier | null {
   const phone = normalizePhone(trimmed);
   return phone ? { type: 'phone', value: phone } : null;
 }
+
+/** Better Auth needs an email; phone-only customers get <phone>@phone.invalid (docs/auth.md decision 3). */
+export const PLACEHOLDER_EMAIL_DOMAIN = 'phone.invalid';
+
+export function placeholderEmailFor(normalizedPhone: string): string {
+  return `${normalizedPhone}@${PLACEHOLDER_EMAIL_DOMAIN}`;
+}
+
+/** Placeholder addresses are never verified, never mailed and never used for guest-order linking. */
+export function isPlaceholderEmail(email: string): boolean {
+  return email.trim().toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
+}

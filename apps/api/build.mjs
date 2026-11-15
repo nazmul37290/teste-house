@@ -1,4 +1,4 @@
-// Bundles the API and the seed into dist/. @shop/shared ships as TypeScript source, so it is
+// Bundles the API, the worker and the seed into dist/. @shop/shared ships as TypeScript source, so it is
 // bundled in; every other dependency stays external and comes from node_modules at runtime.
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -7,7 +7,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const external = Object.keys({ ...pkg.dependencies }).filter((d) => d !== '@shop/shared');
 
 await build({
-  entryPoints: { server: 'src/server.ts', seed: '../../prisma/seed.ts' },
+  entryPoints: { server: 'src/server.ts', worker: 'src/worker.ts', seed: '../../prisma/seed.ts' },
   outdir: 'dist',
   bundle: true,
   platform: 'node',

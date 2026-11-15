@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { normalizePhone, parseLoginIdentifier } from '../src/phone';
+import {
+  isPlaceholderEmail,
+  normalizePhone,
+  parseLoginIdentifier,
+  placeholderEmailFor,
+} from '../src/phone';
 
 describe('normalizePhone', () => {
   it.each([
@@ -35,5 +40,20 @@ describe('parseLoginIdentifier', () => {
   it('rejects garbage', () => {
     expect(parseLoginIdentifier('rahim@')).toBeNull();
     expect(parseLoginIdentifier('hello')).toBeNull();
+  });
+});
+
+describe('placeholder emails', () => {
+  it('builds the placeholder from a normalized phone', () => {
+    expect(placeholderEmailFor('01712345678')).toBe('01712345678@phone.invalid');
+  });
+  it('detects placeholders regardless of case and spaces', () => {
+    expect(isPlaceholderEmail('01712345678@phone.invalid')).toBe(true);
+    expect(isPlaceholderEmail(' 01712345678@PHONE.INVALID ')).toBe(true);
+  });
+  it('does not flag real addresses, including look-alikes', () => {
+    expect(isPlaceholderEmail('someone@example.com')).toBe(false);
+    expect(isPlaceholderEmail('someone@phone.invalid.example.com')).toBe(false);
+    expect(isPlaceholderEmail('someone@notphone.invalid')).toBe(false);
   });
 });
