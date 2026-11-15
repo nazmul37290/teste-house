@@ -17,7 +17,7 @@ Customers and admins sign in with [Better Auth](https://better-auth.com/docs), p
 | 9 | **Sessions:** customers 30 days, admins 7 days, `updateAge` 1 day, cookie cache on, `httpOnly`, `Secure` in production, `SameSite=Lax`. |
 | 10 | **Same origin:** Next.js rewrites `/api/v1/*` to the API, so the browser only talks to the web origin and auth cookies are first-party (no Safari ITP issues). Fallback: `crossSubDomainCookies` on the parent domain plus `trustedOrigins`. |
 | 11 | **Express mounting:** Better Auth handlers mounted with `toNodeHandler` before `express.json()` (section 7). |
-| 12 | **Next.js middleware** only does an optimistic session-cookie presence check. Every real check happens server-side against the API. |
+| 12 | **Next.js proxy** (`apps/web/src/proxy.ts`; Next 16 renamed `middleware.ts` to `proxy.ts`) only does an optimistic session-cookie presence check. Every real check happens server-side against the API. |
 
 ## 2. Instances
 
@@ -126,7 +126,7 @@ Our routes come first, so the catch-alls never shadow them. Better Auth must com
 ## 8. Next.js
 
 - `next.config.ts` rewrites `/api/v1/:path*` to `${API_INTERNAL_URL}/api/v1/:path*`.
-- `middleware.ts` only checks that a session cookie exists for `/account/*` (`shop_c.session_token`) and `/admin/*` (`shop_a.session_token`) and redirects to login if not. Real checks happen server-side against the API (`get-session`, `/admin/auth/me`).
+- `src/proxy.ts` only checks that a session cookie exists for `/account/*` (`shop_c.session_token`) and `/admin/*` except `/admin/login` (`shop_a.session_token`), using `getSessionCookie(request, { cookiePrefix })` from `better-auth/cookies` (it also finds the `__Secure-` names used in production), and redirects to the login page with `?next=` if not. Real checks happen server-side against the API: the admin layout calls `/admin/auth/me` and redirects to login when it fails; `/account` calls `get-session`. `?next=` only accepts same-site relative paths.
 - Client: `createAuthClient({ basePath: '/api/v1/auth' })`, and for admins `createAuthClient({ basePath: '/api/v1/admin/auth', plugins: [twoFactorClient()] })`.
 
 ## 9. Environment
@@ -135,6 +135,5 @@ Our routes come first, so the catch-alls never shadow them. Better Auth must com
 
 ## 10. Open items
 
-- `getSessionCookie` from `better-auth/cookies` with a custom prefix: confirm its options in Phase 3 before writing the middleware.
 - SMS OTP login and SMS password reset (when SMS is added).
 - Google login (ACC-8, could-have).

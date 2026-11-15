@@ -11,7 +11,7 @@ Requirements: Node 22+, pnpm 10 (`corepack enable`), Docker Desktop.
 ```bash
 pnpm install
 cp .env.example .env                 # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
-# create apps/web/.env.local with the "Frontend" variables from .env
+cp apps/web/.env.example apps/web/.env.local   # optional locally: the defaults match
 pnpm db:up                           # Postgres, Redis, Mailpit (mail UI: http://localhost:8025)
 pnpm db:generate                     # generate the Prisma client
 pnpm db:deploy                       # apply the migrations in prisma/migrations

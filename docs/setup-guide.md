@@ -214,9 +214,8 @@ cp .env.example .env
 #    then edit .env: set BETTER_AUTH_SECRET to a random value
 #    (Git Bash: openssl rand -base64 32)
 
-# 3. Create the web app's env file: apps/web/.env.local
-#    with NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_API_URL, API_INTERNAL_URL and REVALIDATE_SECRET
-#    (same values as the "Frontend" block in .env)
+# 3. The web app's env file (optional on your machine: the built-in defaults are the same)
+cp apps/web/.env.example apps/web/.env.local
 
 # 4. Start Postgres, Redis and Mailpit (Docker Desktop must be running)
 pnpm db:up
@@ -242,7 +241,18 @@ Then open:
 | http://localhost:4000/health | The API's health check                                       |
 | http://localhost:8025        | Mailpit: every email the app sends lands here (from Phase 3) |
 
-Stop `pnpm dev` with `Ctrl+C`.
+What you can try today:
+
+| URL | What it is |
+|---|---|
+| http://localhost:3000/register | Create a customer account (mobile number required, email optional). The verification email appears in Mailpit |
+| http://localhost:3000/login | Sign in with the mobile number or the email |
+| http://localhost:3000/account | The signed-in customer: details, add or change email, resend verification, sign out |
+| http://localhost:3000/admin | Admin panel. Sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` from `.env` |
+| `/admin/staff`, `/admin/roles`, `/admin/settings` | Staff accounts, roles and permissions, store settings (each needs its permission) |
+| `/admin/security` | Turn on two-factor authentication (scan the QR code with an authenticator app) and change your password |
+
+Stop `pnpm dev` with `Ctrl+C`. If `pnpm dev` says a port is in use, an earlier `pnpm dev` is still running in another terminal: use that one, or stop it first.
 
 ### Why the two env files?
 
