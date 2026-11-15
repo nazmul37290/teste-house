@@ -480,7 +480,19 @@ Then add a **worker** application the same way: same repo, same `docker/Dockerfi
 
 ### Step 7: Seed and create the Super Admin
 
-The first deploy creates the tables (migrations run on start). The default data (roles, zones, settings) and the real Super Admin account still need to be created once. The seed and the Super Admin command are run from the api container's terminal in Dokploy. The exact production command is written in Phase 3, together with the Super Admin creation (see `database.md` section 6). Use real, strong credentials, never the dev ones.
+The first deploy creates the tables (migrations run on start). The default data (roles, zones, settings) and the real Super Admin account still need to be created once. Open the **api** application's terminal in Dokploy (it opens a shell inside the running container) and run:
+
+```sh
+# 1. Default data: permissions, roles, payment methods, zones, settings. Safe to run again.
+node dist/seed.js
+
+# 2. The Super Admin. `read -s` asks for the password without showing it or saving it in the history.
+read -s SUPER_ADMIN_PASSWORD && export SUPER_ADMIN_PASSWORD
+SUPER_ADMIN_EMAIL=owner@yourshop.com.bd SUPER_ADMIN_NAME="Store Owner" node dist/create-super-admin.js
+unset SUPER_ADMIN_PASSWORD
+```
+
+The password needs at least 12 characters. Running the command again with the same email changes nothing (it never resets a password). The seed never creates an admin in production; `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` are for your machine only. After the first login, turn on two-factor authentication for this account.
 
 ### Step 8: Auto-deploy and backups
 

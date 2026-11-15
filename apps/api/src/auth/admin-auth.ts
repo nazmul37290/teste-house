@@ -1,4 +1,6 @@
+import { ADMIN_PASSWORD_MIN_LENGTH } from '@shop/shared';
 import { betterAuth } from 'better-auth';
+import { APIError } from 'better-auth/api';
 import { twoFactor } from 'better-auth/plugins';
 import { commonAuthOptions, DAY, sessionDefaults, type AuthDeps } from './common';
 
@@ -16,7 +18,31 @@ export function createAdminAuth(deps: AuthDeps) {
     advanced: { ...common.advanced, cookiePrefix: 'shop_a' },
     // Admins sign in through Better Auth's own HTTP route, so its rate limit is their lockout.
     rateLimit: { ...common.rateLimit, customRules: { '/sign-in/email': { window: 60, max: 5 } } },
-    emailAndPassword: { enabled: true, disableSignUp: true },
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: true,
+      minPasswordLength: ADMIN_PASSWORD_MIN_LENGTH,
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          // Inactive admins never get a session (existing ones are revoked when an admin is deactivated).
+          before: async (session) => {
+            const admin = await deps.prisma.adminUser.findUnique({
+              where: { id: session.userId },
+              select: { isActive: true },
+            });
+            if (!admin?.isActive) throw new APIError('FORBIDDEN', { message: 'Account disabled' });
+          },
+          after: async (session) => {
+            await deps.prisma.adminUser.update({
+              where: { id: session.userId },
+              data: { lastLoginAt: new Date() },
+            });
+          },
+        },
+      },
+    },
     user: {
       modelName: 'adminUser',
       additionalFields: {
@@ -30,8 +56,8 @@ export function createAdminAuth(deps: AuthDeps) {
     verification: { ...common.verification, modelName: 'adminVerification' },
     plugins: [
       twoFactor({
-        // Store name comes from settings; wired up in step 5.
-        issuer: 'Shop Admin',
+        // No issuer here: the admin UI sends the store name (from settings) as `issuer` when enabling
+        // 2FA, which is when the QR code is made. Enabling needs the password and a valid TOTP code.
         skipVerificationOnEnable: false,
         schema: { twoFactor: { modelName: 'adminTwoFactor' } },
       }),

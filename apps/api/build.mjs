@@ -7,7 +7,12 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const external = Object.keys({ ...pkg.dependencies }).filter((d) => d !== '@shop/shared');
 
 await build({
-  entryPoints: { server: 'src/server.ts', worker: 'src/worker.ts', seed: '../../prisma/seed.ts' },
+  entryPoints: {
+    server: 'src/server.ts',
+    worker: 'src/worker.ts',
+    seed: '../../prisma/seed.ts',
+    'create-super-admin': 'src/scripts/create-super-admin.ts',
+  },
   outdir: 'dist',
   bundle: true,
   platform: 'node',
@@ -15,6 +20,8 @@ await build({
   target: 'node22',
   sourcemap: true,
   external,
-  banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" },
+  banner: {
+    js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+  },
 });
 console.log('API built');

@@ -1,11 +1,15 @@
 /**
  * Idempotent seed: safe to run many times (upserts by unique key).
- * Creates permissions, default roles, payment methods, delivery zones and settings.
- * The Super Admin user is NOT created here yet: Phase 3 adds it through Better Auth's internal
- * adapter and password hasher (docs/auth.md), never by writing password hashes directly.
+ * Creates permissions, default roles, payment methods, delivery zones and settings, and in
+ * development the Super Admin, through Better Auth's internal adapter and password hasher
+ * (docs/auth.md), never by writing password hashes directly.
  */
 import { PrismaPg } from '@prisma/adapter-pg';
+import { createAdminAuth } from '../apps/api/src/auth/admin-auth';
+import { loadEnv } from '../apps/api/src/config/env';
 import { Prisma, PrismaClient } from '../apps/api/src/generated/prisma/client';
+import { createRedis } from '../apps/api/src/lib/redis';
+import { ensureSuperAdmin } from '../apps/api/src/services/super-admin.service';
 import { DEFAULT_ROLES, PERMISSIONS, SUPER_ADMIN_ROLE } from '../packages/shared/src/permissions';
 
 const url = process.env.DATABASE_URL;
@@ -118,11 +122,35 @@ async function seedSettings() {
   }
 }
 
+/** Development only: production uses `node dist/create-super-admin.js` with its own values. */
+async function seedSuperAdmin() {
+  const { SEED_ADMIN_EMAIL: email, SEED_ADMIN_PASSWORD: password, NODE_ENV } = process.env;
+  if (NODE_ENV === 'production' || !email || !password) {
+    console.log(
+      'Super Admin: skipped (needs SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD, never in production)',
+    );
+    return;
+  }
+  const env = loadEnv();
+  const redis = createRedis(env.REDIS_URL); // lazy: creating a user never touches Redis
+  try {
+    const adminAuth = createAdminAuth({ env, prisma, redis });
+    const result = await ensureSuperAdmin(
+      { prisma, adminAuth },
+      { email, password, name: 'Super Admin' },
+    );
+    console.log(`Super Admin: ${result.created ? 'created' : 'already exists'} (${email})`);
+  } finally {
+    redis.disconnect();
+  }
+}
+
 async function main() {
   await seedPermissionsAndRoles();
   await seedPaymentMethods();
   await seedDeliveryZones();
   await seedSettings();
+  await seedSuperAdmin();
   console.log('Seed complete');
 }
 

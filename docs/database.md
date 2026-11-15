@@ -142,7 +142,7 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 **Delivery zones:** `inside-dhaka` (districts `["Dhaka"]`), `outside-dhaka` (default zone). Charges are placeholders until the owner sets them in admin. "Inside Dhaka" means the district `Dhaka` for now; refine by upazila or area later if needed.
 
-**Super Admin user:** created through `adminAuth`'s internal adapter and password hasher, never by writing a hash. In development the seed does this from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (from Phase 3). Production uses a one-off command with different values.
+**Super Admin user:** created through `adminAuth`'s internal adapter and password hasher, never by writing a hash. In development the seed does this from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (skipped when `NODE_ENV=production`). Production uses `node dist/create-super-admin.js` with `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_NAME` and `SUPER_ADMIN_PASSWORD` (at least 12 characters). Both are idempotent.
 
 **Settings keys:** `store.name`, `store.logo`, `store.phone`, `store.email`, `store.address`, `seo.defaultTitle`, `seo.defaultDescription`, `gtm.containerId`, `review.autoApprove`, `notifications.adminEmail`, `shipping.steadfastEnabled`.
 

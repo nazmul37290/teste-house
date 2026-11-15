@@ -79,3 +79,7 @@ export const loginSchema = z.strictObject({
 /** Output types: phone already normalized, email lowercased. */
 export type RegisterInput = z.output<typeof registerSchema>;
 export type LoginInput = z.output<typeof loginSchema>;
+
+/** Admin passwords are longer than customer ones (adminAuth enforces the same minimum). */
+export const ADMIN_PASSWORD_MIN_LENGTH = 12;
+export const adminPasswordSchema = z.string().min(ADMIN_PASSWORD_MIN_LENGTH).max(128);
