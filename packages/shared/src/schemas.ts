@@ -75,3 +75,7 @@ export const loginSchema = z.strictObject({
   identifier: z.string().trim().min(3).max(120),
   password: z.string().min(1).max(128),
 });
+
+/** Output types: phone already normalized, email lowercased. */
+export type RegisterInput = z.output<typeof registerSchema>;
+export type LoginInput = z.output<typeof loginSchema>;

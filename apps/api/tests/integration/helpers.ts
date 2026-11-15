@@ -32,3 +32,16 @@ export function uniquePhone(): string {
   counter += 1;
   return `013${String((Date.now() + counter) % 100_000_000).padStart(8, '0')}`;
 }
+
+let ipCounter = 0;
+/** A distinct client IP per call, so per-IP limits from other tests never interfere (X-Forwarded-For). */
+export function freshIp(): string {
+  ipCounter += 1;
+  const n = (Date.now() % 1_000_000) * 100 + ipCounter;
+  return `10.${(n >> 16) & 255}.${(n >> 8) & 255}.${n & 255}`;
+}
+
+/** Headers our own state-changing routes need: CSRF header plus a client IP. */
+export function ourRouteHeaders(ip = freshIp()): Record<string, string> {
+  return { Origin: WEB_ORIGIN, 'X-Requested-With': 'XMLHttpRequest', 'X-Forwarded-For': ip };
+}

@@ -14,6 +14,8 @@ export function createAdminAuth(deps: AuthDeps) {
     ...common,
     basePath: ADMIN_AUTH_BASE_PATH,
     advanced: { ...common.advanced, cookiePrefix: 'shop_a' },
+    // Admins sign in through Better Auth's own HTTP route, so its rate limit is their lockout.
+    rateLimit: { ...common.rateLimit, customRules: { '/sign-in/email': { window: 60, max: 5 } } },
     emailAndPassword: { enabled: true, disableSignUp: true },
     user: {
       modelName: 'adminUser',

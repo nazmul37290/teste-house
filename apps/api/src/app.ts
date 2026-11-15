@@ -7,6 +7,7 @@ import { ADMIN_AUTH_BASE_PATH } from './auth/admin-auth';
 import { CUSTOMER_AUTH_BASE_PATH } from './auth/customer-auth';
 import type { Deps } from './deps';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
+import { customerAuthRouter } from './routes/customer-auth.routes';
 import { healthRouter } from './routes/health';
 
 export function createApp(deps: Deps): Express {
@@ -30,6 +31,7 @@ export function createApp(deps: Deps): Express {
 
   // docs/auth.md section 7: our own auth routes first (route-level JSON parser), then the Better Auth
   // catch-alls, and only then the global JSON parser, which would otherwise consume their bodies.
+  app.use(CUSTOMER_AUTH_BASE_PATH, customerAuthRouter(deps));
   app.all(`${CUSTOMER_AUTH_BASE_PATH}/*splat`, toNodeHandler(deps.customerAuth));
   app.all(`${ADMIN_AUTH_BASE_PATH}/*splat`, toNodeHandler(deps.adminAuth));
   app.use(express.json({ limit: '1mb' }));

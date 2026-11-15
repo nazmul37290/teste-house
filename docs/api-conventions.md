@@ -80,7 +80,7 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 | POST | `/auth/request-password-reset`, `/auth/reset-password` | Better Auth. By email |
 | POST | `/auth/change-email` | Better Auth. Add or change email (verification to the new address) |
 
-Better Auth paths above are its standard endpoints under `basePath`. Confirm the exact names against the pinned version in Phase 3. Our `/auth/login` and `/auth/register` are mounted before Better Auth's catch-all.
+Better Auth paths above are its standard endpoints under `basePath` (names confirmed against 1.7.25). Our `/auth/login` and `/auth/register` are mounted before Better Auth's catch-all and need the `X-Requested-With` header. Better Auth's own `/auth/sign-up/email`, `/auth/sign-in/email` and `/auth/update-user` return 404 over HTTP for customers (see `auth.md` section 2). The email links bring the customer back to the web pages `/email-verified` and `/reset-password`.
 | GET/PATCH | `/me` | Profile |
 | POST | `/me/change-password` | |
 | GET/POST/PATCH/DELETE | `/me/addresses`, `/me/addresses/:id` | Saved addresses |

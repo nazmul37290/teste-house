@@ -4,7 +4,13 @@ import request from 'supertest';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createAdminUserWithPassword } from '../../src/auth/admin-users';
 import { commonAuthOptions } from '../../src/auth/common';
-import { cookiesFrom, createTestContext, uniquePhone, WEB_ORIGIN } from './helpers';
+import {
+  cookiesFrom,
+  createTestContext,
+  ourRouteHeaders,
+  uniquePhone,
+  WEB_ORIGIN,
+} from './helpers';
 
 // Phase 3 spike: two Better Auth instances side by side on one Postgres and one Redis (docs/auth.md decision 1).
 const ctx = createTestContext();
@@ -17,10 +23,11 @@ async function customerSignedIn() {
   await ctx.deps.customerAuth.api.signUpEmail({
     body: { name: 'Test Customer', email, password, phone: uniquePhone() },
   });
+  // Customers sign in only through our /auth/login (Better Auth's HTTP sign-in is disabled for them).
   const res = await request(ctx.app)
-    .post('/api/v1/auth/sign-in/email')
-    .set('Origin', WEB_ORIGIN)
-    .send({ email, password });
+    .post('/api/v1/auth/login')
+    .set(ourRouteHeaders())
+    .send({ identifier: email, password });
   return { email, res, cookie: cookiesFrom(res) };
 }
 

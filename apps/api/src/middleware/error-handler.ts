@@ -19,8 +19,13 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
   if (err instanceof AppError) {
+    if (err.retryAfterSec !== undefined) res.set('Retry-After', String(err.retryAfterSec));
     res.status(err.status).json({
-      error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) },
+      error: {
+        code: err.code,
+        message: err.message,
+        ...(err.details ? { details: err.details } : {}),
+      },
     });
     return;
   }

@@ -22,16 +22,17 @@ export type Deps = {
 export function createDeps(env: Env): Deps {
   const prisma = createPrisma(env.DATABASE_URL);
   const redis = createRedis(env.REDIS_URL);
-  let emailQueue: EmailQueue | undefined;
+  let queue: EmailQueue | undefined;
+  const emailQueue = () => (queue ??= createEmailQueue(env.REDIS_URL));
   return {
     env,
     prisma,
     redis,
-    customerAuth: createCustomerAuth({ env, prisma, redis }),
+    customerAuth: createCustomerAuth({ env, prisma, redis, emailQueue }),
     adminAuth: createAdminAuth({ env, prisma, redis }),
-    emailQueue: () => (emailQueue ??= createEmailQueue(env.REDIS_URL)),
+    emailQueue,
     close: async () => {
-      await Promise.allSettled([prisma.$disconnect(), redis.quit(), emailQueue?.close()]);
+      await Promise.allSettled([prisma.$disconnect(), redis.quit(), queue?.close()]);
     },
   };
 }

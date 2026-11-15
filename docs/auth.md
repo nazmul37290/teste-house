@@ -31,9 +31,9 @@ Customers and admins sign in with [Better Auth](https://better-auth.com/docs), p
 | `emailAndPassword` | enabled; sign-up only through our `/register` | enabled, `disableSignUp: true` |
 | `session.expiresIn` | 30 days | 7 days |
 | Extra user fields (`user.additionalFields`) | `phone` (required, unique; see note below), `status`, `lastLoginAt` (`input: false`) | `roleId`, `isActive`, `lastLoginAt` (`input: false`) |
-| `disabledPaths` (HTTP only; server-side `auth.api` calls still work) | `/sign-up/email`, `/update-user` | none (sign-up is disabled by `disableSignUp`) |
+| `disabledPaths` (HTTP only; server-side `auth.api` calls still work) | `/sign-up/email`, `/sign-in/email`, `/update-user` | none (sign-up is disabled by `disableSignUp`) |
 
-Note on `phone`: Better Auth 1.7 rejects a create when a field is both `required` and `input: false`, even on server-side calls, so `phone` is a normal input field. The two HTTP routes that accept user input (`/sign-up/email`, `/update-user`) are disabled, which leaves our `/auth/register` (and later `/me`) as the only way to set it, always through `normalizePhone()`.
+Note on `phone`: Better Auth 1.7 rejects a create when a field is both `required` and `input: false`, even on server-side calls, so `phone` is a normal input field. The two HTTP routes that accept user input (`/sign-up/email`, `/update-user`) are disabled, which leaves our `/auth/register` (and later `/me`) as the only way to set it, always through `normalizePhone()`. The customer `/sign-in/email` HTTP route is disabled too, so nobody can skip our `/auth/login` and its lockout. A `databaseHooks.session.create.before` hook rejects `BLOCKED` customers on every path that creates a session (login, sign-up, verification auto sign-in).
 
 Common options for both:
 
@@ -51,7 +51,7 @@ Table columns match what Better Auth expects for these configs. The Prisma adapt
 
 **Register (customer).** `POST /api/v1/auth/register` (`registerSchema`: name, phone, password, optional email). Normalize the phone with `normalizePhone()`. Lowercase the email or use `<phone>@phone.invalid`. Run the Redis lockout and rate limit checks. Reject a duplicate phone or email with `409 CONFLICT`. Create the user and credential account through `customerAuth.api.signUpEmail` (server call), forward its `Set-Cookie` headers (`returnHeaders: true`), and return the profile. A verification email is queued only for a real email.
 
-**Login (customer).** `POST /api/v1/auth/login` (`loginSchema`: identifier, password). `parseLoginIdentifier()` decides email or phone and normalizes it. Look up the customer and reject blocked customers. Call `customerAuth.api.signInEmail({ body: { email: storedEmail, password }, returnHeaders: true })` and forward `Set-Cookie`. Every failure returns the same `401` message, whether or not the identifier exists. Failures increment the lockout counters (section 6). On success, set `lastLoginAt` and merge the guest cart (Phase 6).
+**Login (customer).** `POST /api/v1/auth/login` (`loginSchema`: identifier, password). `parseLoginIdentifier()` decides email or phone and normalizes it. Look up the customer and reject blocked customers. Call `customerAuth.api.signInEmail({ body: { email: storedEmail, password }, returnHeaders: true })` and forward `Set-Cookie`. Every failure (wrong password, unknown or malformed identifier, blocked customer, placeholder `@phone.invalid` typed as the identifier) returns the same `401` message; an unknown identifier still runs a password hash, so the timing does not reveal whether it exists. Failures increment the lockout counters (section 6). On success, set `lastLoginAt` and merge the guest cart (Phase 6).
 
 **Session, logout.** Better Auth handlers under `/api/v1/auth/*` (`get-session`, `sign-out`). The API reads sessions with `customerAuth.api.getSession({ headers: fromNodeHeaders(req.headers) })`.
 
@@ -92,13 +92,19 @@ Better Auth `rateLimit`: `enabled: true` in all environments except tests (Bette
 
 | Path | Window | Max |
 |---|---|---|
-| `/sign-in/email` | 60 s | 5 |
-| `/sign-up/email` | 60 s | 3 |
+| `/sign-in/email` (admin only; disabled over HTTP for customers) | 60 s | 5 |
+| `/sign-up/email` | disabled on both instances | |
 | `/request-password-reset` (forgot password) | 300 s | 3 |
 | `/send-verification-email` (resend) | 300 s | 3 |
 | `/two-factor/*` | plugin default (3 per 10 s) | |
 
-Our `/login` and `/register` endpoints call `auth.api` server-side, which Better Auth does not rate limit, so they enforce their own Redis limits: a progressive delay and a temporary lockout after repeated failures, keyed per normalized identifier and per IP. Responses are `429 RATE_LIMITED` with `Retry-After`.
+Our `/login` and `/register` endpoints call `auth.api` server-side, which Better Auth does not rate limit, so they enforce their own Redis limits (`apps/api/src/lib/lockout.ts`). A required wait is answered with `429 RATE_LIMITED` and `Retry-After`, never by sleeping, so nobody can hold connections open:
+
+| Limit | Key | Rule |
+|---|---|---|
+| Login failures | normalized identifier (`email:...` or `phone:...`) | 3 free failures, then a doubling wait (1 s, 2 s, 4 s, ... up to 60 s) before the next attempt; locked at 10 failures until the 15-minute window ends; a successful login resets it |
+| Login failures | client IP | locked at 50 failures in 15 minutes (loose on purpose: mobile carriers put many customers behind one IP) |
+| Registrations | client IP | 10 attempts per hour (every attempt counts) |
 
 **Client IP.** In production, `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']`, and Express `trust proxy` is set to match. This is safe only if the origin accepts traffic **only from Cloudflare** (firewall or Cloudflare Tunnel); otherwise anyone can spoof the header. In development, the default `x-forwarded-for` (or `127.0.0.1`) is used.
 

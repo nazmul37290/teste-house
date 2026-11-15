@@ -1,22 +1,78 @@
 import { betterAuth } from 'better-auth';
+import { APIError } from 'better-auth/api';
+import type { EmailQueue } from '../jobs/queues';
+import { enqueueEmail } from '../services/email.service';
 import { commonAuthOptions, DAY, sessionDefaults, type AuthDeps } from './common';
 
 export const CUSTOMER_AUTH_BASE_PATH = '/api/v1/auth';
+/** Web pages Better Auth redirects to after following an email link. */
+export const CUSTOMER_EMAIL_VERIFIED_PATH = '/email-verified';
+
+export type CustomerAuthDeps = AuthDeps & { emailQueue: () => EmailQueue };
 
 /**
  * Customer instance (docs/auth.md section 2). Tables customers, customer_sessions, customer_accounts,
  * customer_verifications. Model names are Prisma client properties.
  */
-export function createCustomerAuth(deps: AuthDeps) {
+export function createCustomerAuth(deps: CustomerAuthDeps) {
   const common = commonAuthOptions(deps, 'ba:c:');
+
+  // Email callbacks only enqueue (no await in the request path: Better Auth's timing-attack advice).
+  // enqueueEmail skips @phone.invalid placeholders, so they are never mailed.
+  const send = (job: Parameters<typeof enqueueEmail>[1]) => {
+    void enqueueEmail(deps, job).catch((err: unknown) => {
+      console.error(
+        `Could not enqueue ${job.template} email: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
+  };
+
   return betterAuth({
     ...common,
     basePath: CUSTOMER_AUTH_BASE_PATH,
     advanced: { ...common.advanced, cookiePrefix: 'shop_c' },
-    // Sign-up and profile updates go only through our own endpoints (/auth/register, /me), which
-    // normalize the phone. disabledPaths blocks the HTTP routes; server-side auth.api calls still work.
-    disabledPaths: ['/sign-up/email', '/update-user'],
-    emailAndPassword: { enabled: true },
+    // Sign-up, sign-in and profile updates go only through our own endpoints (/auth/register,
+    // /auth/login, /me): they normalize the phone and apply our lockout. disabledPaths blocks the
+    // HTTP routes; our server-side auth.api calls still work.
+    disabledPaths: ['/sign-up/email', '/sign-in/email', '/update-user'],
+    rateLimit: {
+      ...common.rateLimit,
+      customRules: {
+        '/request-password-reset': { window: 300, max: 3 },
+        '/send-verification-email': { window: 300, max: 3 },
+      },
+    },
+    emailAndPassword: {
+      enabled: true,
+      resetPasswordTokenExpiresIn: 60 * 60,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        send({ template: 'password-reset', to: user.email, data: { name: user.name, url } });
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      expiresIn: DAY,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        send({ template: 'email-verify', to: user.email, data: { name: user.name, url } });
+      },
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          // Every path that creates a session (login, sign-up, verification auto sign-in).
+          before: async (session) => {
+            const customer = await deps.prisma.customer.findUnique({
+              where: { id: session.userId },
+              select: { status: true },
+            });
+            if (customer?.status === 'BLOCKED')
+              throw new APIError('FORBIDDEN', { message: 'Account blocked' });
+          },
+        },
+      },
+    },
     user: {
       modelName: 'customer',
       additionalFields: {
