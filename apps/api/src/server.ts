@@ -1,8 +1,10 @@
 import { loadEnv } from './config/env';
 import { createApp } from './app';
+import { closeDeps, createDeps } from './deps';
 
 const env = loadEnv();
-const app = createApp(env);
+const deps = createDeps(env);
+const app = createApp(deps);
 
 const server = app.listen(env.PORT, () => {
   console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`);
@@ -10,7 +12,9 @@ const server = app.listen(env.PORT, () => {
 
 function shutdown(signal: string) {
   console.log(`${signal} received, shutting down`);
-  server.close(() => process.exit(0));
+  server.close(() => {
+    void closeDeps(deps).finally(() => process.exit(0));
+  });
   setTimeout(() => process.exit(1), 10_000).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));

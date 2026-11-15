@@ -41,7 +41,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 3: Auth, RBAC, admin shell
 
-- [ ] Spike: two Better Auth instances (`customerAuth`, `adminAuth`) side by side with the Prisma adapter, separate tables, base paths and cookie prefixes, mounted before `express.json()` (fallback: one instance with a `type` field)
+- [x] Spike: two Better Auth instances (`customerAuth`, `adminAuth`) side by side with the Prisma adapter, separate tables, base paths and cookie prefixes, mounted before `express.json()` (passed; fallback not needed)
 - [ ] API foundation: Redis client, BullMQ, `/health/ready`, `MailTransport` (Mailgun and SMTP), `email.send` job with `notification_logs`, worker entry, `email-verify` and `password-reset` templates
 - [ ] Customer auth: `customerAuth` config (Redis secondary storage, rate-limit rules, IP header), our `/auth/register` and `/auth/login` (email or phone, placeholder email, Redis lockout), sessions, logout, email verification, password reset
 - [ ] Guest-order linking in the after-email-verification hook (verified email only, never phone)

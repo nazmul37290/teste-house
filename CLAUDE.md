@@ -31,7 +31,7 @@ Before starting any task, read the docs that apply. They are the source of truth
 3. When a decision changes, update the relevant doc in the same change.
 4. Small, reviewable commits. Conventional commit messages (`feat:`, `fix:`, `chore:`, `docs:`).
 5. Every new endpoint needs: Zod validation, permission or ownership check, and a test for the business logic.
-6. Run `pnpm lint`, `pnpm typecheck` and `pnpm test` before saying a task is done.
+6. Run `pnpm lint`, `pnpm typecheck` and `pnpm test` (and `pnpm test:integration` when the change touches the API) before saying a task is done.
 
 ## Hard rules (never break)
 
@@ -66,12 +66,13 @@ pnpm db:migrate         # create/apply migrations in dev
 pnpm db:seed            # permissions, roles, payment methods, zones, settings, Super Admin
 pnpm dev                # api on :4000, web on :3000
 pnpm lint && pnpm typecheck && pnpm test
+pnpm test:integration   # needs pnpm db:up; uses the shop_test database and Redis db 1
 pnpm build
 ```
 
 ## Status
 
-Phase 1 (schema) and Phase 2 (foundation) are scaffolded. Step 0 (switch auth to Better Auth 1.7.20: docs, schema, env) is done; the seed no longer creates the Super Admin (Phase 3 does, through Better Auth). `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. The first two migrations (init, plus the raw SQL constraints from `docs/database.md` section 4) are applied and the seed runs locally; `prisma/seed.ts` is covered by `pnpm typecheck`. Setup and deployment walkthrough: `docs/setup-guide.md`. Next: Phase 3. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
+Phase 1 (schema) and Phase 2 (foundation) are scaffolded. Step 0 (switch auth to Better Auth 1.7.20: docs, schema, env) is done; the seed no longer creates the Super Admin (Phase 3 does, through Better Auth). `packages/shared` already contains `calculateOrderTotals()`, `normalizePhone()`, permission keys and the strict order schema, with tests. The first two migrations (init, plus the raw SQL constraints from `docs/database.md` section 4) are applied and the seed runs locally; `prisma/seed.ts` is covered by `pnpm typecheck`. Setup and deployment walkthrough: `docs/setup-guide.md`. Phase 3 in progress: the two-instance spike passed (Better Auth now 1.7.25); integration tests run with `pnpm test:integration` against `shop_test`. Pinned on purpose: Prisma 7.10.x (not the release candidate) and TypeScript 6.x (typescript-eslint does not support 7 yet).
 
 ## Open items (do not decide silently)
 

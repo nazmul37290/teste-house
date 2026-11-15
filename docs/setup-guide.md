@@ -278,14 +278,15 @@ All commands run from the repo root.
 
 ### Quality checks
 
-Run all three before every commit (CI on GitHub runs the same):
+Run these before every commit (CI on GitHub runs the same):
 
-| Command          | What it does                                            |
-| ---------------- | ------------------------------------------------------- |
-| `pnpm lint`      | ESLint over the whole repo: finds bugs and bad patterns |
-| `pnpm typecheck` | TypeScript in strict mode over every package            |
-| `pnpm test`      | Vitest unit tests in every package that has them        |
-| `pnpm format`    | Prettier: rewrites files to the standard formatting     |
+| Command                 | What it does                                                                                                                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`             | ESLint over the whole repo: finds bugs and bad patterns                                                                                                                                                                       |
+| `pnpm typecheck`        | TypeScript in strict mode over every package                                                                                                                                                                                  |
+| `pnpm test`             | Vitest unit tests in every package that has them                                                                                                                                                                              |
+| `pnpm format`           | Prettier: rewrites files to the standard formatting                                                                                                                                                                           |
+| `pnpm test:integration` | API tests against real Postgres and Redis (needs `pnpm db:up`). They use a separate database, `shop_test` (created automatically, never your dev data), and Redis db 1. It is never reset; tests use unique emails and phones |
 
 ### Build
 

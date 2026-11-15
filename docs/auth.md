@@ -1,12 +1,12 @@
 # Authentication
 
-Customers and admins sign in with [Better Auth](https://better-auth.com/docs), pinned to **`better-auth` 1.7.20** and **`@better-auth/redis-storage` 1.7.20** (latest stable on 2026-11-11; 1.8 is beta). Admin authorization (RBAC) is ours, not Better Auth's. This file is the source of truth for auth; `design.md` section 3 only summarises it.
+Customers and admins sign in with [Better Auth](https://better-auth.com/docs), pinned to **`better-auth` 1.7.25** and **`@better-auth/redis-storage` 1.7.25** (latest 1.7 patch on 2026-11-15; moved from 1.7.20 in Phase 3), with `ioredis` 5 (the storage package's peer range). Admin authorization (RBAC) is ours, not Better Auth's. This file is the source of truth for auth; `design.md` section 3 only summarises it.
 
 ## 1. Decisions
 
 | # | Decision |
 |---|---|
-| 1 | **Two Better Auth instances** on one Postgres: `customerAuth` and `adminAuth`, with separate tables, base paths and cookie prefixes (section 2). The Better Auth docs do not cover two instances, so Phase 3 starts with a spike that proves it. Fallback if it fails: one instance with a `type` field on a single user table. |
+| 1 | **Two Better Auth instances** on one Postgres: `customerAuth` and `adminAuth`, with separate tables, base paths and cookie prefixes (section 2). The Better Auth docs do not cover two instances; the Phase 3 spike proved it works (`apps/api/tests/integration/auth-instances.test.ts`: separate cookies, tables and Redis prefixes, and neither instance accepts the other's session). |
 | 2 | **Login by email or phone** through our own endpoint `POST /api/v1/auth/login`: `parseLoginIdentifier()` from `packages/shared` detects the type and normalizes it, we look the customer up, then call `customerAuth.api.signInEmail` with that customer's stored email. The phone-number plugin is not used (it is built around SMS OTP). |
 | 3 | **Register** via our own `POST /api/v1/auth/register` with the shared `registerSchema`: phone mandatory and normalized, email optional. Phone-only customers get the placeholder email `<normalizedPhone>@phone.invalid` (Better Auth requires an email). It is never verified and never mailed. `customers.phone` stays unique. |
 | 4 | **Email verification** only for real emails. Customers may log in unverified. Guest orders are linked **only** in the after-email-verification hook, by matching `orders.contactEmail` to the verified email. Never by phone. |
@@ -30,7 +30,10 @@ Customers and admins sign in with [Better Auth](https://better-auth.com/docs), p
 | Plugins | none | `twoFactor` (table `AdminTwoFactor` / `admin_two_factors`) |
 | `emailAndPassword` | enabled; sign-up only through our `/register` | enabled, `disableSignUp: true` |
 | `session.expiresIn` | 30 days | 7 days |
-| Extra user fields (`user.additionalFields`, `input: false`) | `phone` (required, unique), `status`, `lastLoginAt` | `roleId`, `isActive`, `lastLoginAt` |
+| Extra user fields (`user.additionalFields`) | `phone` (required, unique; see note below), `status`, `lastLoginAt` (`input: false`) | `roleId`, `isActive`, `lastLoginAt` (`input: false`) |
+| `disabledPaths` (HTTP only; server-side `auth.api` calls still work) | `/sign-up/email`, `/update-user` | none (sign-up is disabled by `disableSignUp`) |
+
+Note on `phone`: Better Auth 1.7 rejects a create when a field is both `required` and `input: false`, even on server-side calls, so `phone` is a normal input field. The two HTTP routes that accept user input (`/sign-up/email`, `/update-user`) are disabled, which leaves our `/auth/register` (and later `/me`) as the only way to set it, always through `normalizePhone()`.
 
 Common options for both:
 
@@ -42,7 +45,7 @@ Common options for both:
 - `session.updateAge: 86400`, `session.cookieCache: { enabled: true, maxAge: 300 }`.
 - `telemetry: { enabled: false }`.
 
-Table columns are exactly what `npx auth@1.7.20 generate` produced for these configs (checked on 2026-11-11). Our tables and extra columns are kept. If an upgrade changes the expected columns, re-run the generator on a throwaway config and reconcile `prisma/schema.prisma` by hand.
+Table columns match what Better Auth expects for these configs. The Prisma adapter checks this itself: it compares each instance's expected schema (core tables, extra fields and the `twoFactor` plugin) with the generated Prisma data model, and fails every request with `Prisma schema mismatch` if they differ. The integration tests cover both the passing check and a deliberate mismatch, so an upgrade that changes the expected columns fails the tests; then reconcile `prisma/schema.prisma` and add a migration. Model names are Prisma client properties (`customer`, `customerSession`, `adminTwoFactor`, ...).
 
 ## 3. Flows
 
@@ -124,7 +127,6 @@ Our routes come first, so the catch-alls never shadow them. Better Auth must com
 
 ## 10. Open items
 
-- Phase 3 spike: two instances side by side (not covered by the Better Auth docs).
 - `getSessionCookie` from `better-auth/cookies` with a custom prefix: confirm its options in Phase 3 before writing the middleware.
 - SMS OTP login and SMS password reset (when SMS is added).
 - Google login (ACC-8, could-have).
