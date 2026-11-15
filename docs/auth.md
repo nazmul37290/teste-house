@@ -59,7 +59,7 @@ Table columns match what Better Auth expects for these configs. The Prisma adapt
 
 **Forgot and reset password.** `emailAndPassword.sendResetPassword` enqueues `password-reset`, skipped for `@phone.invalid`. `resetPasswordTokenExpiresIn` 1 h, `revokeSessionsOnPasswordReset: true`. Phone-only customers must add and verify a real email first.
 
-**Change email (phone-only customer adds a real email).** Better Auth `user.changeEmail` with verification sent to the new address. After verification, the same linking hook runs.
+**Change email (phone-only customer adds a real email).** Better Auth `POST /auth/change-email` (`user.changeEmail.enabled`, `updateEmailWithoutVerification: true`). An unverified customer (a phone-only placeholder, or a real address not yet verified) has the email swapped at once, still unverified, and gets one normal verification email; clicking it verifies the address and runs the linking hook. A verified customer keeps the old address until they click the link sent to the new one; the swap keeps it verified and runs the hook. Without `updateEmailWithoutVerification`, Better Auth 1.7 would swap an unverified customer's email on click but leave it unverified, so a second email would be needed before guest orders could link.
 
 **Admin login.** `POST /api/v1/admin/auth/sign-in/email` (Better Auth handler). A `databaseHooks.session.create.before` hook on `adminAuth` rejects inactive admins (`isActive = false`). When 2FA is on, the response is `twoFactorRedirect: true` and the client continues with `/two-factor/verify-totp` (or a backup code). `GET /api/v1/admin/auth/me` is ours: it returns the admin profile, role and permission keys for the UI.
 
@@ -69,7 +69,7 @@ Table columns match what Better Auth expects for these configs. The Prisma adapt
 
 ## 4. Guest-order linking
 
-Runs only from `afterEmailVerification` (and after a verified email change):
+Runs only from `afterEmailVerification` (and after a verified email change), in `apps/api/src/services/guest-linking.service.ts`:
 
 ```sql
 UPDATE orders SET "customerId" = $customerId

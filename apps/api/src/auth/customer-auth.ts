@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import type { EmailQueue } from '../jobs/queues';
 import { enqueueEmail } from '../services/email.service';
+import { linkGuestOrders } from '../services/guest-linking.service';
 import { commonAuthOptions, DAY, sessionDefaults, type AuthDeps } from './common';
 
 export const CUSTOMER_AUTH_BASE_PATH = '/api/v1/auth';
@@ -57,6 +58,11 @@ export function createCustomerAuth(deps: CustomerAuthDeps) {
       sendVerificationEmail: async ({ user, url }) => {
         send({ template: 'email-verify', to: user.email, data: { name: user.name, url } });
       },
+      // The only place guest orders are linked: the email is verified at this point (never by phone).
+      // Better Auth also runs this after a verified email change.
+      afterEmailVerification: async (user) => {
+        await linkGuestOrders(deps.prisma, user);
+      },
     },
     databaseHooks: {
       session: {
@@ -75,6 +81,12 @@ export function createCustomerAuth(deps: CustomerAuthDeps) {
     },
     user: {
       modelName: 'customer',
+      // POST /auth/change-email. A verified customer gets a link at the new address; clicking it swaps
+      // the email (still verified) and runs afterEmailVerification. An unverified customer (e.g. a
+      // phone-only placeholder) has the email swapped at once, still unverified, plus one normal
+      // verification email; without this flag Better Auth would swap it on click but leave it
+      // unverified, so the customer would need a second email before guest orders could link.
+      changeEmail: { enabled: true, updateEmailWithoutVerification: true },
       additionalFields: {
         // Settable only through server-side calls (both HTTP paths that accept it are disabled above).
         phone: { type: 'string', required: true, unique: true },
