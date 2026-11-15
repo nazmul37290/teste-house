@@ -59,6 +59,11 @@ Full design in **`auth.md`**. Summary:
 - RBAC is ours (Better Auth's admin and organization plugins are not used). The admin session comes from `adminAuth.api.getSession()`.
 - Middleware `requirePermission('orders.update_status')` loads the admin's role permissions (cached in Redis, invalidated when a role changes) and rejects with 403.
 - Super Admin (`roles.isSystem`) bypasses checks in code.
+- `requirePermission('a', 'b')` with several keys passes when the admin holds any one of them (used where a screen needs a read-only list, e.g. `GET /admin/roles` for `users.manage`).
+- No privilege escalation: an admin who is not a Super Admin can only grant permissions they hold themselves, can only assign roles whose permissions they hold, and cannot assign the Super Admin role or change a Super Admin account. Nobody can deactivate themselves, change their own role, or reset their own password through the staff endpoints (they use Better Auth's `/change-password`, which asks for the current one).
+- At least one active Super Admin always remains. The check locks the active Super Admin rows (`FOR UPDATE`), so two Super Admins removing each other at the same moment cannot both succeed.
+- Staff are never hard-deleted: every reference to `admin_users` is `SET NULL`, so deleting would erase who did what in the audit log, order notes and stock movements. Deactivating revokes all their sessions at once; resetting a password does too.
+- Every admin write calls `recordAudit()` (`apps/api/src/services/audit.service.ts`) in the same transaction; fields that look like secrets (password, token, secret, hash, API key, backup codes) are stored as `[redacted]`.
 - Customer routes enforce ownership (`order.customerId === req.user.id`); guest tracking requires order number plus phone.
 - Admin UI reads the permission list from `/admin/auth/me` to hide menu items; the API is still the gate.
 

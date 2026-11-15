@@ -8,6 +8,7 @@ import { CUSTOMER_AUTH_BASE_PATH } from './auth/customer-auth';
 import type { Deps } from './deps';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { adminAuthRouter } from './routes/admin-auth.routes';
+import { adminRouter } from './routes/admin.routes';
 import { customerAuthRouter } from './routes/customer-auth.routes';
 import { healthRouter } from './routes/health';
 
@@ -38,7 +39,7 @@ export function createApp(deps: Deps): Express {
   app.all(`${ADMIN_AUTH_BASE_PATH}/*splat`, toNodeHandler(deps.adminAuth));
   app.use(express.json({ limit: '1mb' }));
 
-  // Versioned routes are mounted here as phases add them: app.use('/api/v1', apiRouter(...))
+  app.use('/api/v1/admin', adminRouter(deps));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

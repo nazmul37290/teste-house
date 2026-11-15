@@ -119,10 +119,12 @@ describe('admin two-factor (TOTP)', () => {
 
     // Not on until a code is verified (skipVerificationOnEnable: false).
     expect((await me(cookie)).body.data.admin.twoFactorEnabled).toBe(false);
-    expect((await post('/two-factor/verify-totp', { code: totpCode(secret) }, cookie)).status).toBe(
-      200,
-    );
-    expect((await me(cookie)).body.data.admin.twoFactorEnabled).toBe(true);
+    const turnedOn = await post('/two-factor/verify-totp', { code: totpCode(secret) }, cookie);
+    expect(turnedOn.status).toBe(200);
+    // Enabling 2FA rotates the session: the old token is revoked at once, the new one is in Set-Cookie.
+    expect((await me(cookie)).status).toBe(401);
+    expect(hasAdminSession(cookiesFrom(turnedOn))).toBe(true);
+    expect((await me(cookiesFrom(turnedOn))).body.data.admin.twoFactorEnabled).toBe(true);
 
     // Password alone no longer gives a session.
     const first = await signIn(email);

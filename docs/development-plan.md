@@ -46,9 +46,9 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] Customer auth: `customerAuth` config (Redis secondary storage, rate-limit rules, IP header), our `/auth/register` and `/auth/login` (email or phone, placeholder email, Redis lockout), sessions, logout, email verification, password reset
 - [x] Guest-order linking in the after-email-verification hook (verified email only, never phone)
 - [x] Admin auth: `adminAuth` config, sign-up disabled, optional TOTP 2FA, 7-day sessions; Super Admin seeded through Better Auth
-- [ ] `requirePermission` middleware with Redis cache; roles, permissions, users CRUD
+- [x] `requirePermission` middleware with Redis cache; roles, permissions, users CRUD
 - [ ] Admin UI shell: layout, navigation filtered by permissions, roles and users screens
-- [ ] Audit logging helper
+- [x] Audit logging helper
 - [ ] Settings API and screen (store name, logo, contact, SEO defaults, GTM ID)
 
 ## Phase 4: Catalog management (admin)

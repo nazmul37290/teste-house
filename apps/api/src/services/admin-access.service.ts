@@ -1,4 +1,6 @@
 import { PERMISSION_KEYS, type PermissionKey } from '@shop/shared';
+import type { Redis } from 'ioredis';
+import { getRolePermissionKeys } from '../lib/permission-cache';
 import type { Db } from '../lib/prisma';
 import { findAdminWithRole } from '../repositories/admin.repository';
 
@@ -16,19 +18,15 @@ export type AdminContext = {
 
 const KNOWN = new Set<string>(PERMISSION_KEYS);
 
-export async function loadAdminContext(prisma: Db, adminId: string): Promise<AdminContext | null> {
-  const admin = await findAdminWithRole(prisma, adminId);
+export async function loadAdminContext(
+  deps: { prisma: Db; redis: Redis },
+  adminId: string,
+): Promise<AdminContext | null> {
+  const admin = await findAdminWithRole(deps.prisma, adminId);
   if (!admin) return null;
   const { role, twoFactorEnabled, ...rest } = admin;
   const permissions = role.isSystem
     ? [...PERMISSION_KEYS]
-    : role.permissions
-        .map((rp) => rp.permission.key)
-        .filter((k): k is PermissionKey => KNOWN.has(k));
-  return {
-    ...rest,
-    twoFactorEnabled: twoFactorEnabled ?? false,
-    role: { id: role.id, name: role.name, isSystem: role.isSystem },
-    permissions,
-  };
+    : (await getRolePermissionKeys(deps, role.id)).filter((k): k is PermissionKey => KNOWN.has(k));
+  return { ...rest, twoFactorEnabled: twoFactorEnabled ?? false, role, permissions };
 }

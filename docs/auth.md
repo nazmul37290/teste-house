@@ -80,6 +80,8 @@ WHERE "customerId" IS NULL AND "contactEmail" = $verifiedEmail;
 - `@phone.invalid` addresses are never verified, so they never link.
 - Idempotent: running twice changes nothing.
 
+**Revocation and the cookie cache.** `session.cookieCache` (5 minutes) lets `getSession` trust the signed `session_data` cookie without checking storage, so a revoked session would keep working for up to 5 minutes. `requireAdmin` therefore calls `getSession` with `query: { disableCookieCache: true }`, so deactivating an admin or resetting their password ends their sessions at once. Customer routes that must react at once (for example after `customers.block`, which must also call `internalAdapter.deleteUserSessions`) need the same option.
+
 ## 5. Cookies
 
 - Names follow `<prefix>.<name>`: `shop_c.session_token` and `shop_c.session_data` (cookie cache), and `shop_a.session_token`, `shop_a.session_data` and `shop_a.two_factor` (during the 2FA step). Prefixes are separate, so a customer session can never be read as an admin session.

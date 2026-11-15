@@ -10,14 +10,7 @@ export function findAdminWithRole(prisma: Db, id: string) {
       isActive: true,
       twoFactorEnabled: true,
       lastLoginAt: true,
-      role: {
-        select: {
-          id: true,
-          name: true,
-          isSystem: true,
-          permissions: { select: { permission: { select: { key: true } } } },
-        },
-      },
+      role: { select: { id: true, name: true, isSystem: true } },
     },
   });
 }

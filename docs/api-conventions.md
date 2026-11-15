@@ -113,6 +113,6 @@ Better Auth paths above are its standard endpoints under `basePath` (names confi
 | Marketing | CRUD `/admin/coupons`, `/banners`, `/homepage-sections`, `/redirects` [`coupons.manage`, `marketing.manage`] |
 | Payments | `GET /admin/payment-methods`, `PATCH /:id` (toggle, COD scope, limits) [`payments.toggle`] |
 | Shipping | CRUD `/admin/delivery-zones` incl. toggle [`shipping.manage`]; `GET /admin/courier/balance` |
-| Staff | CRUD `/admin/users`, `/admin/roles`, `GET /admin/permissions`, `PUT /admin/roles/:id/permissions` [`users.manage`, `roles.manage`] |
+| Staff | `GET/POST /admin/roles`, `GET/PATCH/DELETE /admin/roles/:id`, `PUT /admin/roles/:id/permissions`, `GET /admin/permissions` [`roles.manage`; `GET /admin/roles` also `users.manage`]. `GET/POST /admin/users`, `GET/PATCH /admin/users/:id` (name, role, `isActive`), `PUT /admin/users/:id/password` [`users.manage`]. No `DELETE` for staff: deactivate instead (see `design.md` section 4). Business-rule reasons: `SYSTEM_ROLE`, `UNKNOWN_ROLE`, `CANNOT_DEACTIVATE_SELF`, `CANNOT_CHANGE_OWN_ROLE`, `USE_CHANGE_PASSWORD`, `LAST_SUPER_ADMIN`; `409` with `ROLE_IN_USE` |
 | Settings | `GET/PUT /admin/settings` [`settings.manage`] |
 | Audit | `GET /admin/audit-logs` [`audit.view`] |
