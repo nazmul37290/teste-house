@@ -4,3 +4,4 @@ export * from './phone';
 export * from './permissions';
 export * from './schemas';
 export * from './admin-schemas';
+export * from './settings';

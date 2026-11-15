@@ -11,6 +11,7 @@ import { adminAuthRouter } from './routes/admin-auth.routes';
 import { adminRouter } from './routes/admin.routes';
 import { customerAuthRouter } from './routes/customer-auth.routes';
 import { healthRouter } from './routes/health';
+import { publicSettingsRouter } from './routes/settings.routes';
 
 export function createApp(deps: Deps): Express {
   const { env } = deps;
@@ -39,6 +40,7 @@ export function createApp(deps: Deps): Express {
   app.all(`${ADMIN_AUTH_BASE_PATH}/*splat`, toNodeHandler(deps.adminAuth));
   app.use(express.json({ limit: '1mb' }));
 
+  app.use('/api/v1', publicSettingsRouter(deps));
   app.use('/api/v1/admin', adminRouter(deps));
 
   app.use(notFoundHandler);

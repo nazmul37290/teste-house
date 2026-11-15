@@ -114,5 +114,5 @@ Better Auth paths above are its standard endpoints under `basePath` (names confi
 | Payments | `GET /admin/payment-methods`, `PATCH /:id` (toggle, COD scope, limits) [`payments.toggle`] |
 | Shipping | CRUD `/admin/delivery-zones` incl. toggle [`shipping.manage`]; `GET /admin/courier/balance` |
 | Staff | `GET/POST /admin/roles`, `GET/PATCH/DELETE /admin/roles/:id`, `PUT /admin/roles/:id/permissions`, `GET /admin/permissions` [`roles.manage`; `GET /admin/roles` also `users.manage`]. `GET/POST /admin/users`, `GET/PATCH /admin/users/:id` (name, role, `isActive`), `PUT /admin/users/:id/password` [`users.manage`]. No `DELETE` for staff: deactivate instead (see `design.md` section 4). Business-rule reasons: `SYSTEM_ROLE`, `UNKNOWN_ROLE`, `CANNOT_DEACTIVATE_SELF`, `CANNOT_CHANGE_OWN_ROLE`, `USE_CHANGE_PASSWORD`, `LAST_SUPER_ADMIN`; `409` with `ROLE_IN_USE` |
-| Settings | `GET/PUT /admin/settings` [`settings.manage`] |
+| Settings | `GET/PUT /admin/settings` [`settings.manage`]. `PUT` takes any subset of the keys in `SETTING_DEFINITIONS` (unknown keys are rejected) and audits only the keys that changed. Public subset: `GET /settings/public` (no auth, `Cache-Control: public, max-age=60`) |
 | Audit | `GET /admin/audit-logs` [`audit.view`] |
