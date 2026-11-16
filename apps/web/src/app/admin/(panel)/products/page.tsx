@@ -41,14 +41,25 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Products"
         actions={
-          can(admin, 'products.create') ? (
-            <Link
-              href="/admin/products/new"
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700"
-            >
-              New product
-            </Link>
-          ) : null
+          <div className="flex items-center gap-4 text-sm">
+            {/* A plain link: the browser sends the session cookie and saves the file. */}
+            <a href="/api/v1/admin/products/export.csv" className="underline">
+              Export CSV
+            </a>
+            {can(admin, 'products.create') && can(admin, 'products.update') ? (
+              <Link href="/admin/products/import" className="underline">
+                Import CSV
+              </Link>
+            ) : null}
+            {can(admin, 'products.create') ? (
+              <Link
+                href="/admin/products/new"
+                className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white hover:bg-neutral-700"
+              >
+                New product
+              </Link>
+            ) : null}
+          </div>
         }
       />
       <Card>

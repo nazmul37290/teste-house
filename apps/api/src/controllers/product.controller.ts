@@ -11,6 +11,8 @@ import {
 import type { Request, RequestHandler } from 'express';
 import type { Deps } from '../deps';
 import { actorFrom } from '../services/audit.service';
+import { AppError } from '../lib/errors';
+import * as csv from '../services/product-csv.service';
 import * as products from '../services/product.service';
 
 /** Products, variants and product images. Controllers parse and respond; rules live in the service. */
@@ -29,11 +31,9 @@ export function productController(deps: Deps) {
       res.json({ data: await products.getProduct(deps, id(req)) });
     }),
     create: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await products.createProduct(deps, actor(req), createProductSchema.parse(req.body)),
-        });
+      res.status(201).json({
+        data: await products.createProduct(deps, actor(req), createProductSchema.parse(req.body)),
+      });
     }),
     update: h(async (req, res) => {
       res.json({
@@ -58,16 +58,14 @@ export function productController(deps: Deps) {
       res.json({ data: await products.setProductImages(deps, actor(req), id(req), mediaIds) });
     }),
     addVariant: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await products.addVariant(
-            deps,
-            actor(req),
-            id(req),
-            createVariantSchema.parse(req.body),
-          ),
-        });
+      res.status(201).json({
+        data: await products.addVariant(
+          deps,
+          actor(req),
+          id(req),
+          createVariantSchema.parse(req.body),
+        ),
+      });
     }),
     updateVariant: h(async (req, res) => {
       res.json({
@@ -78,6 +76,53 @@ export function productController(deps: Deps) {
           updateVariantSchema.parse(req.body),
         ),
       });
+    }),
+    exportCsv: h(async (_req, res) => {
+      const body = await csv.exportProductsCsv(deps.prisma);
+      const date = new Date().toISOString().slice(0, 10);
+      res.set({
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="products-${date}.csv"`,
+      });
+      res.send(body);
+    }),
+    importCsv: h(async (req, res) => {
+      if (!req.file)
+        throw new AppError('VALIDATION_ERROR', 'Choose a CSV file', [
+          { path: 'file', message: 'Required' },
+        ]);
+      let text: string;
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(req.file.buffer);
+      } catch {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'The file is not UTF-8 text. Save it as "CSV UTF-8".',
+          [{ path: 'file', message: 'Not UTF-8' }],
+        );
+      }
+      const dryRun = req.query.dryRun !== 'false';
+      const report = await csv.importProductsCsv(
+        deps.prisma,
+        actorFrom(req, deps.env),
+        text,
+        dryRun,
+      );
+      // A failed apply is a business-rule error carrying the per-row report.
+      if (!dryRun && !report.ok) {
+        res
+          .status(422)
+          .json({
+            error: {
+              code: 'BUSINESS_RULE',
+              message: 'Fix the errors in the file first',
+              details: [{ reason: 'CSV_INVALID' }],
+            },
+            data: report,
+          });
+        return;
+      }
+      res.json({ data: report });
     }),
     deleteVariant: h(async (req, res) => {
       res.json({ data: await products.deleteVariant(deps, actor(req), id(req)) });

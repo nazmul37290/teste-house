@@ -57,7 +57,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] Categories (tree), brands, tags (plus attributes and values)
 - [x] Products and variants CRUD with SEO fields, food fields, images, status, flags
 - [x] Inventory: adjustments, movement log, optional batches and expiry, low-stock threshold
-- [ ] CSV import and export
+- [x] CSV import and export
 - [ ] Enter the first 50 products
 
 ## Phase 5: Storefront catalog and SEO

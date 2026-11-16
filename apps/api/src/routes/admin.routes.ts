@@ -10,6 +10,7 @@ import { requireAdmin } from '../middleware/require-admin';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import { requirePermission } from '../middleware/require-permission';
 import { singleUpload } from '../middleware/upload';
+import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
 import { getAllSettings, updateSettings } from '../services/settings.service';
 
@@ -91,7 +92,15 @@ export function adminRouter(deps: Deps): Router {
   const products = productController(deps);
   router.get('/products', requirePermission('products.view'), products.list);
   router.post('/products', requirePermission('products.create'), products.create);
-  // Declared before /products/:id so "bulk-status" is never read as an id.
+  // Declared before /products/:id so these paths are never read as an id.
+  router.get('/products/export.csv', requirePermission('products.view'), products.exportCsv);
+  router.post(
+    '/products/import',
+    requirePermission('products.create'),
+    requirePermission('products.update'),
+    singleUpload('file', MAX_CSV_BYTES),
+    products.importCsv,
+  );
   router.post('/products/bulk-status', requirePermission('products.update'), products.bulkStatus);
   router.get('/products/:id', requirePermission('products.view'), products.get);
   router.patch('/products/:id', requirePermission('products.update'), products.update);
