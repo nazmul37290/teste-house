@@ -50,13 +50,14 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/products` | List with filters (category, brand, price, availability, rating), sort, pagination |
-| GET | `/products/:slug` | Product detail with variants, images, rating summary |
+| GET | `/products` | List: `q` (search: full-text on name + short description, plus trigram similarity), `category` (slug, includes active subcategories), `brand` (slugs), `attr` (`attribute-slug:value-slug`, filterable attributes only; OR within an attribute, AND across), `minPrice`/`maxPrice` (effective price: sale price if set), `inStock`, `rating`, `sort` (`relevance` default with `q`, else `newest`; `price_asc`, `price_desc`, `popular`), `page`, `pageSize` (max 48). `meta.facets`: brands, price range and attribute values with counts, over the category/search only. Only visible products (ACTIVE, not deleted, an active variant); cards carry `price` (cheapest effective), `regularPrice` when on sale, `inStock`, never exact stock |
+| GET | `/products/:slug` | Product detail: active variants with effective `price`, `regularPrice`, `pricePerUnit`, `inStock`/`lowStock`, attributes; images, breadcrumbs, related products (same category). 404 for hidden products |
 | GET | `/products/:slug/reviews` | Approved reviews |
 | GET | `/categories`, `/categories/:slug` | Category tree and detail |
 | GET | `/brands` | Brands |
-| GET | `/search/suggest?q=` | Instant suggestions |
-| GET | `/homepage` | Banners and sections |
+| GET | `/search/suggest?q=` | Up to 8 product names (prefix first, then similar); 60 requests per minute per IP. Full search is `GET /products?q=` |
+| GET | `/homepage` | `hero` banners (position `home_hero`, within their dates) and resolved `sections` (CATEGORY_GRID, PRODUCT_LIST, BANNER_STRIP, TEXT for CUSTOM_HTML); defaults when none are configured; a section with an invalid config is skipped |
+| GET | `/redirects/resolve?path=` | Redirect for an old URL (`{ toPath, statusCode }`) or 404 |
 | GET | `/settings/public` | Store name, logo, contact, GTM ID |
 | GET | `/delivery-zones/quote` | Zone and charge for a district (display only; the order recalculates) |
 | POST | `/checkout/quote` | Full server-side price breakdown for the current cart, coupon and district. The web app displays this instead of computing totals itself |
@@ -65,7 +66,7 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 | POST | `/coupons/validate` | Preview a discount |
 | POST | `/orders` | Place order (guest or logged in) |
 | GET | `/orders/track?orderNumber=&phone=` | Guest tracking |
-| GET | `/sitemap-data` | Slugs and dates for sitemaps (internal use by web) |
+| GET | `/sitemap-data` | Visible product and category slugs with `updatedAt` (used by the web sitemap) |
 
 ### Customer auth and account
 

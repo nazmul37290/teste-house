@@ -8,3 +8,4 @@ export * from './settings';
 export * from './media';
 export * from './catalog-schemas';
 export * from './product';
+export * from './storefront-schemas';
