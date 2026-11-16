@@ -40,7 +40,7 @@ Out of scope for v1: blog, Bangla language, multi-currency, multi-vendor, mobile
 - **CAT-5 (M)** Per-product SEO fields: meta title, description, canonical, OG image.
 - **CAT-6 (S)** Related products (same category by default).
 - **CAT-7 (S)** CSV import and export of products.
-- **CAT-8 (M)** Featured / new arrival / best seller flags; banners and homepage sections managed from admin.
+- **CAT-8 (M)** Featured / new arrival / best seller flags; banners and homepage sections managed from admin. Free-text homepage sections are plain text, never HTML (decided in Phase 5: admin-written HTML could carry scripts).
 
 ## 4. Browse and search
 

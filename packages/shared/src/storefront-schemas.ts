@@ -93,3 +93,72 @@ export type SectionConfig<T extends HomepageSectionType> = z.output<
 
 /** Banner positions the storefront shows. */
 export const BANNER_POSITIONS = ['home_hero', 'home_strip'] as const;
+
+// Admin: banners and homepage sections ------------------------------------------------------------
+
+/** A site path ("/category/honey") or an https URL; never javascript: or other schemes. */
+export const bannerLinkSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (v) => /^\/(?!\/)[^\s]*$/.test(v) || /^https:\/\/[^\s]+$/.test(v),
+    'Use a path like /category/honey or an https:// link',
+  );
+
+const isoDateTime = z.iso.datetime({ offset: true });
+
+const bannerFields = {
+  title: z.string().trim().min(1).max(100),
+  imageId: z.uuid(),
+  mobileImageId: z.uuid().nullable().optional(),
+  linkUrl: bannerLinkSchema.nullable().optional(),
+  position: z.enum(BANNER_POSITIONS).optional(),
+  sortOrder: z.number().int().min(0).max(100_000).optional(),
+  isActive: z.boolean().optional(),
+  startsAt: isoDateTime.nullable().optional(),
+  endsAt: isoDateTime.nullable().optional(),
+};
+const datesInOrder = (v: { startsAt?: string | null; endsAt?: string | null }) =>
+  !v.startsAt || !v.endsAt || new Date(v.startsAt) < new Date(v.endsAt);
+
+export const createBannerSchema = z
+  .strictObject(bannerFields)
+  .refine(datesInOrder, { message: 'The end must be after the start', path: ['endsAt'] });
+export const updateBannerSchema = z
+  .strictObject({
+    ...bannerFields,
+    title: bannerFields.title.optional(),
+    imageId: bannerFields.imageId.optional(),
+  })
+  .refine(datesInOrder, { message: 'The end must be after the start', path: ['endsAt'] })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'Nothing to update' });
+
+/** A whole section (PUT): the config is checked against the schema of its type. */
+export const homepageSectionSchema = z
+  .strictObject({
+    type: z.enum(HOMEPAGE_SECTION_TYPES),
+    title: z.string().trim().max(80).nullable().optional(),
+    config: z.unknown(),
+    sortOrder: z.number().int().min(0).max(100_000).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .superRefine((v, ctx) => {
+    const result = sectionConfigSchemas[v.type].safeParse(v.config ?? {});
+    if (!result.success) {
+      for (const issue of result.error.issues)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['config', ...issue.path.map(String)],
+          message: issue.message,
+        });
+    }
+  })
+  .transform((v) => ({
+    ...v,
+    config: sectionConfigSchemas[v.type].parse(v.config ?? {}) as Record<string, unknown>,
+  }));
+
+export type CreateBannerInput = z.output<typeof createBannerSchema>;
+export type UpdateBannerInput = z.output<typeof updateBannerSchema>;
+export type HomepageSectionInput = z.output<typeof homepageSectionSchema>;

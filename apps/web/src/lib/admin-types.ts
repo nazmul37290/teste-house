@@ -172,3 +172,27 @@ export type Movement = {
   order: { orderNumber: string } | null;
   adminUser: { name: string } | null;
 };
+
+export type Banner = {
+  id: string;
+  title: string;
+  imageId: string;
+  mobileImageId: string | null;
+  linkUrl: string | null;
+  position: string;
+  sortOrder: number;
+  isActive: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  image: { url: string; altText: string };
+  mobileImage: { url: string; altText: string } | null;
+};
+
+export type HomepageSection = {
+  id: string;
+  type: 'CATEGORY_GRID' | 'PRODUCT_LIST' | 'BANNER_STRIP' | 'CUSTOM_HTML';
+  title: string | null;
+  config: Record<string, unknown> | null;
+  sortOrder: number;
+  isActive: boolean;
+};

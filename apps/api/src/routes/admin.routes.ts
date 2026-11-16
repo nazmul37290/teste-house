@@ -1,5 +1,11 @@
-import { Router } from 'express';
-import { updateSettingsSchema } from '@shop/shared';
+import { Router, type Request } from 'express';
+import {
+  createBannerSchema,
+  homepageSectionSchema,
+  idParamSchema,
+  updateBannerSchema,
+  updateSettingsSchema,
+} from '@shop/shared';
 import { inventoryController } from '../controllers/inventory.controller';
 import { mediaController } from '../controllers/media.controller';
 import { productController } from '../controllers/product.controller';
@@ -12,6 +18,7 @@ import { requirePermission } from '../middleware/require-permission';
 import { singleUpload } from '../middleware/upload';
 import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
+import * as marketing from '../services/marketing.service';
 import { getAllSettings, updateSettings } from '../services/settings.service';
 
 /**
@@ -39,7 +46,11 @@ export function adminRouter(deps: Deps): Router {
   router.put('/users/:id/password', requirePermission('users.manage'), staff.setUserPassword);
 
   const media = mediaController(deps);
-  router.get('/media', requirePermission('media.upload', 'products.view'), media.list);
+  router.get(
+    '/media',
+    requirePermission('media.upload', 'products.view', 'marketing.manage'),
+    media.list,
+  );
   router.post('/media', requirePermission('media.upload'), singleUpload('file'), media.upload);
   router.patch('/media/:id', requirePermission('media.upload'), media.update);
   router.delete('/media/:id', requirePermission('media.upload'), media.remove);
@@ -48,7 +59,7 @@ export function adminRouter(deps: Deps): Router {
   const tax = taxonomyController(deps);
   router.get(
     '/categories',
-    requirePermission('categories.manage', 'products.view'),
+    requirePermission('categories.manage', 'products.view', 'marketing.manage'),
     tax.listCategories,
   );
   router.post('/categories', requirePermission('categories.manage'), tax.createCategory);
@@ -90,7 +101,8 @@ export function adminRouter(deps: Deps): Router {
   );
 
   const products = productController(deps);
-  router.get('/products', requirePermission('products.view'), products.list);
+  // marketing.manage may read the list too: homepage sections pick products from it.
+  router.get('/products', requirePermission('products.view', 'marketing.manage'), products.list);
   router.post('/products', requirePermission('products.create'), products.create);
   // Declared before /products/:id so these paths are never read as an id.
   router.get('/products/export.csv', requirePermission('products.view'), products.exportCsv);
@@ -120,6 +132,50 @@ export function adminRouter(deps: Deps): Router {
   );
   router.post('/inventory/adjust', requirePermission('inventory.adjust'), inventory.adjust);
   router.post('/inventory/receive', requirePermission('inventory.adjust'), inventory.receive);
+
+  // Marketing: banners and homepage sections.
+  const mk = { prisma: deps.prisma, publicMediaUrl: deps.publicMediaUrl };
+  const pid = (req: Request) => idParamSchema.parse(req.params).id;
+  router.get('/banners', requirePermission('marketing.manage'), async (_req, res) => {
+    res.json({ data: await marketing.listBanners(mk) });
+  });
+  router.post('/banners', requirePermission('marketing.manage'), async (req, res) => {
+    const input = createBannerSchema.parse(req.body);
+    res
+      .status(201)
+      .json({ data: await marketing.createBanner(mk, actorFrom(req, deps.env), input) });
+  });
+  router.patch('/banners/:id', requirePermission('marketing.manage'), async (req, res) => {
+    const input = updateBannerSchema.parse(req.body);
+    res.json({ data: await marketing.updateBanner(mk, actorFrom(req, deps.env), pid(req), input) });
+  });
+  router.delete('/banners/:id', requirePermission('marketing.manage'), async (req, res) => {
+    await marketing.deleteBanner(mk, actorFrom(req, deps.env), pid(req));
+    res.status(204).end();
+  });
+  router.get('/homepage-sections', requirePermission('marketing.manage'), async (_req, res) => {
+    res.json({ data: await marketing.listSections(deps.prisma) });
+  });
+  router.post('/homepage-sections', requirePermission('marketing.manage'), async (req, res) => {
+    const input = homepageSectionSchema.parse(req.body);
+    res
+      .status(201)
+      .json({ data: await marketing.createSection(deps.prisma, actorFrom(req, deps.env), input) });
+  });
+  router.put('/homepage-sections/:id', requirePermission('marketing.manage'), async (req, res) => {
+    const input = homepageSectionSchema.parse(req.body);
+    res.json({
+      data: await marketing.replaceSection(deps.prisma, actorFrom(req, deps.env), pid(req), input),
+    });
+  });
+  router.delete(
+    '/homepage-sections/:id',
+    requirePermission('marketing.manage'),
+    async (req, res) => {
+      await marketing.deleteSection(deps.prisma, actorFrom(req, deps.env), pid(req));
+      res.status(204).end();
+    },
+  );
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });
