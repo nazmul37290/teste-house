@@ -147,3 +147,28 @@ export type CatalogLookups = {
   tags: Tag[];
   attributes: Attribute[];
 };
+
+export type StockRow = {
+  id: string;
+  sku: string;
+  name: string;
+  stockQty: number;
+  lowStockThreshold: number;
+  isActive: boolean;
+  isLow: boolean;
+  nearestExpiry: string | null;
+  product: { id: string; name: string; status: ProductStatus };
+};
+
+export type Movement = {
+  id: string;
+  type: 'PURCHASE' | 'SALE' | 'CANCEL_RELEASE' | 'RETURN' | 'ADJUSTMENT';
+  quantity: number;
+  balanceAfter: number;
+  reason: string | null;
+  createdAt: string;
+  variant: { id: string; sku: string; name: string; product: { name: string } };
+  batch: { batchNo: string } | null;
+  order: { orderNumber: string } | null;
+  adminUser: { name: string } | null;
+};

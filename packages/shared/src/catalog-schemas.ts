@@ -281,3 +281,59 @@ export type UpdateVariantInput = z.output<typeof updateVariantSchema>;
 export type CreateProductInput = z.output<typeof createProductSchema>;
 export type UpdateProductInput = z.output<typeof updateProductSchema>;
 export type ProductListQuery = z.output<typeof productListQuerySchema>;
+
+// Inventory ------------------------------------------------------------------------------------
+
+/** Signed change to stock with a reason (docs/requirements.md: adjustments with reason). */
+export const adjustStockSchema = z.strictObject({
+  variantId: z.uuid(),
+  quantity: z
+    .number()
+    .int()
+    .min(-1_000_000)
+    .max(1_000_000)
+    .refine((q) => q !== 0, 'Enter how many to add (positive) or remove (negative)'),
+  reason: z.string().trim().min(3, 'Say why (for example: damaged, stock count)').max(200),
+  /** Optional: take the change from (or add it to) a specific batch. */
+  batchId: z.uuid().optional(),
+});
+
+const isoDate = z.iso.date();
+
+/** Goods received: adds stock as a PURCHASE, optionally as a new batch with dates. */
+export const receiveStockSchema = z
+  .strictObject({
+    variantId: z.uuid(),
+    quantity: z.number().int().min(1).max(1_000_000),
+    reason: z.string().trim().max(200).optional(),
+    batchNo: z.string().trim().min(1).max(50).optional(),
+    manufacturedAt: isoDate.optional(),
+    expiryDate: isoDate.optional(),
+  })
+  .refine((v) => v.batchNo || (!v.manufacturedAt && !v.expiryDate), {
+    message: 'Dates need a batch number',
+    path: ['batchNo'],
+  })
+  .refine((v) => !v.manufacturedAt || !v.expiryDate || v.manufacturedAt <= v.expiryDate, {
+    message: 'The expiry date must be after the manufacturing date',
+    path: ['expiryDate'],
+  });
+
+export const inventoryListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  q: z.string().trim().max(100).optional(),
+  lowStock: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true'),
+});
+
+export const movementListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  variantId: z.uuid().optional(),
+});
+
+export type AdjustStockInput = z.output<typeof adjustStockSchema>;
+export type ReceiveStockInput = z.output<typeof receiveStockSchema>;

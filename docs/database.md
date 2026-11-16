@@ -132,7 +132,9 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 **Reviews allowed** only when the customer has an order item for the product whose order is `DELIVERED`; set `isVerifiedPurchase` and `orderItemId`.
 
-**Low stock.** When `stockQty <= lowStockThreshold` after a movement, enqueue a low-stock alert.
+**Inventory.** Every stock change is one atomic statement (`UPDATE ... SET "stockQty" = "stockQty" + n WHERE ... AND "stockQty" + n >= 0 RETURNING "stockQty"`) in the same transaction as its `stock_movements` row, whose `balanceAfter` is the returned value, so concurrent changes never overdraw or record wrong balances. Adjustments need a reason (`ADJUSTMENT`); goods received are a `PURCHASE`, optionally as a batch (`batchNo` unique per variant, optional manufacture and expiry dates, `qtyRemaining` tracked when an adjustment names the batch).
+
+**Low stock.** After any committed stock change, if `stockQty <= lowStockThreshold`, email `notifications.adminEmail` (skipped when empty) with the `admin-low-stock` template, at most once per variant per 24 hours (Redis key `lowstock:alerted:<variantId>`, cleared when stock is back above the alert level, so the next drop alerts again). A failed check never fails the stock change.
 
 **Super Admin.** The `roles` row with `isSystem = true` is always granted all permissions in code; it is not edited through the UI.
 

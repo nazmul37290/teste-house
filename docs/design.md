@@ -112,7 +112,7 @@ See `integrations.md`. Summary:
 | `email.send` | Transactional and admin emails, retries, writes `notification_logs` |
 | `courier.book`, `courier.sync` | Steadfast booking and status polling |
 | `order.expire-unpaid` | Cancel stale online-payment orders |
-| `stock.low-alert` | Admin low-stock email |
+| (no own queue) | Low-stock alert: checked right after each committed stock change (`checkLowStock()`); the email itself goes through `email.send` (`admin-low-stock`) |
 | `cache.revalidate` | Call Next.js revalidate endpoint after catalog changes |
 | `media.cleanup` | Remove orphaned files after a grace period |
 | `token.cleanup` | Delete expired refresh and verification tokens |

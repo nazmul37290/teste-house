@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { updateSettingsSchema } from '@shop/shared';
+import { inventoryController } from '../controllers/inventory.controller';
 import { mediaController } from '../controllers/media.controller';
 import { productController } from '../controllers/product.controller';
 import { staffController } from '../controllers/staff.controller';
@@ -99,6 +100,17 @@ export function adminRouter(deps: Deps): Router {
   router.post('/products/:id/variants', requirePermission('products.update'), products.addVariant);
   router.patch('/variants/:id', requirePermission('products.update'), products.updateVariant);
   router.delete('/variants/:id', requirePermission('products.update'), products.deleteVariant);
+
+  const inventory = inventoryController(deps);
+  router.get('/inventory', requirePermission('inventory.view'), inventory.list);
+  router.get('/inventory/movements', requirePermission('inventory.view'), inventory.movements);
+  router.get(
+    '/inventory/variants/:id/batches',
+    requirePermission('inventory.view'),
+    inventory.batches,
+  );
+  router.post('/inventory/adjust', requirePermission('inventory.adjust'), inventory.adjust);
+  router.post('/inventory/receive', requirePermission('inventory.adjust'), inventory.receive);
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });

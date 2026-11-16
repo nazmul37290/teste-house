@@ -5,6 +5,14 @@
 export type EmailTemplates = {
   'email-verify': { name: string; url: string };
   'password-reset': { name: string; url: string };
+  'admin-low-stock': {
+    productName: string;
+    variantName: string;
+    sku: string;
+    stockQty: number;
+    threshold: number;
+    url: string;
+  };
 };
 export type EmailTemplateName = keyof EmailTemplates;
 
@@ -58,6 +66,21 @@ const renderers: {
       `<p>Hi ${escapeHtml(name)},</p><p>We received a request to reset your password. The link is valid for 1 hour.</p>${button(url, 'Reset password')}<p style="font-size:13px;color:#525252">If you did not ask for this, ignore this email; your password stays the same.</p>`,
     ),
     text: `Hi ${name},\n\nReset your ${brand.name} password (valid for 1 hour):\n${url}\n\nIf you did not ask for this, ignore this email; your password stays the same.`,
+  }),
+  'admin-low-stock': ({ productName, variantName, sku, stockQty, threshold, url }, brand) => ({
+    subject: `Low stock: ${productName} (${variantName})`,
+    html: layout(
+      brand,
+      `<p>Stock is running low:</p>
+<p style="font-size:16px"><strong>${escapeHtml(productName)}</strong> — ${escapeHtml(variantName)}<br>SKU ${escapeHtml(sku)}</p>
+<p><strong>${stockQty}</strong> left (alert level ${threshold}).</p>${button(url, 'Open inventory')}`,
+    ),
+    text: `Low stock at ${brand.name}:
+
+${productName} — ${variantName} (SKU ${sku})
+${stockQty} left (alert level ${threshold}).
+
+${url}`,
   }),
 };
 
