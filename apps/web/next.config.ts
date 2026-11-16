@@ -16,6 +16,10 @@ const config: NextConfig = {
       { protocol: 'http', hostname: 'localhost', port: '4000', pathname: '/media/**' },
     ],
     formats: ['image/avif', 'image/webp'],
+    // Exactly the widths the API stores (MEDIA_WIDTHS), so every srcset entry is a distinct real
+    // file for the shop's custom loader (components/shop/shop-image.tsx).
+    imageSizes: [200],
+    deviceSizes: [500, 1000, 1600],
   },
   // Same origin for the browser (docs/auth.md decision 10): /api/v1/* on the web origin goes to the
   // API, so auth cookies are first-party.

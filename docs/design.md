@@ -125,7 +125,7 @@ See `integrations.md`. Summary:
 - JSON-LD component renders `Product` (with `Offer`, `availability`, `priceCurrency: BDT`, `aggregateRating` when rating count > 0), `BreadcrumbList`, `Organization`, `WebSite`.
 - `app/sitemap.ts` (one sitemap: home, categories, products from `GET /sitemap-data`; split into several only if it nears 50,000 URLs; legal placeholder pages are left out while they are `noindex`) and `app/robots.ts` (disallow `/admin`, `/cart`, `/checkout`, `/account`, `/api`).
 - Listing pages with filters: canonical to the unfiltered URL; `noindex` on multi-filter combinations; `rel` links for pagination.
-- Images via `next/image` with a custom loader that picks our pre-generated WebP width (200/500/1000/1600, the next one up), so Next never re-encodes; explicit width/height, priority only for the LCP image.
+- Images via `next/image` with a custom loader that picks our pre-generated WebP width (200/500/1000/1600, the next one up), so Next never re-encodes (`images.imageSizes`/`deviceSizes` in `next.config.ts` are set to exactly those widths, so each `srcset` entry is a distinct file); system font stack, no web font download; explicit width/height, priority only for the LCP image.
 - JSON-LD is rendered as a `<script type="application/ld+json">` with `<` escaped, so text from the catalog can never close the script tag.
 
 ## 10. GTM and analytics
