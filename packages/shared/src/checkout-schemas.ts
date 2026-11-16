@@ -155,3 +155,17 @@ export type UpdateDeliveryZoneInput = z.output<typeof updateDeliveryZoneSchema>;
 export type UpdatePaymentMethodInput = z.output<typeof updatePaymentMethodSchema>;
 export type CreateCouponInput = z.output<typeof createCouponSchema>;
 export type UpdateCouponInput = z.output<typeof updateCouponSchema>;
+
+// Cart -------------------------------------------------------------------------------------------
+
+/** Most of one variant a cart line (and an order line) may hold. */
+export const MAX_CART_LINE_QUANTITY = 50;
+/** Most distinct lines in one cart. */
+export const MAX_CART_LINES = 50;
+
+const cartQuantity = z.number().int().min(1).max(MAX_CART_LINE_QUANTITY);
+
+export const addCartItemSchema = z.strictObject({ variantId: z.uuid(), quantity: cartQuantity });
+export const updateCartItemSchema = z.strictObject({ quantity: cartQuantity });
+
+export type AddCartItemInput = z.output<typeof addCartItemSchema>;

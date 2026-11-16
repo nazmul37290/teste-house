@@ -62,7 +62,7 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 | GET | `/delivery-zones/quote` | Zone and charge for a district (display only; the order recalculates) |
 | POST | `/checkout/quote` | Full server-side price breakdown for the current cart, coupon and district. The web app displays this instead of computing totals itself |
 | GET | `/payment-methods` | Active methods, filtered by COD scope for the district |
-| GET/POST/PATCH/DELETE | `/cart`, `/cart/items`, `/cart/items/:id` | Guest or customer cart |
+| GET/POST/PATCH/DELETE | `/cart`, `/cart/items`, `/cart/items/:id` | Guest or customer cart. `POST /cart/items {variantId, quantity}` adds to an existing line; `PATCH /cart/items/:id {quantity}` sets it (1 to 50). Every call returns the whole cart: lines with current `unitPrice`/`regularPrice`/`lineTotal`, `maxQuantity` (stock capped at 50, never the exact stock), `problem` (`UNAVAILABLE`, `OUT_OF_STOCK`, `NOT_ENOUGH_STOCK` or null), `itemCount`, `subtotal` (lines without a problem), `hasProblems`. Reasons: `UNAVAILABLE`, `OUT_OF_STOCK`, `NOT_ENOUGH_STOCK` (with `maxQuantity`), `CART_FULL` (50 lines); another cart's line is 404. Writes need the CSRF header; responses are `Cache-Control: private, no-store` |
 | POST | `/coupons/validate` | Preview a discount |
 | POST | `/orders` | Place order (guest or logged in) |
 | GET | `/orders/track?orderNumber=&phone=` | Guest tracking |

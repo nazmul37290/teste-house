@@ -70,7 +70,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 6: Cart, checkout, COD orders, accounts
 
-- [ ] Guest and customer cart with merge on login
+- [x] Guest and customer cart with merge on login
 - [ ] Delivery zone quote; admin zone management with toggles
 - [ ] Coupons (admin and validation)
 - [ ] `POST /checkout/quote` and strict `POST /orders` schema (rejects any client money field)

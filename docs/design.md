@@ -69,7 +69,7 @@ Full design in **`auth.md`**. Summary:
 
 ## 5. Checkout and orders
 
-- Cart: guests get a `sessionToken` cookie; on login the guest cart merges into the customer cart (sum quantities, cap at stock).
+- Cart: guests get an httpOnly `shop_cart` cookie (32 random bytes, 30 days from the last change, `SameSite=Lax`, `Secure` in production); `carts.sessionToken` stores only its SHA-256. The first signed-in request that still carries the cookie merges the guest cart into the customer cart (sum quantities, cap at stock and at 50 per line), deletes the guest cart and clears the cookie. Cart prices are for display; the order reads prices again inside its transaction.
 - Checkout calls `POST /orders` with an `Idempotency-Key` header. The transaction steps are in `database.md` section 5. The client never sends prices or totals; all money rules are in `pricing.md`. The checkout UI shows the breakdown returned by `POST /checkout/quote` and sends `expectedGrandTotal` only so the server can detect a price change.
 - Delivery quote: `GET /delivery-zones/quote?district=...&subtotal=...` returns the charge and zone for display; the server recomputes at order time.
 - Payment methods list (`GET /payment-methods`) returns only active methods, filtered by COD scope for the chosen district.

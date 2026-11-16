@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPublicSettings, storeName } from '@/lib/api-server';
 import { getCategories } from '@/lib/storefront';
+import { CartButton } from './cart-button';
 import { SearchBox } from './search-box';
 
 /** Store header. Static (no session lookup) so pages stay cacheable; /account handles sign-in. */
@@ -33,6 +34,7 @@ export async function ShopHeader() {
         >
           Account
         </Link>
+        <CartButton />
       </div>
       {top.length ? (
         <nav aria-label="Categories" className="mx-auto max-w-6xl overflow-x-auto px-4">

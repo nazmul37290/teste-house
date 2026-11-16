@@ -5,7 +5,7 @@ export type Status = { tone: 'success' | 'error'; text: string } | null;
 export type ApiErrorBody = {
   code: string;
   message: string;
-  details?: { path?: string; message?: string; reason?: string }[];
+  details?: { path?: string; message?: string; reason?: string; maxQuantity?: number }[];
 };
 
 export class ApiError extends Error {

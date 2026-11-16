@@ -1,19 +1,37 @@
 'use client';
 
+import { MAX_CART_LINE_QUANTITY } from '@shop/shared';
 import { useState } from 'react';
 import { Price } from '@/components/shop/bits';
+import { cartApi, cartErrorText, openCartDrawer } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
 import type { ProductVariant } from '@/lib/storefront-types';
 
 /**
- * Variant choice, price and stock state. The cart arrives in Phase 6; until then the button stays
- * disabled (and says "Out of stock" for sold-out variants, BRW-4). Prices shown here are for display;
- * the server calculates every order total itself.
+ * Variant choice, price, stock state and add to cart (disabled for sold-out variants, BRW-4).
+ * Prices shown here are for display; the server calculates every order total itself.
  */
 export function BuyBox({ variants }: { variants: ProductVariant[] }) {
   const firstInStock = variants.findIndex((v) => v.inStock);
   const [index, setIndex] = useState(firstInStock >= 0 ? firstInStock : 0);
   const v = variants[index]!;
+  const [quantity, setQuantity] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function add() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      await cartApi.add(v.id, quantity);
+      setQuantity(1);
+      openCartDrawer();
+    } catch (err) {
+      setMessage(cartErrorText(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -34,7 +52,10 @@ export function BuyBox({ variants }: { variants: ProductVariant[] }) {
               <button
                 key={option.id}
                 type="button"
-                onClick={() => setIndex(i)}
+                onClick={() => {
+                  setIndex(i);
+                  setMessage(null);
+                }}
                 aria-pressed={i === index}
                 className={`rounded-md border px-3 py-2 text-sm ${
                   i === index
@@ -61,14 +82,39 @@ export function BuyBox({ variants }: { variants: ProductVariant[] }) {
         {v.inStock ? (v.lowStock ? 'Only a few left' : 'In stock') : 'Out of stock'}
       </p>
 
-      <button
-        type="button"
-        disabled
-        className="w-full rounded-md bg-neutral-900 px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-      >
-        {v.inStock ? 'Add to cart' : 'Out of stock'}
-      </button>
-      {v.inStock ? <p className="text-xs text-neutral-500">Ordering opens soon.</p> : null}
+      <div className="flex flex-wrap items-center gap-3">
+        {v.inStock ? (
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-neutral-700">Qty</span>
+            <select
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="rounded-md border border-neutral-300 bg-white px-2 py-2"
+            >
+              {Array.from({ length: Math.min(10, MAX_CART_LINE_QUANTITY) }, (_, i) => i + 1).map(
+                (n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+        ) : null}
+        <button
+          type="button"
+          disabled={!v.inStock || busy}
+          onClick={() => void add()}
+          className="flex-1 rounded-md bg-neutral-900 px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+        >
+          {v.inStock ? (busy ? 'Adding…' : 'Add to cart') : 'Out of stock'}
+        </button>
+      </div>
+      {message ? (
+        <p className="text-sm text-red-700" role="alert">
+          {message}
+        </p>
+      ) : null}
       <p className="text-xs text-neutral-400">SKU {v.sku}</p>
     </div>
   );

@@ -24,7 +24,7 @@ type Decimalish = { toFixed(n: number): string };
 const paisa = (d: Decimalish) => parsePaisa(d.toFixed(2));
 const amount = (d: Decimalish | null) => (d === null ? null : String(Number(d.toFixed(3))));
 
-function imageOf(
+export function imageOf(
   base: string,
   media: { path: string; altText: string; width: number | null; height: number | null },
 ) {
