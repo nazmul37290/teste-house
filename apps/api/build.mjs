@@ -12,6 +12,7 @@ await build({
     worker: 'src/worker.ts',
     seed: '../../prisma/seed.ts',
     'create-super-admin': 'src/scripts/create-super-admin.ts',
+    'seed-demo': 'src/scripts/seed-demo.ts',
   },
   outdir: 'dist',
   bundle: true,

@@ -64,6 +64,7 @@ pnpm db:up              # Postgres, Redis, Mailpit via docker/compose.dev.yml
 pnpm db:generate        # generate the Prisma client (needs DATABASE_URL in .env)
 pnpm db:migrate         # create/apply migrations in dev
 pnpm db:seed            # permissions, roles, payment methods, zones, settings, Super Admin
+pnpm db:seed-demo       # development only: demo catalog (products, variants, images)
 pnpm dev                # api on :4000, web on :3000
 pnpm lint && pnpm typecheck && pnpm test
 pnpm test:integration   # needs pnpm db:up; uses the shop_test database and Redis db 1
