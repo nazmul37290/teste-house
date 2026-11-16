@@ -6,7 +6,13 @@ import { Alert, Button, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
 
-export function RegisterForm({ next }: { next: string }) {
+export function RegisterForm({
+  next,
+  defaults = { name: '', phone: '', email: '' },
+}: {
+  next: string;
+  defaults?: { name: string; phone: string; email: string };
+}) {
   const router = useRouter();
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,7 +54,15 @@ export function RegisterForm({ next }: { next: string }) {
     <form onSubmit={onSubmit} className="space-y-4">
       {general ? <Alert>{general}</Alert> : null}
       <Field label="Full name" htmlFor="name" error={fieldError('name')}>
-        <Input id="name" name="name" required minLength={2} maxLength={100} autoComplete="name" />
+        <Input
+          id="name"
+          name="name"
+          required
+          minLength={2}
+          maxLength={100}
+          autoComplete="name"
+          defaultValue={defaults.name}
+        />
       </Field>
       <Field
         label="Mobile number"
@@ -63,6 +77,7 @@ export function RegisterForm({ next }: { next: string }) {
           inputMode="tel"
           autoComplete="tel"
           placeholder="01XXXXXXXXX"
+          defaultValue={defaults.phone}
         />
       </Field>
       <Field
@@ -71,7 +86,13 @@ export function RegisterForm({ next }: { next: string }) {
         hint="For order updates and password reset."
         error={fieldError('email')}
       >
-        <Input id="email" name="email" type="email" autoComplete="email" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={defaults.email}
+        />
       </Field>
       <Field
         label="Password"

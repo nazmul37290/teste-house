@@ -49,6 +49,8 @@ export const onCartOpen = (fn: () => void) => {
 
 export const cartApi = {
   get: () => api<Cart>('/cart'),
+  /** Reloads the cart and tells every cart view (after an order removed lines on the server). */
+  refresh: () => api<Cart>('/cart').then(broadcast),
   add: (variantId: string, quantity: number) =>
     api<Cart>('/cart/items', { method: 'POST', body: { variantId, quantity } }).then(broadcast),
   setQuantity: (id: string, quantity: number) =>

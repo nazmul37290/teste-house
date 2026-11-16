@@ -58,7 +58,7 @@ export async function checkLowStock(
 }
 
 /** The low-stock check must never fail the stock change that already committed. */
-async function afterChange(deps: InventoryDeps, variantId: string) {
+export async function afterStockChange(deps: InventoryDeps, variantId: string) {
   await checkLowStock(deps, variantId).catch((err: unknown) => {
     console.error(
       `Low-stock check failed for ${variantId}: ${err instanceof Error ? err.message : String(err)}`,
@@ -117,7 +117,7 @@ export async function adjustStock(deps: InventoryDeps, actor: Actor, input: Adju
     return balance;
   });
 
-  await afterChange(deps, input.variantId);
+  await afterStockChange(deps, input.variantId);
   return { variantId: input.variantId, stockQty: balanceAfter };
 }
 
@@ -166,7 +166,7 @@ export async function receiveStock(deps: InventoryDeps, actor: Actor, input: Rec
       });
       return { stockQty: balance, batchId: batch?.id ?? null };
     });
-    await afterChange(deps, input.variantId);
+    await afterStockChange(deps, input.variantId);
     return { variantId: input.variantId, ...result };
   } catch (err) {
     if (isUniqueViolation(err))

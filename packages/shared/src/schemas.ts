@@ -19,6 +19,9 @@ const phone = z
     return n;
   });
 
+/** A Bangladeshi mobile number, normalized to 01XXXXXXXXX. */
+export const phoneSchema = phone;
+
 const email = z.string().trim().toLowerCase().pipe(z.email()).optional();
 
 export const orderItemInput = z.strictObject({
@@ -71,6 +74,10 @@ export const createOrderSchema = z
   .refine((v) => Boolean(v.address) !== Boolean(v.addressId), {
     message: 'Provide either address or addressId',
     path: ['address'],
+  })
+  .refine((v) => new Set(v.items.map((i) => i.variantId)).size === v.items.length, {
+    message: 'Each item may appear only once',
+    path: ['items'],
   });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

@@ -2,6 +2,8 @@
  * Transactional email templates. Every value is HTML-escaped; the store name and logo always come
  * from the `store.name` and `store.logo` settings (never hardcoded).
  */
+import { formatTaka } from '@shop/shared';
+
 export type EmailTemplates = {
   'email-verify': { name: string; url: string };
   'password-reset': { name: string; url: string };
@@ -13,8 +15,31 @@ export type EmailTemplates = {
     threshold: number;
     url: string;
   };
+  'order-placed': OrderEmailData & { trackUrl: string };
+  'admin-new-order': {
+    orderNumber: string;
+    customerName: string;
+    phone: string;
+    district: string;
+    itemCount: number;
+    grandTotal: string;
+    paymentMethod: string;
+    url: string;
+  };
 };
 export type EmailTemplateName = keyof EmailTemplates;
+
+/** Order summary shared by the customer order emails. Money values are API strings ("1680.00"). */
+export type OrderEmailData = {
+  name: string;
+  orderNumber: string;
+  items: { name: string; quantity: number; lineTotal: string }[];
+  subtotal: string;
+  discountTotal: string;
+  deliveryCharge: string;
+  grandTotal: string;
+  paymentMethod: string;
+};
 
 export type RenderedEmail = { subject: string; html: string; text: string };
 
@@ -41,6 +66,29 @@ function layout(brand: Brand, bodyHtml: string): string {
 ${header}
 ${bodyHtml}
 </div></body></html>`;
+}
+
+function orderTable(o: OrderEmailData): { html: string; text: string } {
+  const row = (label: string, value: string, bold = false) =>
+    `<tr><td style="padding:4px 0">${bold ? '<strong>' : ''}${escapeHtml(label)}${bold ? '</strong>' : ''}</td><td style="padding:4px 0;text-align:right">${bold ? '<strong>' : ''}${escapeHtml(value)}${bold ? '</strong>' : ''}</td></tr>`;
+  const items = o.items
+    .map((i) => row(`${i.name} × ${i.quantity}`, formatTaka(i.lineTotal)))
+    .join('');
+  const discount =
+    o.discountTotal !== '0.00' ? row('Discount', `− ${formatTaka(o.discountTotal)}`) : '';
+  const html = `<table style="width:100%;border-collapse:collapse;font-size:14px">${items}
+<tr><td colspan="2" style="border-top:1px solid #e5e5e5;padding-top:4px"></td></tr>
+${row('Subtotal', formatTaka(o.subtotal))}${discount}${row('Delivery', formatTaka(o.deliveryCharge))}${row('Total', formatTaka(o.grandTotal), true)}</table>
+<p style="font-size:14px">Payment: ${escapeHtml(o.paymentMethod)}</p>`;
+  const text = [
+    ...o.items.map((i) => `${i.name} x ${i.quantity}: ${formatTaka(i.lineTotal)}`),
+    `Subtotal: ${formatTaka(o.subtotal)}`,
+    ...(o.discountTotal !== '0.00' ? [`Discount: -${formatTaka(o.discountTotal)}`] : []),
+    `Delivery: ${formatTaka(o.deliveryCharge)}`,
+    `Total: ${formatTaka(o.grandTotal)}`,
+    `Payment: ${o.paymentMethod}`,
+  ].join('\n');
+  return { html, text };
 }
 
 function button(url: string, label: string): string {
@@ -81,6 +129,37 @@ ${productName} — ${variantName} (SKU ${sku})
 ${stockQty} left (alert level ${threshold}).
 
 ${url}`,
+  }),
+  'order-placed': (o, brand) => {
+    const t = orderTable(o);
+    return {
+      subject: `Order ${o.orderNumber} received – ${brand.name}`,
+      html: layout(
+        brand,
+        `<p>Hi ${escapeHtml(o.name)},</p><p>Thank you! We have received your order <strong>${escapeHtml(o.orderNumber)}</strong>. We will call or message you to confirm it.</p>${t.html}${button(o.trackUrl, 'Track your order')}`,
+      ),
+      text: `Hi ${o.name},
+
+Thank you! We have received your order ${o.orderNumber}. We will call or message you to confirm it.
+
+${t.text}
+
+Track your order: ${o.trackUrl}`,
+    };
+  },
+  'admin-new-order': (o, brand) => ({
+    subject: `New order ${o.orderNumber}: ${formatTaka(o.grandTotal)}`,
+    html: layout(
+      brand,
+      `<p>A new order arrived:</p>
+<p style="font-size:16px"><strong>${escapeHtml(o.orderNumber)}</strong> — ${formatTaka(o.grandTotal)} (${escapeHtml(o.paymentMethod)})</p>
+<p>${escapeHtml(o.customerName)}, ${escapeHtml(o.phone)}, ${escapeHtml(o.district)}<br>${o.itemCount} item(s)</p>${button(o.url, 'Open order')}`,
+    ),
+    text: `New order at ${brand.name}: ${o.orderNumber}, ${formatTaka(o.grandTotal)} (${o.paymentMethod})
+${o.customerName}, ${o.phone}, ${o.district}
+${o.itemCount} item(s)
+
+${o.url}`,
   }),
 };
 

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BD_GEO } from './bd-geo';
 import { moneySchema } from './catalog-schemas';
 import { parsePaisa } from './money';
+import { orderItemInput, phoneSchema } from './schemas';
 
 /** All district names (delivery zones list districts; the address form picks one). */
 export const BD_DISTRICTS: readonly string[] = Object.values(BD_GEO)
@@ -169,3 +170,40 @@ export const addCartItemSchema = z.strictObject({ variantId: z.uuid(), quantity:
 export const updateCartItemSchema = z.strictObject({ quantity: cartQuantity });
 
 export type AddCartItemInput = z.output<typeof addCartItemSchema>;
+
+// Checkout quote and guest tracking --------------------------------------------------------------
+
+/**
+ * Price preview for the checkout page: the same calculation as the order, without writing anything.
+ * The district (or a saved address of the signed-in customer) picks the delivery zone; the phone, if
+ * known, lets the per-customer coupon limit be checked early.
+ */
+export const checkoutQuoteSchema = z
+  .strictObject({
+    items: z.array(orderItemInput).min(1).max(100),
+    couponCode: z.string().trim().toUpperCase().max(40).optional(),
+    district: z
+      .string()
+      .trim()
+      .refine((d) => BD_DISTRICTS.includes(d), 'Unknown district')
+      .optional(),
+    addressId: z.uuid().optional(),
+    phone: phoneSchema.optional(),
+  })
+  .refine((v) => Boolean(v.district) !== Boolean(v.addressId), {
+    message: 'Provide either district or addressId',
+    path: ['district'],
+  })
+  .refine((v) => new Set(v.items.map((i) => i.variantId)).size === v.items.length, {
+    message: 'Each item may appear only once',
+    path: ['items'],
+  });
+export type CheckoutQuoteInput = z.output<typeof checkoutQuoteSchema>;
+
+export const ORDER_NUMBER_PATTERN = /^ORD-\d{6,}$/;
+
+export const trackOrderSchema = z.strictObject({
+  orderNumber: z.string().trim().toUpperCase().regex(ORDER_NUMBER_PATTERN, 'Like ORD-000123'),
+  phone: phoneSchema,
+});
+export type TrackOrderInput = z.output<typeof trackOrderSchema>;

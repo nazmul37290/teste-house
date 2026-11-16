@@ -14,6 +14,7 @@ import { customerAuthRouter } from './routes/customer-auth.routes';
 import { healthRouter } from './routes/health';
 import { publicSettingsRouter } from './routes/settings.routes';
 import { cartRouter } from './routes/cart.routes';
+import { orderRouter } from './routes/order.routes';
 import { storefrontRouter } from './routes/storefront.routes';
 
 export function createApp(deps: Deps): Express {
@@ -62,6 +63,7 @@ export function createApp(deps: Deps): Express {
   app.use('/api/v1', publicSettingsRouter(deps));
   app.use('/api/v1', storefrontRouter(deps));
   app.use('/api/v1', cartRouter(deps));
+  app.use('/api/v1', orderRouter(deps));
   app.use('/api/v1/admin', adminRouter(deps));
 
   app.use(notFoundHandler);

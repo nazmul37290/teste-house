@@ -6,7 +6,7 @@ import { parseEnvelope } from './api-types';
  */
 export async function api<T>(
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<T> {
   const res = await fetch(`/api/v1${path}`, {
     method: init.method ?? 'GET',
@@ -14,6 +14,7 @@ export async function api<T>(
     headers: {
       'X-Requested-With': 'XMLHttpRequest',
       ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...init.headers,
     },
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
   });

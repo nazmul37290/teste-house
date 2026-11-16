@@ -71,14 +71,14 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 ## Phase 6: Cart, checkout, COD orders, accounts
 
 - [x] Guest and customer cart with merge on login
-- [ ] Delivery zone quote; admin zone management with toggles
-- [ ] Coupons (admin and validation)
-- [ ] `POST /checkout/quote` and strict `POST /orders` schema (rejects any client money field)
-- [ ] Order creation transaction using `calculateOrderTotals()`, idempotency, stock decrement, movements, price snapshots
-- [ ] `PRICE_CHANGED` handling in the checkout UI
-- [ ] Concurrency tests (last unit, coupon usage limit) and database CHECK tests
-- [ ] Payment method listing with admin toggles and COD scope
-- [ ] Order confirmation page, guest tracking (order number + phone)
+- [x] Delivery zone quote; admin zone management with toggles
+- [x] Coupons (admin and validation)
+- [x] `POST /checkout/quote` and strict `POST /orders` schema (rejects any client money field)
+- [x] Order creation transaction using `calculateOrderTotals()`, idempotency, stock decrement, movements, price snapshots
+- [x] `PRICE_CHANGED` handling in the checkout UI
+- [x] Concurrency tests (last unit, coupon usage limit) and database CHECK tests
+- [x] Payment method listing with admin toggles and COD scope
+- [x] Order confirmation page, guest tracking (order number + phone)
 - [ ] Customer area: profile, addresses, order history, cancel, invoice PDF
 - [ ] Guest-order linking on email verification
 - [ ] Order emails (placed, confirmed, cancelled)

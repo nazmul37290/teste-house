@@ -30,23 +30,31 @@ export function tagsForWrite(method: string, path: string): string[] {
   );
 }
 
+/**
+ * Queues a storefront refresh for these tags (no-op without REVALIDATE_SECRET). The same jobId while
+ * one is waiting turns a burst of writes (a CSV import, many orders) into one refresh. Never throws.
+ */
+export function queueRevalidate(deps: Pick<Deps, 'env' | 'revalidateQueue'>, tags: string[]): void {
+  if (!tags.length || !deps.env.REVALIDATE_SECRET) return;
+  // BullMQ job ids may not contain ":".
+  const key = [...tags].sort().join('-');
+  deps
+    .revalidateQueue()
+    .add('revalidate', { tags }, { jobId: `revalidate-${key}`, delay: 1000 })
+    .catch((err: unknown) => {
+      console.error(
+        `Could not queue a storefront refresh: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
+}
+
 export function revalidateAfterWrite(deps: Pick<Deps, 'env' | 'revalidateQueue'>): RequestHandler {
   return (req, res, next) => {
     const tags = tagsForWrite(req.method, req.path);
     if (tags.length && deps.env.REVALIDATE_SECRET) {
       res.on('finish', () => {
         if (res.statusCode >= 400) return;
-        // Same jobId while one is waiting: a burst of writes (e.g. a CSV import) becomes one refresh.
-        // (BullMQ job ids may not contain ":".)
-        const key = [...tags].sort().join('-');
-        deps
-          .revalidateQueue()
-          .add('revalidate', { tags }, { jobId: `revalidate-${key}`, delay: 1000 })
-          .catch((err: unknown) => {
-            console.error(
-              `Could not queue a storefront refresh: ${err instanceof Error ? err.message : String(err)}`,
-            );
-          });
+        queueRevalidate(deps, tags);
       });
     }
     next();

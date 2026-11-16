@@ -127,3 +127,12 @@ describe('payment method config', () => {
     expect(readPaymentMethodConfig({ scope: 'MARS' })).toEqual({});
   });
 });
+
+describe('formatTaka', () => {
+  it('groups digits the Bangladeshi way and drops .00', async () => {
+    const { formatTaka } = await import('../src/money');
+    expect(formatTaka('125000.50')).toBe('Tk 1,25,000.50');
+    expect(formatTaka('650.00')).toBe('Tk 650');
+    expect(formatTaka('1680')).toBe('Tk 1,680');
+  });
+});

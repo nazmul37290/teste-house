@@ -89,7 +89,11 @@ export function calculateOrderTotals(input: PricingInput): PricingResult {
   if (input.items.length === 0) throw new PricingError('EMPTY_CART', 'Cart is empty');
 
   const lines: PricingLine[] = input.items.map((item) => {
-    if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > MAX_LINE_QUANTITY) {
+    if (
+      !Number.isInteger(item.quantity) ||
+      item.quantity < 1 ||
+      item.quantity > MAX_LINE_QUANTITY
+    ) {
       throw new PricingError('INVALID_QUANTITY', `Invalid quantity for ${item.variantId}`);
     }
     if (!isPaisa(item.price)) {

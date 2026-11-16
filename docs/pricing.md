@@ -33,7 +33,7 @@ All amounts below are integer paisa.
    - Then cap by `maxDiscount` (if set), then cap by `subtotal` (a discount can never exceed the subtotal).
    - Reject (not silently ignore) if invalid: inactive, before `startsAt`, after `expiresAt`, subtotal below `minOrderAmount`, `usageLimit` reached, or `perCustomerLimit` reached for this customer or phone. The error is `422 BUSINESS_RULE` with a reason such as `COUPON_EXPIRED`.
 4. **Net merchandise** = `subtotal - discount`.
-5. **Delivery charge.** Resolve the zone from the address district (zone must be `isActive`; otherwise the default active zone; if none applies, reject with `DELIVERY_NOT_AVAILABLE`). Charge = `0` if the zone has `freeDeliveryThreshold` and `net merchandise >= threshold`, else `zone.charge`.
+5. **Delivery charge.** Resolve the zone from the address district: the zone that lists the district, otherwise the default zone. The resolved zone must be `isActive`; a turned-off zone means no delivery there and the order is rejected with `DELIVERY_NOT_AVAILABLE` (it does not fall back to the default zone). Charge = `0` if the zone has `freeDeliveryThreshold` and `net merchandise >= threshold`, else `zone.charge`.
 6. **Grand total** = `net merchandise + deliveryCharge`. It is never negative.
 7. **Payable amount.** COD: collect `grandTotal` on delivery. Online: the gateway charge equals `grandTotal` exactly.
 

@@ -71,8 +71,12 @@ Full design in **`auth.md`**. Summary:
 
 - Cart: guests get an httpOnly `shop_cart` cookie (32 random bytes, 30 days from the last change, `SameSite=Lax`, `Secure` in production); `carts.sessionToken` stores only its SHA-256. The first signed-in request that still carries the cookie merges the guest cart into the customer cart (sum quantities, cap at stock and at 50 per line), deletes the guest cart and clears the cookie. Cart prices are for display; the order reads prices again inside its transaction.
 - Checkout calls `POST /orders` with an `Idempotency-Key` header. The transaction steps are in `database.md` section 5. The client never sends prices or totals; all money rules are in `pricing.md`. The checkout UI shows the breakdown returned by `POST /checkout/quote` and sends `expectedGrandTotal` only so the server can detect a price change.
-- Delivery quote: `GET /delivery-zones/quote?district=...&subtotal=...` returns the charge and zone for display; the server recomputes at order time.
-- Payment methods list (`GET /payment-methods`) returns only active methods, filtered by COD scope for the chosen district.
+- `POST /checkout/quote` runs the same code as the order (lines, zone, coupon, totals, usable payment methods) without writing anything; the checkout page shows only these numbers and re-quotes when the cart, district or coupon changes.
+- Zone: the zone that lists the district, else the default zone. A zone that is turned off refuses the order (`DELIVERY_NOT_AVAILABLE`); it does not fall back to the default zone.
+- Payment methods: active ones that checkout supports (only `COD` until the UddoktaPay adapter exists in Phase 7). COD with scope `DHAKA_ONLY` is allowed only in the zone with code `inside-dhaka`; optional min/max amounts apply to the grand total.
+- Order number: `nextval` of the `orderSeq` sequence inside the transaction, formatted `ORD-000123`. Each order also adds its quantities to `products.soldCount` (best-seller sorting).
+- After commit (never failing the order): ordered lines leave the cart, the `order-placed` email goes to a real contact email, `admin-new-order` to `notifications.adminEmail`, low-stock checks run, and the storefront `catalog` tag is refreshed.
+- Confirmation page `/order/<number>` shows the order kept in the tab's sessionStorage (nothing else in the URL); otherwise it links to `/track`, where order number + phone are sent in a POST body.
 
 **Order state machine** (enforced in one service function `changeOrderStatus`; every call writes `order_status_history`):
 
