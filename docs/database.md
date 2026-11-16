@@ -106,6 +106,8 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 ## 5. Business rules the code must keep
 
+**Addresses and zones.** Division, district and upazila names come from `packages/shared/src/bd-geo-data.ts` (generated from github.com/nuhil/bangladesh-geocode, MIT; 8 divisions, 64 districts, 495 upazilas). The server checks that the district is in the division and the upazila in the district (`checkBdAddress()`). The upazila is optional, because city areas (for example Mirpur in Dhaka) are not upazilas. A district belongs to at most one delivery zone; the default zone covers all other districts; a zone used by orders is turned off, not deleted.
+
 **Order number.** `orderSeq` is a database sequence; `orderNumber = 'ORD-' + zero-padded orderSeq` (6 digits).
 
 **Order creation** (one transaction, idempotent on `idempotencyKey`):

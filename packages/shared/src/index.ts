@@ -9,3 +9,5 @@ export * from './media';
 export * from './catalog-schemas';
 export * from './product';
 export * from './storefront-schemas';
+export * from './bd-geo';
+export * from './checkout-schemas';

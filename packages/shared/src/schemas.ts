@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { checkBdAddress } from './bd-geo';
 import { normalizePhone } from './phone';
 
 /**
@@ -25,16 +26,26 @@ export const orderItemInput = z.strictObject({
   quantity: z.number().int().min(1).max(1000),
 });
 
-export const addressInput = z.strictObject({
-  recipientName: z.string().trim().min(2).max(100),
-  phone,
-  division: z.string().trim().min(2).max(50),
-  district: z.string().trim().min(2).max(50),
-  upazila: z.string().trim().max(50).optional(),
-  addressLine: z.string().trim().min(5).max(300),
-  postalCode: z.string().trim().max(10).optional(),
-  deliveryNote: z.string().trim().max(300).optional(),
-});
+export const addressInput = z
+  .strictObject({
+    recipientName: z.string().trim().min(2).max(100),
+    phone,
+    division: z.string().trim().min(2).max(50),
+    district: z.string().trim().min(2).max(50),
+    upazila: z
+      .string()
+      .trim()
+      .max(50)
+      .optional()
+      .transform((v) => v || undefined),
+    addressLine: z.string().trim().min(5).max(300),
+    postalCode: z.string().trim().max(10).optional(),
+    deliveryNote: z.string().trim().max(300).optional(),
+  })
+  .superRefine((a, ctx) => {
+    const geo = checkBdAddress(a.division, a.district, a.upazila);
+    if (!geo.ok) ctx.addIssue({ code: 'custom', path: [geo.path], message: `Unknown ${geo.path}` });
+  });
 
 export const contactInput = z.strictObject({
   name: z.string().trim().min(2).max(100),

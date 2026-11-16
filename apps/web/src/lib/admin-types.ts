@@ -196,3 +196,42 @@ export type HomepageSection = {
   sortOrder: number;
   isActive: boolean;
 };
+
+export type DeliveryZone = {
+  id: string;
+  name: string;
+  code: string;
+  districts: string[];
+  charge: string;
+  freeDeliveryThreshold: string | null;
+  estimatedDays: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  orderCount: number;
+};
+
+export type PaymentMethodAdmin = {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  sortOrder: number;
+  config: { scope?: 'DHAKA_ONLY' | 'NATIONWIDE'; minAmount?: string; maxAmount?: string };
+};
+
+export type Coupon = {
+  id: string;
+  code: string;
+  type: 'FIXED' | 'PERCENT';
+  value: string;
+  minOrderAmount: string | null;
+  maxDiscount: string | null;
+  usageLimit: number | null;
+  perCustomerLimit: number | null;
+  usedCount: number;
+  startsAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+};

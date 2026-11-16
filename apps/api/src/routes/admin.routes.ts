@@ -1,6 +1,11 @@
 import { Router, type Request } from 'express';
 import {
   createBannerSchema,
+  createCouponSchema,
+  createDeliveryZoneSchema,
+  updateCouponSchema,
+  updateDeliveryZoneSchema,
+  updatePaymentMethodSchema,
   homepageSectionSchema,
   idParamSchema,
   updateBannerSchema,
@@ -19,7 +24,9 @@ import { revalidateAfterWrite } from '../middleware/revalidate-after-write';
 import { singleUpload } from '../middleware/upload';
 import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
+import * as coupons from '../services/coupon.service';
 import * as marketing from '../services/marketing.service';
+import * as shipping from '../services/shipping.service';
 import { getAllSettings, updateSettings } from '../services/settings.service';
 
 /**
@@ -177,6 +184,61 @@ export function adminRouter(deps: Deps): Router {
       res.status(204).end();
     },
   );
+
+  // Shipping, payment methods and coupons.
+  router.get('/delivery-zones', requirePermission('shipping.manage'), async (_req, res) => {
+    res.json({ data: await shipping.listZones(deps.prisma) });
+  });
+  router.post('/delivery-zones', requirePermission('shipping.manage'), async (req, res) => {
+    const input = createDeliveryZoneSchema.parse(req.body);
+    res
+      .status(201)
+      .json({ data: await shipping.createZone(deps.prisma, actorFrom(req, deps.env), input) });
+  });
+  router.patch('/delivery-zones/:id', requirePermission('shipping.manage'), async (req, res) => {
+    const input = updateDeliveryZoneSchema.parse(req.body);
+    res.json({
+      data: await shipping.updateZone(deps.prisma, actorFrom(req, deps.env), pid(req), input),
+    });
+  });
+  router.delete('/delivery-zones/:id', requirePermission('shipping.manage'), async (req, res) => {
+    await shipping.deleteZone(deps.prisma, actorFrom(req, deps.env), pid(req));
+    res.status(204).end();
+  });
+  router.get('/payment-methods', requirePermission('payments.toggle'), async (_req, res) => {
+    res.json({ data: await shipping.listPaymentMethods(deps.prisma) });
+  });
+  router.patch('/payment-methods/:id', requirePermission('payments.toggle'), async (req, res) => {
+    const input = updatePaymentMethodSchema.parse(req.body);
+    res.json({
+      data: await shipping.updatePaymentMethod(
+        deps.prisma,
+        actorFrom(req, deps.env),
+        pid(req),
+        input,
+      ),
+    });
+  });
+  router.get('/coupons', requirePermission('coupons.manage'), async (req, res) => {
+    const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 40) : undefined;
+    res.json({ data: await coupons.listCoupons(deps.prisma, q) });
+  });
+  router.post('/coupons', requirePermission('coupons.manage'), async (req, res) => {
+    const input = createCouponSchema.parse(req.body);
+    res
+      .status(201)
+      .json({ data: await coupons.createCoupon(deps.prisma, actorFrom(req, deps.env), input) });
+  });
+  router.patch('/coupons/:id', requirePermission('coupons.manage'), async (req, res) => {
+    const input = updateCouponSchema.parse(req.body);
+    res.json({
+      data: await coupons.updateCoupon(deps.prisma, actorFrom(req, deps.env), pid(req), input),
+    });
+  });
+  router.delete('/coupons/:id', requirePermission('coupons.manage'), async (req, res) => {
+    await coupons.deleteCoupon(deps.prisma, actorFrom(req, deps.env), pid(req));
+    res.status(204).end();
+  });
 
   router.get('/settings', requirePermission('settings.manage'), async (_req, res) => {
     res.json({ data: await getAllSettings(deps.prisma) });
