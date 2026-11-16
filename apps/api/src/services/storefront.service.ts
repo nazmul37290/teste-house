@@ -475,9 +475,11 @@ async function resolveSection(
           c.slug,
         ]),
       );
-      const categories = ids
-        ? ids.flatMap((id) => all.filter((c) => c.slug === byId.get(id)))
-        : all.filter((c) => c.depth === 1);
+      const categories = (
+        ids
+          ? ids.flatMap((id) => all.filter((c) => c.slug === byId.get(id)))
+          : all.filter((c) => c.depth === 1)
+      ).filter((c) => c.productCount > 0); // empty categories are dead ends on the home page
       return categories.length ? { type, title, categories } : null;
     }
     case 'PRODUCT_LIST': {
