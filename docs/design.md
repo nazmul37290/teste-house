@@ -113,19 +113,20 @@ See `integrations.md`. Summary:
 | `courier.book`, `courier.sync` | Steadfast booking and status polling |
 | `order.expire-unpaid` | Cancel stale online-payment orders |
 | (no own queue) | Low-stock alert: checked right after each committed stock change (`checkLowStock()`); the email itself goes through `email.send` (`admin-low-stock`) |
-| `cache.revalidate` | Call Next.js revalidate endpoint after catalog changes |
+| `cache.revalidate` | After a successful admin write (catalog, inventory, media, banners, homepage sections, settings) the API enqueues the matching tags (`catalog`, `homepage`, `settings`); the worker POSTs them to the web app's `POST /api/revalidate` at `WEB_INTERNAL_URL` with the `x-revalidate-secret` header. Jobs for the same tags within one second collapse into one (job id from the tags), 5 attempts with backoff. Without `REVALIDATE_SECRET` nothing is enqueued and pages refresh on their 5-minute timer |
 | `media.cleanup` | Remove orphaned files after a grace period |
 | `token.cleanup` | Delete expired refresh and verification tokens |
 
 ## 9. SEO implementation
 
 - Product, category, home and static pages are server components with `generateMetadata`; metadata comes from the SEO fields with template fallbacks from `Setting`.
-- ISR with tag-based revalidation (`product:<slug>`, `category:<slug>`); the API triggers revalidation on catalog writes.
+- Every storefront fetch is cached by Next with tags (`catalog` on all of them, plus `product:<slug>`, `category:<slug>`, `homepage`; the settings fetch is tagged `settings`) and `revalidate: 300` as a safety net. `POST /api/revalidate` (web) checks the secret in constant time, accepts 1 to 20 tags matching `^[a-z0-9][a-z0-9:_-]{0,99}$` and calls `revalidateTag(tag, { expire: 0 })`, so the next request gets fresh data. Admin writes revalidate `catalog` as a whole: simple, and the catalog is small.
 - Slugs are unique and permanent in URLs; a slug change inserts a `redirects` row (301). Next.js middleware or `redirects()` serves them.
 - JSON-LD component renders `Product` (with `Offer`, `availability`, `priceCurrency: BDT`, `aggregateRating` when rating count > 0), `BreadcrumbList`, `Organization`, `WebSite`.
-- `app/sitemap.ts` (split sitemaps for products, categories, pages) and `app/robots.ts` (disallow `/admin`, `/cart`, `/checkout`, `/account`, `/api`).
+- `app/sitemap.ts` (one sitemap: home, categories, products from `GET /sitemap-data`; split into several only if it nears 50,000 URLs; legal placeholder pages are left out while they are `noindex`) and `app/robots.ts` (disallow `/admin`, `/cart`, `/checkout`, `/account`, `/api`).
 - Listing pages with filters: canonical to the unfiltered URL; `noindex` on multi-filter combinations; `rel` links for pagination.
-- Images via `next/image`, WebP/AVIF, explicit width/height, priority only for the LCP image.
+- Images via `next/image` with a custom loader that picks our pre-generated WebP width (200/500/1000/1600, the next one up), so Next never re-encodes; explicit width/height, priority only for the LCP image.
+- JSON-LD is rendered as a `<script type="application/ld+json">` with `<` escaped, so text from the catalog can never close the script tag.
 
 ## 10. GTM and analytics
 
@@ -180,7 +181,7 @@ See `integrations.md`. Summary:
 | Steadfast | `STEADFAST_BASE_URL`, `STEADFAST_API_KEY`, `STEADFAST_SECRET_KEY`, `STEADFAST_WEBHOOK_TOKEN` |
 | UddoktaPay | `UDDOKTAPAY_BASE_URL`, `UDDOKTAPAY_API_KEY`, `UDDOKTAPAY_WEBHOOK_SECRET` |
 | Files | `UPLOAD_DIR`, `PUBLIC_MEDIA_URL` |
-| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` |
+| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` (web and api/worker, same value, at least 16 chars), `WEB_INTERNAL_URL` (api/worker: internal address of the web app for revalidation) |
 | Optional | `SENTRY_DSN`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
 
 Keep `.env.example` in sync with this table.

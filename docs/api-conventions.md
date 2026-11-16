@@ -68,6 +68,8 @@ Business-rule errors carry a stable machine code in `error.details[0].reason` (f
 | GET | `/orders/track?orderNumber=&phone=` | Guest tracking |
 | GET | `/sitemap-data` | Visible product and category slugs with `updatedAt` (used by the web sitemap) |
 
+Not part of this API but called by it: the web app's `POST /api/revalidate` (body `{ "tags": ["catalog"] }`, header `x-revalidate-secret`; 401 on a wrong secret, 400 on bad tags, `{ "revalidated": [...] }` on success). Only the worker calls it, see `docs/design.md` section 8.
+
 ### Customer auth and account
 
 | Method | Path | Purpose |

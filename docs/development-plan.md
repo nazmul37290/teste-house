@@ -62,11 +62,11 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 5: Storefront catalog and SEO
 
-- [ ] Home (banners, sections), category and product pages (SSR/ISR, tag revalidation)
-- [ ] Listing filters, sort, pagination; search with suggestions
-- [ ] Metadata, canonical, OG, JSON-LD, sitemap, robots, redirects
+- [x] Home (banners, sections), category and product pages (SSR/ISR, tag revalidation)
+- [x] Listing filters, sort, pagination; search with suggestions
+- [x] Metadata, canonical, OG, JSON-LD, sitemap, robots, redirects
 - [ ] Performance pass: image sizes, fonts, Core Web Vitals check
-- [ ] Placeholder legal pages and footer links
+- [x] Placeholder legal pages and footer links
 
 ## Phase 6: Cart, checkout, COD orders, accounts
 

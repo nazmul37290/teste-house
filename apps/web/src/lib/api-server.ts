@@ -59,7 +59,9 @@ export type PublicSettings = {
 /** Public settings (store name, logo, SEO defaults). Shared by everyone, revalidated every minute. */
 export const getPublicSettings = cache(async (): Promise<PublicSettings> => {
   try {
-    const res = await fetch(`${API}/api/v1/settings/public`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API}/api/v1/settings/public`, {
+      next: { revalidate: 60, tags: ['settings'] },
+    });
     return await parseEnvelope<PublicSettings>(res);
   } catch {
     return {}; // API down: render with fallbacks rather than failing every page

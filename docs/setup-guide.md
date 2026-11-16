@@ -211,10 +211,11 @@ pnpm install
 
 # 2. Create your local environment file (never commit .env)
 cp .env.example .env
-#    then edit .env: set BETTER_AUTH_SECRET to a random value
-#    (Git Bash: openssl rand -base64 32)
+#    then edit .env: set BETTER_AUTH_SECRET and REVALIDATE_SECRET to random values
+#    (Git Bash: openssl rand -base64 32 / openssl rand -hex 24)
 
-# 3. The web app's env file (optional on your machine: the built-in defaults are the same)
+# 3. The web app's env file; put the SAME REVALIDATE_SECRET in it as in .env
+#    (without it, admin changes reach the shop only after up to 5 minutes)
 cp apps/web/.env.example apps/web/.env.local
 
 # 4. Start Postgres, Redis and Mailpit (Docker Desktop must be running)
@@ -237,7 +238,7 @@ Then open:
 
 | URL                          | What you see                                                 |
 | ---------------------------- | ------------------------------------------------------------ |
-| http://localhost:3000        | The storefront (still a skeleton)                            |
+| http://localhost:3000        | The storefront (run `pnpm db:seed-demo` once for demo products) |
 | http://localhost:4000/health | The API's health check                                       |
 | http://localhost:8025        | Mailpit: every email the app sends lands here (from Phase 3) |
 
@@ -251,6 +252,9 @@ What you can try today:
 | http://localhost:3000/admin | Admin panel. Sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` from `.env` |
 | `/admin/staff`, `/admin/roles`, `/admin/settings` | Staff accounts, roles and permissions, store settings (each needs its permission) |
 | `/admin/security` | Turn on two-factor authentication (scan the QR code with an authenticator app) and change your password |
+| http://localhost:3000/category/honey-spreads, `/product/<slug>`, `/search?q=honey` | Shop pages: filters, sort, search suggestions. Change a price in `/admin/products` and reload the product page: it updates within a couple of seconds |
+| `/admin/banners`, `/admin/homepage` | Home page banners and sections |
+| http://localhost:3000/sitemap.xml | The sitemap search engines read |
 
 Stop `pnpm dev` with `Ctrl+C`. If `pnpm dev` says a port is in use, an earlier `pnpm dev` is still running in another terminal: use that one, or stop it first.
 
@@ -464,6 +468,7 @@ In the Dokploy dashboard:
    UPLOAD_DIR=/data/uploads
    PUBLIC_MEDIA_URL=https://api.yourshop.com.bd/media
    REVALIDATE_SECRET=<random, same as in web>
+   WEB_INTERNAL_URL=http://<web service name>:3000
    RUN_MIGRATIONS=true
    ```
 5. **Volume (mount):** a persistent volume mounted at `/data/uploads`. Without it, every uploaded product image is lost on the next deploy.

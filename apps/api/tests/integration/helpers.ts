@@ -9,7 +9,7 @@ import { TEST_DATABASE_URL, TEST_REDIS_URL } from './test-env';
 
 export const WEB_ORIGIN = 'http://localhost:3000';
 
-export function createTestContext() {
+export function createTestContext(overrides: Record<string, string> = {}) {
   const env = loadEnv({
     NODE_ENV: 'test',
     DATABASE_URL: TEST_DATABASE_URL,
@@ -20,6 +20,7 @@ export function createTestContext() {
     // A fresh folder per test file: uploads never land in the real uploads/ directory.
     UPLOAD_DIR: mkdtempSync(path.join(tmpdir(), 'shop-test-uploads-')),
     PUBLIC_MEDIA_URL: 'http://localhost:4000/media',
+    ...overrides,
   });
   const deps: Deps = createDeps(env);
   const app = createApp(deps);

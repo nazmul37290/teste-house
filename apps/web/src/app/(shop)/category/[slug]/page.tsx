@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { Breadcrumbs, PlainText } from '@/components/shop/bits';
+import { JsonLd } from '@/components/shop/json-ld';
 import { ProductListing } from '@/components/shop/product-listing';
+import { absoluteUrl } from '@/lib/site';
 import { getCategory, listProducts, resolveRedirect, type ListParams } from '@/lib/storefront';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<ListParams> };
@@ -36,8 +38,19 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   }
   const data = (await listProducts({ ...query, category: slug }, [`category:${slug}`]))!;
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: category.breadcrumbs.map((b, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: b.name,
+      item: absoluteUrl(`/category/${b.slug}`),
+    })),
+  };
   return (
     <div className="space-y-6">
+      <JsonLd data={breadcrumbLd} />
       <Breadcrumbs
         items={category.breadcrumbs.map((b) => ({ name: b.name, href: `/category/${b.slug}` }))}
       />

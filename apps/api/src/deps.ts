@@ -4,7 +4,12 @@ import { createCustomerAuth, type CustomerAuth } from './auth/customer-auth';
 import type { Env } from './config/env';
 import { createLocalStorage } from './integrations/storage/local-storage';
 import type { StorageDriver } from './integrations/storage/storage-driver';
-import { createEmailQueue, type EmailQueue } from './jobs/queues';
+import {
+  createEmailQueue,
+  createRevalidateQueue,
+  type EmailQueue,
+  type RevalidateQueue,
+} from './jobs/queues';
 import { createPrisma, type Db } from './lib/prisma';
 import { createRedis } from './lib/redis';
 
@@ -17,6 +22,8 @@ export type Deps = {
   adminAuth: AdminAuth;
   /** Created on first use, so building the app never opens a BullMQ connection. */
   emailQueue: () => EmailQueue;
+  /** Storefront cache refresh jobs (created on first use). */
+  revalidateQueue: () => RevalidateQueue;
   /** Uploaded files (UPLOAD_DIR), served at PUBLIC_MEDIA_URL. */
   storage: StorageDriver;
   publicMediaUrl: string;
@@ -29,6 +36,8 @@ export function createDeps(env: Env): Deps {
   const redis = createRedis(env.REDIS_URL);
   let queue: EmailQueue | undefined;
   const emailQueue = () => (queue ??= createEmailQueue(env.REDIS_URL));
+  let revalidate: RevalidateQueue | undefined;
+  const revalidateQueue = () => (revalidate ??= createRevalidateQueue(env.REDIS_URL));
   return {
     env,
     prisma,
@@ -36,10 +45,16 @@ export function createDeps(env: Env): Deps {
     customerAuth: createCustomerAuth({ env, prisma, redis, emailQueue }),
     adminAuth: createAdminAuth({ env, prisma, redis }),
     emailQueue,
+    revalidateQueue,
     storage: createLocalStorage(env.UPLOAD_DIR, env.PUBLIC_MEDIA_URL),
     publicMediaUrl: env.PUBLIC_MEDIA_URL,
     close: async () => {
-      await Promise.allSettled([prisma.$disconnect(), redis.quit(), queue?.close()]);
+      await Promise.allSettled([
+        prisma.$disconnect(),
+        redis.quit(),
+        queue?.close(),
+        revalidate?.close(),
+      ]);
     },
   };
 }

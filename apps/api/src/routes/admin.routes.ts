@@ -15,6 +15,7 @@ import type { Deps } from '../deps';
 import { requireAdmin } from '../middleware/require-admin';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import { requirePermission } from '../middleware/require-permission';
+import { revalidateAfterWrite } from '../middleware/revalidate-after-write';
 import { singleUpload } from '../middleware/upload';
 import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
@@ -27,7 +28,7 @@ import { getAllSettings, updateSettings } from '../services/settings.service';
  */
 export function adminRouter(deps: Deps): Router {
   const router = Router();
-  router.use(requireCsrfHeader, requireAdmin(deps));
+  router.use(requireCsrfHeader, requireAdmin(deps), revalidateAfterWrite(deps));
 
   const staff = staffController(deps);
   router.get('/permissions', requirePermission('roles.manage'), staff.listPermissions);

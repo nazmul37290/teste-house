@@ -9,7 +9,12 @@ const schema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000')
-    .transform((v) => v.split(',').map((s) => s.trim()).filter(Boolean)),
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
   COOKIE_DOMAIN: z.string().optional(),
 
   DATABASE_URL: z.string().min(1),
@@ -41,7 +46,10 @@ const schema = z.object({
 
   UPLOAD_DIR: z.string().default('./uploads'),
   PUBLIC_MEDIA_URL: z.string().default('http://localhost:4000/media'),
-  REVALIDATE_SECRET: z.string().optional(),
+  // Storefront cache refresh (docs/design.md section 9): the worker posts changed cache tags to the
+  // web app. Without a secret, refreshes are skipped and pages update on their own timer instead.
+  REVALIDATE_SECRET: z.string().min(16).optional(),
+  WEB_INTERNAL_URL: z.url().default('http://localhost:3000'),
 });
 
 export type Env = z.infer<typeof schema>;

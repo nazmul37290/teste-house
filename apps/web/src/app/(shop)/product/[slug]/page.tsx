@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { Breadcrumbs, PlainText, SectionHeading } from '@/components/shop/bits';
+import { JsonLd } from '@/components/shop/json-ld';
 import { ProductGrid } from '@/components/shop/product-card';
+import { absoluteUrl } from '@/lib/site';
 import { getProduct, resolveRedirect } from '@/lib/storefront';
 import { BuyBox } from './buy-box';
 import { Gallery } from './gallery';
@@ -47,8 +49,55 @@ export default async function ProductPage({ params }: Props) {
     ['Shelf life', product.shelfLife],
     ['Origin', product.origin],
   ];
+  const url = absoluteUrl(`/product/${product.slug}`);
+  const productLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.shortDescription ?? product.description ?? undefined,
+    image: product.images.map((i) => i.urls['1000']),
+    brand: product.brand ? { '@type': 'Brand', name: product.brand.name } : undefined,
+    offers: product.variants.map((v) => ({
+      '@type': 'Offer',
+      sku: v.sku,
+      name: v.name,
+      price: v.price,
+      priceCurrency: 'BDT',
+      availability: v.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      url,
+    })),
+    // Only with real reviews (Phase 9); an empty rating is invalid structured data.
+    aggregateRating:
+      product.ratingCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.ratingAvg,
+            reviewCount: product.ratingCount,
+          }
+        : undefined,
+  };
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      ...product.breadcrumbs.map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: b.name,
+        item: absoluteUrl(`/category/${b.slug}`),
+      })),
+      {
+        '@type': 'ListItem',
+        position: product.breadcrumbs.length + 1,
+        name: product.name,
+        item: url,
+      },
+    ],
+  };
   return (
     <div className="space-y-10">
+      <JsonLd data={[productLd, breadcrumbLd]} />
       <Breadcrumbs
         items={[
           ...product.breadcrumbs.map((b) => ({ name: b.name, href: `/category/${b.slug}` })),

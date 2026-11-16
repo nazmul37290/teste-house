@@ -20,6 +20,22 @@ export function bullConnection(redisUrl: string): ConnectionOptions {
   return new Redis(redisUrl, { maxRetriesPerRequest: null });
 }
 
+export const REVALIDATE_QUEUE = 'cache.revalidate';
+export type RevalidateJob = { tags: string[] };
+export type RevalidateQueue = Queue<RevalidateJob>;
+
+export function createRevalidateQueue(redisUrl: string): RevalidateQueue {
+  return new Queue<RevalidateJob>(REVALIDATE_QUEUE, {
+    connection: bullConnection(redisUrl),
+    defaultJobOptions: {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 5_000 },
+      removeOnComplete: true,
+      removeOnFail: 1000,
+    },
+  });
+}
+
 export function createEmailQueue(redisUrl: string): EmailQueue {
   return new Queue<EmailJob>(EMAIL_QUEUE, {
     connection: bullConnection(redisUrl),

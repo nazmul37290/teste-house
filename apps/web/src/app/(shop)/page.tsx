@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { connection } from 'next/server';
 import { PlainText, SectionHeading } from '@/components/shop/bits';
+import { JsonLd } from '@/components/shop/json-ld';
 import { ProductGrid } from '@/components/shop/product-card';
+import { getPublicSettings, storeName } from '@/lib/api-server';
+import { SITE_URL } from '@/lib/site';
 import { ShopImage } from '@/components/shop/shop-image';
 import { getHomepage } from '@/lib/storefront';
 import type { HeroBanner, HomeSection } from '@/lib/storefront-types';
@@ -131,9 +134,35 @@ export default async function HomePage() {
   // Render per request, not at build time: the build (e.g. in Docker) has no API to read from. The
   // data itself is still cached (tagged fetch with revalidate), so this costs little.
   await connection();
-  const home = await getHomepage();
+  const [home, name, settings] = await Promise.all([
+    getHomepage(),
+    storeName(),
+    getPublicSettings(),
+  ]);
+  const logo = settings['store.logo'];
+  const siteLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name,
+      url: SITE_URL,
+      ...(logo ? { logo } : {}),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name,
+      url: SITE_URL,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${SITE_URL}/search?q={search_term_string}`,
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ];
   return (
     <div className="space-y-12">
+      <JsonLd data={siteLd} />
       <h1 className="sr-only">Shop packaged food online</h1>
       {home.hero.length ? (
         <div
