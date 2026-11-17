@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
+import { ShipmentTimeline } from '@/components/shop/shipment-timeline';
 import { Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
@@ -90,6 +91,7 @@ export function TrackForm({ initialOrder }: { initialOrder: string }) {
               </li>
             ))}
           </ol>
+          <ShipmentTimeline shipments={order.shipments ?? []} />
           <ItemRows items={order.items} />
           <Totals {...order} />
           <p className="text-sm text-neutral-600">

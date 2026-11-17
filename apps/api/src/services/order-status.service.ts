@@ -157,6 +157,8 @@ async function afterStatusChange(
   try {
     if (result.to === 'CONFIRMED' || result.to === 'CANCELLED')
       await sendStatusEmail(deps, result.orderId, result.to, change);
+    if (result.to === 'HANDED_TO_COURIER' || result.to === 'DELIVERED')
+      await sendShippingEmail(deps, result.orderId, result.to);
   } catch (err) {
     console.error(
       `Status email for ${result.orderId} failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -219,6 +221,51 @@ async function sendStatusEmail(
       deliveryCharge: o.deliveryCharge.toFixed(2),
       grandTotal: o.grandTotal.toFixed(2),
       paymentMethod: o.paymentMethod.name,
+      trackUrl,
+    },
+  });
+}
+
+/** Shipped (with the courier tracking code) and delivered emails. */
+async function sendShippingEmail(
+  deps: StatusDeps,
+  orderId: string,
+  to: 'HANDED_TO_COURIER' | 'DELIVERED',
+) {
+  const o = await deps.prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      contactName: true,
+      contactEmail: true,
+      shipments: {
+        select: { trackingCode: true, trackingUrl: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
+  });
+  if (!o.contactEmail) return;
+  const trackUrl = `${deps.env.APP_URL.replace(/\/+$/, '')}/track?order=${encodeURIComponent(o.orderNumber)}`;
+  if (to === 'DELIVERED') {
+    await enqueueEmail(deps, {
+      template: 'order-delivered',
+      to: o.contactEmail,
+      orderId,
+      data: { name: o.contactName, orderNumber: o.orderNumber },
+    });
+    return;
+  }
+  const shipment = o.shipments[0];
+  await enqueueEmail(deps, {
+    template: 'order-shipped',
+    to: o.contactEmail,
+    orderId,
+    data: {
+      name: o.contactName,
+      orderNumber: o.orderNumber,
+      trackingCode: shipment?.trackingCode ?? null,
+      courierTrackingUrl: shipment?.trackingUrl ?? null,
       trackUrl,
     },
   });

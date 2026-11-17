@@ -3,7 +3,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { NoAccess } from '@/components/admin/no-access';
 import { Badge, Button, Card, Input, PageHeader, Select } from '@/components/ui';
+import { can } from '@/lib/admin-nav';
 import { adminForPage } from '@/lib/admin-page';
+import { apiServer } from '@/lib/api-server';
+import { BulkCourierForm } from './bulk-courier-form';
 import type { AdminOrderListItem } from '@/lib/admin-types';
 import { apiServerList } from '@/lib/api-server';
 import { formatDhaka } from '@/lib/format';
@@ -23,7 +26,9 @@ type Search = {
 };
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Search> }) {
-  if (!(await adminForPage('orders.view'))) return <NoAccess />;
+  const admin = await adminForPage('orders.view');
+  if (!admin) return <NoAccess />;
+  const canBook = can(admin, 'orders.book_courier');
   const sp = await searchParams;
   const current = Math.max(1, Number(sp.page) || 1);
   const filters = Object.fromEntries(
@@ -34,12 +39,30 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { items, meta } = await apiServerList<AdminOrderListItem>(
     `/admin/orders?${new URLSearchParams({ page: String(current), pageSize: String(PAGE_SIZE), ...filters })}`,
   );
+  const balance = canBook
+    ? await apiServer<{ configured: true; balance: string } | { configured: false }>(
+        '/admin/courier/balance',
+      ).catch(() => null)
+    : null;
   const link = (p: number) =>
     `/admin/orders?${new URLSearchParams({ page: String(p), ...filters })}`;
 
   return (
     <>
-      <PageHeader title="Orders" description="Dates are Dhaka time." />
+      <PageHeader
+        title="Orders"
+        description="Dates are Dhaka time."
+        actions={
+          canBook ? (
+            <span className="text-sm text-neutral-600">
+              {balance?.configured
+                ? `Courier balance: ${formatTaka(balance.balance)}`
+                : 'Courier not connected yet'}
+            </span>
+          ) : null
+        }
+      />
+      {canBook ? <BulkCourierForm /> : null}
       <Card>
         <form className="mb-4 flex flex-wrap gap-2" action="/admin/orders">
           <Input
@@ -111,6 +134,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               {items.map((o) => (
                 <tr key={o.id} className="hover:bg-neutral-50">
                   <td className="py-2 pr-3">
+                    {canBook && o.status === 'PROCESSING' ? (
+                      <input
+                        type="checkbox"
+                        name="orderIds"
+                        value={o.id}
+                        form="bulk-courier"
+                        aria-label={`Select ${o.orderNumber} for the courier`}
+                        className="mr-2"
+                      />
+                    ) : null}
                     <Link href={`/admin/orders/${o.id}`} className="font-medium underline">
                       {o.orderNumber}
                     </Link>

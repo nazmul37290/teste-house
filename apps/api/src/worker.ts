@@ -4,7 +4,13 @@ import { closeDeps, createDeps } from './deps';
 import { createMailTransport } from './integrations/mail';
 import { processEmailJob } from './jobs/email.processor';
 import {
+  BOOK_JOB,
   bullConnection,
+  COURIER_QUEUE,
+  COURIER_SYNC_EVERY_MS,
+  createCourierQueue,
+  SYNC_JOB,
+  type CourierBookJob,
   createPaymentsQueue,
   EMAIL_QUEUE,
   EXPIRE_JOB,
@@ -16,6 +22,7 @@ import {
   type RevalidateJob,
 } from './jobs/queues';
 import { processRevalidateJob } from './jobs/revalidate.processor';
+import { bookShipment, onBookingFailed, syncShipments } from './services/courier.service';
 import { expireUnpaidOrders, reconcilePayments } from './services/payment.service';
 
 /** Background worker: same image as the API, started with `node dist/worker.js`. */
@@ -78,8 +85,37 @@ await paymentsQueue.upsertJobScheduler(
   { name: EXPIRE_JOB },
 );
 
+// Courier: one booking job per order (retried with backoff), and a status sync every 30 minutes.
+const courierQueue = createCourierQueue(env.REDIS_URL);
+const courierWorker = new Worker(
+  COURIER_QUEUE,
+  async (job) => {
+    if (job.name === BOOK_JOB) {
+      const { orderId, adminUserId } = job.data as CourierBookJob;
+      return bookShipment(deps, orderId, adminUserId);
+    }
+    if (job.name === SYNC_JOB) return { changed: await syncShipments(deps) };
+    return null;
+  },
+  { connection: bullConnection(env.REDIS_URL), concurrency: 2 },
+);
+courierWorker.on('failed', (job, err) => {
+  console.error(`${job?.name} ${job?.id} failed: ${err.message}`);
+  // Out of retries: tell staff on the order (the order itself is left as it was).
+  if (job?.name === BOOK_JOB && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+    void onBookingFailed(deps, (job.data as CourierBookJob).orderId, err.message).catch(
+      () => undefined,
+    );
+  }
+});
+await courierQueue.upsertJobScheduler(
+  SYNC_JOB,
+  { every: COURIER_SYNC_EVERY_MS },
+  { name: SYNC_JOB },
+);
+
 console.log(
-  `Worker started (${env.NODE_ENV}): ${EMAIL_QUEUE}, ${REVALIDATE_QUEUE}, ${PAYMENTS_QUEUE}` +
+  `Worker started (${env.NODE_ENV}): ${EMAIL_QUEUE}, ${REVALIDATE_QUEUE}, ${PAYMENTS_QUEUE}, ${COURIER_QUEUE}` +
     (Object.keys(deps.gateways).length ? '' : ' (no payment gateway configured)'),
 );
 
@@ -91,6 +127,8 @@ async function shutdown(signal: string) {
     revalidateWorker.close(),
     paymentsWorker.close(),
     paymentsQueue.close(),
+    courierWorker.close(),
+    courierQueue.close(),
   ]);
   await closeDeps(deps);
   process.exit(0);

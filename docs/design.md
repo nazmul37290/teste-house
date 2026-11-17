@@ -116,7 +116,7 @@ See `integrations.md`. Summary:
 | Queue / job | Purpose |
 |---|---|
 | `email.send` | Transactional and admin emails, retries, writes `notification_logs` |
-| `courier.book`, `courier.sync` | Steadfast booking and status polling |
+| `courier`: `courier.book`, `courier.sync` | Booking per order (5 attempts, exponential backoff; after the last one a staff note on the order, the order is untouched) and status polling every 30 minutes for orders with the courier (job scheduler) |
 | `payments.maintenance`: `payment.reconcile`, `order.expire-unpaid` | Every 5 minutes (BullMQ job schedulers): re-verify open online payments; cancel online orders unpaid after 30 minutes (stock and coupon released) |
 | (no own queue) | Low-stock alert: checked right after each committed stock change (`checkLowStock()`); the email itself goes through `email.send` (`admin-low-stock`) |
 | `cache.revalidate` | After a successful admin write (catalog, inventory, media, banners, homepage sections, settings) the API enqueues the matching tags (`catalog`, `homepage`, `settings`); the worker POSTs them to the web app's `POST /api/revalidate` at `WEB_INTERNAL_URL` with the `x-revalidate-secret` header. Jobs for the same tags within one second collapse into one (job id from the tags), 5 attempts with backoff. Without `REVALIDATE_SECRET` nothing is enqueued and pages refresh on their 5-minute timer |

@@ -6,6 +6,11 @@ All adapters live in `apps/api/src/integrations/<provider>/`, are called only fr
 
 ## 1. Steadfast courier
 
+**Status (Phase 8, 2026-11-17):** everything around the courier is built and tested with a fake adapter: the `CourierAdapter` seam (`apps/api/src/integrations/courier/`), booking (single and bulk) through the `courier.book` queue, shipments and `courier_events`, the 30-minute `courier.sync` job, the order status mapping (`apps/api/src/services/courier-state.ts`), shipped and delivered emails, the customer and admin parcel timeline, and the balance display. **The Steadfast adapter itself is not written yet**: Steadfast's API documentation is not public (steadfast.com.bd and portal.packzy.com publish none; it is behind the merchant login), and endpoints must not be guessed. Until the owner provides the docs, `createCourier()` returns `null`, booking answers `COURIER_NOT_CONFIGURED` and the sync job does nothing. When the docs arrive: implement `steadfast.ts` against them (base URL, auth headers, create order and bulk fields, COD format, status names into `CourierState`, balance), add the webhook route with the documented authentication, and fill the raw-status table.
+
+Our normalized courier states (`CourierState`): `BOOKED`, `IN_TRANSIT`, `DELIVERED`, `PARTIAL_DELIVERED`, `RETURNED`, `CANCELLED`, `HOLD`, `UNKNOWN`. Only `IN_TRANSIT` -> IN_TRANSIT, `DELIVERED` -> DELIVERED (COD marked paid) and `RETURNED` / `CANCELLED` -> RETURNED (stock back) move the order, and only when the state machine allows it; the others are recorded on the timeline for a person to handle.
+
+
 Env: `STEADFAST_BASE_URL`, `STEADFAST_API_KEY`, `STEADFAST_SECRET_KEY`, `STEADFAST_WEBHOOK_TOKEN`. Enable/disable switch: setting `shipping.steadfastEnabled`.
 
 Adapter interface:

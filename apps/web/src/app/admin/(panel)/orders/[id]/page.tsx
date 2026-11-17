@@ -13,7 +13,14 @@ import { apiServer } from '@/lib/api-server';
 import { formatDhaka } from '@/lib/format';
 import { STATUS_LABEL, STATUS_TONE } from '@/lib/order-types';
 import { formatTaka } from '@/lib/money';
-import { NotesForm, OrderEditor, RefundForm, StatusActions } from './order-admin-actions';
+import { ShipmentTimeline } from '@/components/shop/shipment-timeline';
+import {
+  BookCourierButton,
+  NotesForm,
+  OrderEditor,
+  RefundForm,
+  StatusActions,
+} from './order-admin-actions';
 
 export const metadata: Metadata = { title: 'Order' };
 
@@ -112,6 +119,15 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               )}
             />
           </Card>
+          {order.shipments?.length ? (
+            <Card title="Courier">
+              <ShipmentTimeline shipments={order.shipments} />
+            </Card>
+          ) : order.status === 'PROCESSING' && can(admin, 'orders.book_courier') ? (
+            <Card title="Courier">
+              <BookCourierButton orderId={order.id} />
+            </Card>
+          ) : null}
           <Card title="Customer">
             <p className="text-sm">
               {order.contactName}

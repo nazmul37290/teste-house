@@ -1,4 +1,5 @@
 import { Router, type Request } from 'express';
+import { z } from 'zod';
 import {
   adminOrderListQuerySchema,
   adminPaymentListQuerySchema,
@@ -34,6 +35,7 @@ import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
 import * as adminOrders from '../services/admin-order.service';
 import * as coupons from '../services/coupon.service';
+import * as courier from '../services/courier.service';
 import * as paymentAdmin from '../services/payment-admin.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
 import * as marketing from '../services/marketing.service';
@@ -202,6 +204,41 @@ export function adminRouter(deps: Deps): Router {
     const { items, total } = await adminOrders.listOrders(deps.prisma, q);
     res.json({ data: items, meta: { page: q.page, pageSize: q.pageSize, total } });
   });
+  // Courier (Steadfast adapter pending its official docs: COURIER_NOT_CONFIGURED until then).
+  const bulkBody = z.strictObject({ orderIds: z.array(z.uuid()).min(1).max(100) });
+  router.post(
+    '/orders/bulk/book-courier',
+    requirePermission('orders.book_courier'),
+    async (req, res) => {
+      const { orderIds } = bulkBody.parse(req.body);
+      res.status(202).json({
+        data: await courier.requestBooking(deps, actorFrom(req, deps.env), orderIds),
+      });
+    },
+  );
+  router.post(
+    '/orders/:id/book-courier',
+    requirePermission('orders.book_courier'),
+    async (req, res) => {
+      const [result] = await courier.requestBooking(deps, actorFrom(req, deps.env), [pid(req)]);
+      if (result && !result.queued) {
+        const messages: Record<string, string> = {
+          NOT_FOUND: 'Order not found',
+          ALREADY_BOOKED: 'This order is already with the courier',
+          NOT_PROCESSING: 'Only orders that are being packed can be sent to the courier',
+        };
+        if (result.reason === 'NOT_FOUND') throw new AppError('NOT_FOUND', 'Order not found');
+        throw new AppError('BUSINESS_RULE', messages[result.reason ?? ''] ?? 'Cannot book', [
+          { reason: result.reason },
+        ]);
+      }
+      res.status(202).json({ data: result });
+    },
+  );
+  router.get('/courier/balance', requirePermission('orders.book_courier'), async (_req, res) => {
+    res.json({ data: await courier.courierBalance(deps) });
+  });
+
   // SKU lookup for adding an item while editing an order (orders.edit may lack inventory.view).
   router.get('/orders/variant-lookup', requirePermission('orders.edit'), async (req, res) => {
     const sku = String(req.query.sku ?? '')

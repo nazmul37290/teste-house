@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
+import { ShipmentTimeline } from '@/components/shop/shipment-timeline';
 import { ApiError } from '@/lib/api-types';
 import { apiServer } from '@/lib/api-server';
 import { formatDhaka } from '@/lib/format';
@@ -57,6 +58,12 @@ export default async function AccountOrderPage({
               ))}
             </ol>
           </section>
+          {order.shipments?.length ? (
+            <section className="rounded-lg border border-neutral-200 p-4">
+              <h3 className="mb-2 font-semibold">Delivery</h3>
+              <ShipmentTimeline shipments={order.shipments} />
+            </section>
+          ) : null}
           {a ? (
             <section className="rounded-lg border border-neutral-200 p-4 text-sm">
               <h3 className="mb-2 font-semibold">Delivery address</h3>

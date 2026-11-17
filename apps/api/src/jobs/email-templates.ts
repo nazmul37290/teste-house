@@ -24,6 +24,14 @@ export type EmailTemplates = {
     reason: string | null;
   };
   'admin-payment-review': { orderNumber: string; problem: string; url: string };
+  'order-shipped': {
+    name: string;
+    orderNumber: string;
+    trackingCode: string | null;
+    courierTrackingUrl: string | null;
+    trackUrl: string;
+  };
+  'order-delivered': { name: string; orderNumber: string };
   'admin-new-order': {
     orderNumber: string;
     customerName: string;
@@ -180,6 +188,22 @@ Track your order: ${o.trackUrl}`,
       text: `Hi ${name},\n\n${why} ${orderNumber}.\n${note ? `${note}\n` : ''}Nothing is due for this order. If you have questions, reply to this email.`,
     };
   },
+  'order-shipped': ({ name, orderNumber, trackingCode, courierTrackingUrl, trackUrl }, brand) => ({
+    subject: `Order ${orderNumber} is on its way – ${brand.name}`,
+    html: layout(
+      brand,
+      `<p>Hi ${escapeHtml(name)},</p><p>Your order <strong>${escapeHtml(orderNumber)}</strong> is with the courier.${trackingCode ? ` Tracking code: <strong>${escapeHtml(trackingCode)}</strong>.` : ''}</p>${button(courierTrackingUrl ?? trackUrl, 'Track your parcel')}<p style="font-size:13px;color:#525252">If you pay on delivery, please keep the amount ready.</p>`,
+    ),
+    text: `Hi ${name},\n\nYour order ${orderNumber} is with the courier.${trackingCode ? ` Tracking code: ${trackingCode}.` : ''}\n\nTrack your parcel: ${courierTrackingUrl ?? trackUrl}\n\nIf you pay on delivery, please keep the amount ready.`,
+  }),
+  'order-delivered': ({ name, orderNumber }, brand) => ({
+    subject: `Order ${orderNumber} delivered – ${brand.name}`,
+    html: layout(
+      brand,
+      `<p>Hi ${escapeHtml(name)},</p><p>Your order <strong>${escapeHtml(orderNumber)}</strong> has been delivered. Thank you for shopping with us!</p>`,
+    ),
+    text: `Hi ${name},\n\nYour order ${orderNumber} has been delivered. Thank you for shopping with us!`,
+  }),
   'admin-payment-review': ({ orderNumber, problem, url }, brand) => ({
     subject: `Payment needs review: ${orderNumber}`,
     html: layout(

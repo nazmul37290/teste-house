@@ -404,3 +404,28 @@ export function RefundForm({
     </form>
   );
 }
+
+/** Queues the courier booking; the order moves to "with the courier" once the parcel is booked. */
+export function BookCourierButton({ orderId }: { orderId: string }) {
+  const { busy, status, run } = useAction();
+  return (
+    <div className="space-y-2">
+      {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
+      <p className="text-sm text-neutral-600">
+        Books a parcel with the courier, with the amount to collect on delivery.
+      </p>
+      <Button
+        type="button"
+        disabled={busy}
+        onClick={() =>
+          void run(
+            () => api(`/admin/orders/${orderId}/book-courier`, { method: 'POST', body: {} }),
+            'Queued for the courier. The order updates in a moment.',
+          )
+        }
+      >
+        Send to courier
+      </Button>
+    </div>
+  );
+}

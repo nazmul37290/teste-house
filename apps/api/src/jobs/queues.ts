@@ -60,3 +60,23 @@ export function createPaymentsQueue(redisUrl: string): Queue {
     defaultJobOptions: { removeOnComplete: 100, removeOnFail: 500 },
   });
 }
+
+/** Courier work (worker): `courier.book` per order, and the scheduled `courier.sync`. */
+export const COURIER_QUEUE = 'courier';
+export const BOOK_JOB = 'courier.book';
+export const SYNC_JOB = 'courier.sync';
+export const COURIER_SYNC_EVERY_MS = 30 * 60_000;
+export type CourierBookJob = { orderId: string; adminUserId: string | null };
+export type CourierQueue = Queue<CourierBookJob | Record<string, never>>;
+
+export function createCourierQueue(redisUrl: string): CourierQueue {
+  return new Queue(COURIER_QUEUE, {
+    connection: bullConnection(redisUrl),
+    defaultJobOptions: {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 30_000 },
+      removeOnComplete: 500,
+      removeOnFail: 2000,
+    },
+  });
+}

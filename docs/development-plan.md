@@ -93,11 +93,11 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 8: Steadfast
 
-- [ ] Adapter and status map (from official docs)
-- [ ] Single and bulk booking via queue; shipment record; order status change
-- [ ] Webhook plus polling sync; courier events timeline
-- [ ] Customer tracking timeline and shipped email
-- [ ] Courier balance display in admin
+- [ ] Adapter and status map (from official docs) (seam, states and mapping done; Steadfast adapter waits for the docs from the merchant dashboard)
+- [x] Single and bulk booking via queue; shipment record; order status change
+- [ ] Webhook plus polling sync; courier events timeline (polling and timeline done; webhook waits for the docs)
+- [x] Customer tracking timeline and shipped email
+- [x] Courier balance display in admin (shows "not connected" until the adapter exists)
 
 ## Phase 9: Reviews, ratings, wishlist
 

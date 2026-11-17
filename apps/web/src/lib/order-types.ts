@@ -89,6 +89,7 @@ export type OrderView = {
     discountAmount: string;
   }[];
   timeline: { status: OrderStatus; at: string }[];
+  shipments?: Shipment[];
   /** Only on the response that placed an online order: where to pay, or why paying could not start. */
   payment?: { redirectUrl: string } | { error: string } | null;
 };
@@ -132,4 +133,20 @@ export const STATUS_TONE: Record<OrderStatus, 'green' | 'amber' | 'neutral'> = {
   CANCELLED: 'neutral',
   RETURNED: 'neutral',
   FAILED: 'neutral',
+};
+
+/** A courier parcel with its tracking timeline (STF-9). */
+export type Shipment = {
+  provider: string;
+  trackingCode: string | null;
+  trackingUrl: string | null;
+  courierStatus: string | null;
+  bookedAt: string;
+  events: { status: string; message: string | null; at: string }[];
+};
+
+/** Courier status text as shown to people ("in_transit" -> "In transit"). */
+export const courierStatusText = (s: string) => {
+  const t = s.replace(/_/g, ' ').trim();
+  return t ? t[0]!.toUpperCase() + t.slice(1) : '';
 };

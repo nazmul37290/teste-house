@@ -752,6 +752,21 @@ const viewSelect = {
     orderBy: { productName: 'asc' },
   },
   statusHistory: { select: { toStatus: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
+  shipments: {
+    where: { consignmentId: { not: null } },
+    select: {
+      provider: true,
+      trackingCode: true,
+      trackingUrl: true,
+      courierStatus: true,
+      createdAt: true,
+      events: {
+        select: { status: true, message: true, occurredAt: true },
+        orderBy: { occurredAt: 'asc' },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  },
 } as const;
 
 type ViewRow = Prisma.OrderGetPayload<{ select: typeof viewSelect }>;
@@ -782,6 +797,15 @@ function toView(o: ViewRow) {
       discountAmount: i.discountAmount.toFixed(2),
     })),
     timeline: o.statusHistory.map((h) => ({ status: h.toStatus, at: h.createdAt })),
+    // Courier parcels with their tracking timeline (STF-9). Raw payloads are never exposed.
+    shipments: o.shipments.map((s) => ({
+      provider: s.provider,
+      trackingCode: s.trackingCode,
+      trackingUrl: s.trackingUrl,
+      courierStatus: s.courierStatus,
+      bookedAt: s.createdAt,
+      events: s.events.map((e) => ({ status: e.status, message: e.message, at: e.occurredAt })),
+    })),
   };
 }
 export type OrderView = ReturnType<typeof toView>;
