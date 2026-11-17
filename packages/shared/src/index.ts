@@ -11,3 +11,4 @@ export * from './product';
 export * from './storefront-schemas';
 export * from './bd-geo';
 export * from './checkout-schemas';
+export * from './order-admin-schemas';

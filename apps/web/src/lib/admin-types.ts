@@ -235,3 +235,53 @@ export type Coupon = {
   isActive: boolean;
   createdAt: string;
 };
+
+export type AdminOrderListItem = {
+  id: string;
+  orderNumber: string;
+  status: import('./order-types').OrderStatus;
+  paymentStatus: string;
+  placedAt: string;
+  contactName: string;
+  contactPhone: string;
+  grandTotal: string;
+  customerId: string | null;
+  paymentMethod: { code: string; name: string };
+  district: string | null;
+  lineCount: number;
+};
+
+export type AdminOrder = import('./order-types').OrderView & {
+  id: string;
+  contactPhone: string;
+  contactEmail: string | null;
+  customerNote: string | null;
+  customerId: string | null;
+  cancelReason: string | null;
+  history: {
+    from: string | null;
+    to: string;
+    note: string | null;
+    source: string;
+    by: string | null;
+    at: string;
+  }[];
+  notes: { id: string; note: string; by: string | null; at: string }[];
+  payments: {
+    id: string;
+    amount: string;
+    status: string;
+    gatewayTxnId: string | null;
+    createdAt: string;
+  }[];
+  allowedTransitions: import('./order-types').OrderStatus[];
+  editable: boolean;
+  risk: {
+    otherOrdersSamePhone: number;
+    delivered: number;
+    cancelled: number;
+    returnedOrFailed: number;
+    problemRate: number | null;
+    sameIpLast24h: number;
+  };
+};

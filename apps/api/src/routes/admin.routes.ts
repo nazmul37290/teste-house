@@ -1,5 +1,10 @@
 import { Router, type Request } from 'express';
 import {
+  adminOrderListQuerySchema,
+  changeOrderStatusSchema,
+  editOrderSchema,
+  hasPermission,
+  orderNoteSchema,
   createBannerSchema,
   createCouponSchema,
   createDeliveryZoneSchema,
@@ -20,11 +25,14 @@ import type { Deps } from '../deps';
 import { requireAdmin } from '../middleware/require-admin';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import { requirePermission } from '../middleware/require-permission';
+import { AppError } from '../lib/errors';
 import { revalidateAfterWrite } from '../middleware/revalidate-after-write';
 import { singleUpload } from '../middleware/upload';
 import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
+import * as adminOrders from '../services/admin-order.service';
 import * as coupons from '../services/coupon.service';
+import { renderOrderPdf } from '../services/order-pdf.service';
 import * as marketing from '../services/marketing.service';
 import * as shipping from '../services/shipping.service';
 import { getAllSettings, updateSettings } from '../services/settings.service';
@@ -184,6 +192,96 @@ export function adminRouter(deps: Deps): Router {
       res.status(204).end();
     },
   );
+
+  // Orders.
+  router.get('/orders', requirePermission('orders.view'), async (req, res) => {
+    const q = adminOrderListQuerySchema.parse(req.query);
+    const { items, total } = await adminOrders.listOrders(deps.prisma, q);
+    res.json({ data: items, meta: { page: q.page, pageSize: q.pageSize, total } });
+  });
+  // SKU lookup for adding an item while editing an order (orders.edit may lack inventory.view).
+  router.get('/orders/variant-lookup', requirePermission('orders.edit'), async (req, res) => {
+    const sku = String(req.query.sku ?? '')
+      .trim()
+      .toUpperCase()
+      .slice(0, 64);
+    const v = sku
+      ? await deps.prisma.productVariant.findUnique({
+          where: { sku },
+          select: {
+            id: true,
+            sku: true,
+            name: true,
+            price: true,
+            salePrice: true,
+            stockQty: true,
+            isActive: true,
+            product: { select: { name: true, status: true, deletedAt: true } },
+          },
+        })
+      : null;
+    if (!v || !v.isActive || v.product.status !== 'ACTIVE' || v.product.deletedAt) {
+      throw new AppError('NOT_FOUND', 'No orderable variant with this SKU');
+    }
+    res.json({
+      data: {
+        variantId: v.id,
+        sku: v.sku,
+        productName: v.product.name,
+        variantName: v.name,
+        price: (v.salePrice ?? v.price).toFixed(2),
+        stockQty: v.stockQty,
+      },
+    });
+  });
+  router.get('/orders/:id', requirePermission('orders.view'), async (req, res) => {
+    res.json({ data: await adminOrders.getOrder(deps.prisma, pid(req)) });
+  });
+  router.post(
+    '/orders/:id/status',
+    requirePermission('orders.update_status', 'orders.cancel'),
+    async (req, res) => {
+      const input = changeOrderStatusSchema.parse(req.body);
+      // Cancelling needs orders.cancel; every other change needs orders.update_status.
+      const needed = input.status === 'CANCELLED' ? 'orders.cancel' : 'orders.update_status';
+      const admin = req.admin!;
+      if (!hasPermission(admin.permissions, needed, admin.role.isSystem)) {
+        throw new AppError('FORBIDDEN', 'You do not have permission to do this');
+      }
+      res.json({
+        data: await adminOrders.setStatus(deps, actorFrom(req, deps.env), pid(req), input),
+      });
+    },
+  );
+  router.patch('/orders/:id', requirePermission('orders.edit'), async (req, res) => {
+    const input = editOrderSchema.parse(req.body);
+    res.json({
+      data: await adminOrders.editOrder(deps, actorFrom(req, deps.env), pid(req), input),
+    });
+  });
+  router.post('/orders/:id/notes', requirePermission('orders.add_note'), async (req, res) => {
+    const { note } = orderNoteSchema.parse(req.body);
+    res.status(201).json({
+      data: await adminOrders.addNote(deps.prisma, actorFrom(req, deps.env), pid(req), note),
+    });
+  });
+  for (const kind of ['invoice', 'packing-slip'] as const) {
+    router.get(`/orders/:id/${kind}`, requirePermission('orders.view'), async (req, res) => {
+      const id = pid(req);
+      const order = await deps.prisma.order.findUnique({
+        where: { id },
+        select: { orderNumber: true },
+      });
+      if (!order) throw new AppError('NOT_FOUND', 'Order not found');
+      res
+        .set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${kind}-${order.orderNumber}.pdf"`,
+          'Cache-Control': 'private, no-store',
+        })
+        .send(await renderOrderPdf(deps.prisma, id, kind));
+    });
+  }
 
   // Shipping, payment methods and coupons.
   router.get('/delivery-zones', requirePermission('shipping.manage'), async (_req, res) => {

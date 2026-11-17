@@ -118,3 +118,16 @@ export type OrderListItem = {
   itemCount: number;
   paymentMethod: { name: string };
 };
+
+/** Badge colour per status in the admin. */
+export const STATUS_TONE: Record<OrderStatus, 'green' | 'amber' | 'neutral'> = {
+  PENDING: 'amber',
+  CONFIRMED: 'amber',
+  PROCESSING: 'amber',
+  HANDED_TO_COURIER: 'neutral',
+  IN_TRANSIT: 'neutral',
+  DELIVERED: 'green',
+  CANCELLED: 'neutral',
+  RETURNED: 'neutral',
+  FAILED: 'neutral',
+};
