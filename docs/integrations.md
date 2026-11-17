@@ -37,38 +37,43 @@ Behaviour:
 
 ## 2. UddoktaPay (online payments)
 
-Env: `UDDOKTAPAY_BASE_URL`, `UDDOKTAPAY_API_KEY`, `UDDOKTAPAY_WEBHOOK_SECRET` (if the provider supports one).
+Env: `UDDOKTAPAY_BASE_URL` (the merchant's own UddoktaPay installation, e.g. `https://pay.yourshop.com.bd`; development: `https://sandbox.uddoktapay.com` with the public test key from the official docs), `UDDOKTAPAY_API_KEY`. The gateway is offered at checkout only when both are set and the `UDDOKTAPAY` payment method is active. There is no separate webhook secret: the provider authenticates its webhook with the same API key.
 
-Adapter interface:
+From the official docs (uddoktapay.readme.io, read 2026-11-17) and checked against the sandbox:
+
+- Every call: `POST`, JSON, headers `RT-UDDOKTAPAY-API-KEY: <key>`, `Content-Type` and `Accept: application/json`.
+- Create charge `{base}/api/checkout-v2`: `full_name`, `email` (required; guests without email get the never-mailed `<phone>@phone.invalid`), `amount` (string, `"1660.00"`), `metadata` (`{ order_number, payment_id }`), `redirect_url` (web `/payment/return`), `return_type: "GET"`, `cancel_url` (web `/payment/return?cancelled=1`), `webhook_url` (API `/api/v1/webhooks/uddoktapay`). Success `{ status: true, message, payment_url }`; error `{ status: false, message }`.
+- The token in `payment_url` is **not** the invoice id (verifying it returns "No Data Found"). The real `invoice_id` reaches us only on the return URL (`?invoice_id=...`) and in the webhook body.
+- Verify `{base}/api/verify-payment` `{ invoice_id }`: `amount`, `fee`, `charged_amount` (strings), `invoice_id`, `metadata`, `payment_method`, `sender_number`, `transaction_id`, `date`, `status`. `COMPLETED` = paid; `PENDING` = pending; the sandbox returns an **empty status** for an invoice not paid yet (treated as pending); only `ERROR` on a known invoice is a failure; `{ status: "ERROR", message: "No Data Found" }` (unknown invoice) changes nothing.
+- Webhook: `POST` with the same header and the verify fields in the body. The docs say it is sent when an admin clicks "send webhook" in the UddoktaPay panel, so it cannot be relied on. We compare the header with our key (timing-safe), read only `invoice_id`, and run our own verify.
+- Refund `{base}/api/refund-payment` exists; we do not call it (refunds are recorded manually, PAY-7).
+- Sandbox quirk: the redirect drops the port of `redirect_url` (`http://localhost/payment/return?...`). Locally, add `:3000` by hand; real domains are unaffected.
+
+Adapter interface (`apps/api/src/integrations/payments/`):
 
 ```ts
 interface PaymentGateway {
+  readonly code: string; // payment_methods.code
   createCharge(input: {
-    orderNumber: string;
-    amount: number;           // BDT, from the order total on the server
-    customer: { name: string; phone: string; email?: string };
-    returnUrl: string;        // result page, display only
-    cancelUrl: string;
-    webhookUrl: string;
-  }): Promise<{ redirectUrl: string; gatewayInvoiceId: string; raw: unknown }>;
-
+    orderNumber: string; paymentId: string; amount: Paisa;
+    customer: { name: string; phone: string; email: string };
+    returnUrl: string; cancelUrl: string; webhookUrl: string;
+  }): Promise<{ redirectUrl: string; gatewayInvoiceId: string | null; raw: unknown; request: unknown }>;
   verify(ref: { gatewayInvoiceId: string }): Promise<{
-    status: 'SUCCESS' | 'PENDING' | 'FAILED';
-    amount: number;
-    gatewayTxnId?: string;
-    raw: unknown;
+    status: 'SUCCESS' | 'PENDING' | 'FAILED'; amount: Paisa | null; gatewayInvoiceId: string;
+    gatewayTxnId?: string; orderNumber?: string; paymentId?: string; raw: unknown;
   }>;
 }
 ```
 
 Behaviour:
 
-- The amount always comes from `orders.grandTotal`, never from the client. The verified gateway amount must equal `orders.grandTotal`; a mismatch marks the payment `FAILED`, flags the order for review and never marks it paid (see `pricing.md` section 7).
-- The browser return URL only shows state. **Payment is confirmed only by the webhook or by `verify()`**; compare the verified amount and order reference with our records before marking `SUCCESS`.
-- Webhook handler is idempotent: a repeated notification for an already successful payment is a no-op. Unique key `(methodId, gatewayTxnId)` prevents duplicates.
-- Save `rawRequest` and `rawResponse` on `payments` for dispute handling.
-- Unpaid online orders are cancelled after 30 minutes (`order.expire-unpaid`); a late successful payment on a cancelled order is flagged for admin review, not silently applied.
-- The gateway is registered as a `payment_methods` row (`code = UDDOKTAPAY`); the admin toggle controls whether it appears at checkout. New gateways implement `PaymentGateway` and get their own row.
+- The amount always comes from `orders.grandTotal`. `applyVerification()` (`payment.service.ts`) is the only code that records money: it locks the order, and accepts a COMPLETED payment only when the verified amount equals the order total and the attempt amount, and the echoed order number matches. A mismatch marks the attempt `FAILED`, adds an order note and emails `notifications.adminEmail` (`admin-payment-review`); it never marks the order paid.
+- The browser return URL only triggers our verify; it is never proof. A verified payment sets `orders.paymentStatus = PAID` and auto-confirms the order (`CONFIRMED`, source SYSTEM, confirmation email).
+- Idempotent: an attempt already `SUCCESS` is left alone; `(methodId, gatewayTxnId)` is unique.
+- `rawRequest` / `rawResponse` are stored on `payments`.
+- Jobs (worker, every 5 minutes): `payment.reconcile` re-verifies open attempts whose invoice id is known; `order.expire-unpaid` verifies once more, then cancels online orders unpaid 30 minutes after placement (stock and coupon released, open attempts `CANCELLED`). A payment that arrives after that is recorded, the order stays cancelled, and staff get a note and an email to refund or reinstate.
+- Online orders get no "order received" email; the first email is the confirmation (paid) or the cancellation (expired).
 
 ## 3. Email (Mailgun, switchable)
 

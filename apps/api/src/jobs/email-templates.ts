@@ -23,6 +23,7 @@ export type EmailTemplates = {
     byCustomer: boolean;
     reason: string | null;
   };
+  'admin-payment-review': { orderNumber: string; problem: string; url: string };
   'admin-new-order': {
     orderNumber: string;
     customerName: string;
@@ -179,6 +180,14 @@ Track your order: ${o.trackUrl}`,
       text: `Hi ${name},\n\n${why} ${orderNumber}.\n${note ? `${note}\n` : ''}Nothing is due for this order. If you have questions, reply to this email.`,
     };
   },
+  'admin-payment-review': ({ orderNumber, problem, url }, brand) => ({
+    subject: `Payment needs review: ${orderNumber}`,
+    html: layout(
+      brand,
+      `<p>An online payment for order <strong>${escapeHtml(orderNumber)}</strong> needs your attention:</p><p>${escapeHtml(problem)}</p>${button(url, 'Open order')}`,
+    ),
+    text: `An online payment for order ${orderNumber} at ${brand.name} needs your attention:\n\n${problem}\n\n${url}`,
+  }),
   'admin-new-order': (o, brand) => ({
     subject: `New order ${o.orderNumber}: ${formatTaka(o.grandTotal)}`,
     html: layout(

@@ -162,6 +162,11 @@ export function CheckoutForm() {
         // Private mode: the confirmation page falls back to tracking.
       }
       void cartApi.refresh().catch(() => undefined);
+      // Online payment: off to the gateway. Paid or not is decided by our server, never this redirect.
+      if (order.payment && 'redirectUrl' in order.payment) {
+        window.location.assign(order.payment.redirectUrl);
+        return;
+      }
       router.push(`/order/${order.orderNumber}`);
     } catch (err) {
       setPlacing(false);

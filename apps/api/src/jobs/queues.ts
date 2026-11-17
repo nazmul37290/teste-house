@@ -47,3 +47,16 @@ export function createEmailQueue(redisUrl: string): EmailQueue {
     },
   });
 }
+
+/** Scheduled payment upkeep (worker): re-verify open attempts and expire unpaid online orders. */
+export const PAYMENTS_QUEUE = 'payments.maintenance';
+export const RECONCILE_JOB = 'payment.reconcile';
+export const EXPIRE_JOB = 'order.expire-unpaid';
+export const PAYMENT_JOB_EVERY_MS = 5 * 60_000;
+
+export function createPaymentsQueue(redisUrl: string): Queue {
+  return new Queue(PAYMENTS_QUEUE, {
+    connection: bullConnection(redisUrl),
+    defaultJobOptions: { removeOnComplete: 100, removeOnFail: 500 },
+  });
+}

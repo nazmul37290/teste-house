@@ -86,9 +86,9 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 7: Online payment (UddoktaPay)
 
-- [ ] `PaymentGateway` adapter, charge creation, return page
-- [ ] Webhook plus verify, amount check, idempotency
-- [ ] Unpaid order expiry job, stock release
+- [x] `PaymentGateway` adapter, charge creation, return page
+- [x] Webhook plus verify, amount check, idempotency
+- [x] Unpaid order expiry job, stock release
 - [ ] Admin toggle and payment records view; refunds recorded manually
 
 ## Phase 8: Steadfast

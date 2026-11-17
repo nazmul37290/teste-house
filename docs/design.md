@@ -100,9 +100,9 @@ Side effects: `CANCELLED`/`FAILED`/`RETURNED` restore stock; `DELIVERED` sets `d
 
 See `integrations.md`. Summary:
 
-1. Create order (transaction), then create a `payments` row `INITIATED` and call the gateway adapter `createCharge()`; return the redirect URL.
-2. Customer pays on the gateway; browser returns to a result page that only **displays** state.
-3. The webhook (and a fallback verify call) confirms with the gateway, checks amount and order match, and sets `payments.status = SUCCESS`, `orders.paymentStatus = PAID`, then auto-confirms or leaves for manual confirmation per setting. Processing is idempotent.
+1. Create order (transaction, `paymentStatus = PENDING`), then create a `payments` row `INITIATED` and call the gateway adapter `createCharge()`; the order response carries `payment.redirectUrl` (or `payment.error`: the order is kept and can be paid with `POST /orders/pay`).
+2. Customer pays on the gateway; the browser returns to `/payment/return?invoice_id=...`, which asks `POST /payments/uddoktapay/confirm` and only **displays** the result.
+3. Confirmation always comes from our own `verify()` call (return page, webhook, reconcile job or expiry job), applied by `applyVerification()`: amount and order must match, then `payments.status = SUCCESS`, `orders.paymentStatus = PAID` and the order is auto-confirmed (decided in Phase 7). Processing is idempotent. Details in `integrations.md` section 2.
 
 ## 7. Steadfast courier
 
@@ -117,7 +117,7 @@ See `integrations.md`. Summary:
 |---|---|
 | `email.send` | Transactional and admin emails, retries, writes `notification_logs` |
 | `courier.book`, `courier.sync` | Steadfast booking and status polling |
-| `order.expire-unpaid` | Cancel stale online-payment orders |
+| `payments.maintenance`: `payment.reconcile`, `order.expire-unpaid` | Every 5 minutes (BullMQ job schedulers): re-verify open online payments; cancel online orders unpaid after 30 minutes (stock and coupon released) |
 | (no own queue) | Low-stock alert: checked right after each committed stock change (`checkLowStock()`); the email itself goes through `email.send` (`admin-low-stock`) |
 | `cache.revalidate` | After a successful admin write (catalog, inventory, media, banners, homepage sections, settings) the API enqueues the matching tags (`catalog`, `homepage`, `settings`); the worker POSTs them to the web app's `POST /api/revalidate` at `WEB_INTERNAL_URL` with the `x-revalidate-secret` header. Jobs for the same tags within one second collapse into one (job id from the tags), 5 attempts with backoff. Without `REVALIDATE_SECRET` nothing is enqueued and pages refresh on their 5-minute timer |
 | `media.cleanup` | Remove orphaned files after a grace period |
@@ -185,7 +185,7 @@ See `integrations.md`. Summary:
 | Auth | `BETTER_AUTH_SECRET` (signs cookies, encrypts 2FA secrets; at least 32 chars), `BETTER_AUTH_URL` (public web origin) |
 | Mail | `MAIL_PROVIDER` (`mailgun` or `smtp`), `MAIL_FROM`, `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_BASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` |
 | Steadfast | `STEADFAST_BASE_URL`, `STEADFAST_API_KEY`, `STEADFAST_SECRET_KEY`, `STEADFAST_WEBHOOK_TOKEN` |
-| UddoktaPay | `UDDOKTAPAY_BASE_URL`, `UDDOKTAPAY_API_KEY`, `UDDOKTAPAY_WEBHOOK_SECRET` |
+| UddoktaPay | `UDDOKTAPAY_BASE_URL` (the merchant's installation), `UDDOKTAPAY_API_KEY` (also authenticates the webhook) |
 | Files | `UPLOAD_DIR`, `PUBLIC_MEDIA_URL` |
 | Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` (web and api/worker, same value, at least 16 chars), `WEB_INTERNAL_URL` (api/worker: internal address of the web app for revalidation) |
 | Optional | `SENTRY_DSN`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |

@@ -89,6 +89,8 @@ export type OrderView = {
     discountAmount: string;
   }[];
   timeline: { status: OrderStatus; at: string }[];
+  /** Only on the response that placed an online order: where to pay, or why paying could not start. */
+  payment?: { redirectUrl: string } | { error: string } | null;
 };
 
 /** The order just placed, kept for the confirmation page (this tab only). */

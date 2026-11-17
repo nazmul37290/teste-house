@@ -16,6 +16,7 @@ import { publicSettingsRouter } from './routes/settings.routes';
 import { accountRouter } from './routes/account.routes';
 import { cartRouter } from './routes/cart.routes';
 import { orderRouter } from './routes/order.routes';
+import { paymentRouter } from './routes/payment.routes';
 import { storefrontRouter } from './routes/storefront.routes';
 
 export function createApp(deps: Deps): Express {
@@ -65,6 +66,7 @@ export function createApp(deps: Deps): Express {
   app.use('/api/v1', storefrontRouter(deps));
   app.use('/api/v1', cartRouter(deps));
   app.use('/api/v1', orderRouter(deps));
+  app.use('/api/v1', paymentRouter(deps));
   app.use('/api/v1', accountRouter(deps));
   app.use('/api/v1/admin', adminRouter(deps));
 

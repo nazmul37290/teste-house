@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
+import { PayNowButton } from '@/components/shop/pay-now-button';
 import { LAST_ORDER_KEY, type OrderView } from '@/lib/order-types';
 
 /**
@@ -64,6 +65,20 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
             : ''}
         </p>
       </div>
+
+      {order.paymentMethod.code !== 'COD' &&
+      order.paymentStatus !== 'PAID' &&
+      order.contactPhone ? (
+        <section className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
+          <p className="font-medium">Payment not completed yet</p>
+          <p>
+            {order.payment && 'error' in order.payment
+              ? order.payment.error
+              : 'Pay within 30 minutes, or the order is cancelled.'}
+          </p>
+          <PayNowButton orderNumber={order.orderNumber} phone={order.contactPhone} />
+        </section>
+      ) : null}
 
       <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
         <ItemRows items={order.items} />

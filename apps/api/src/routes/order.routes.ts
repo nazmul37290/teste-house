@@ -8,6 +8,8 @@ import { enforceRateLimit } from '../lib/rate-limit';
 import { optionalCustomer } from '../middleware/require-customer';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import * as orders from '../services/order.service';
+import { ONLINE_METHOD_CODES } from '../services/order.service';
+import * as payments from '../services/payment.service';
 import { resolveCartId } from './cart.routes';
 
 const idempotencyKey = z.uuid();
@@ -55,7 +57,19 @@ export function orderRouter(deps: Deps): Router {
       },
       input,
     );
-    res.status(result.created ? 201 : 200).json({ data: result.order });
+    // Online payment: open a gateway charge for the new order (a failure still returns the order).
+    const payment =
+      result.created && ONLINE_METHOD_CODES.includes(result.order.paymentMethod.code)
+        ? await payments.startPayment(deps, result.orderId)
+        : null;
+    res.status(result.created ? 201 : 200).json({ data: { ...result.order, payment } });
+  });
+
+  // "Pay again" for an unpaid online order (order number + phone, like tracking).
+  router.post('/orders/pay', async (req, res) => {
+    await enforceRateLimit(deps.redis, `pay:${clientIp(req, deps.env)}`, 10, 60);
+    const { orderNumber, phone } = trackOrderSchema.parse(req.body);
+    res.json({ data: await payments.payAgain(deps, orderNumber, phone) });
   });
 
   router.post('/orders/track', async (req, res) => {

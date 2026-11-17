@@ -42,7 +42,6 @@ const schema = z.object({
 
   UDDOKTAPAY_BASE_URL: z.string().optional(),
   UDDOKTAPAY_API_KEY: z.string().optional(),
-  UDDOKTAPAY_WEBHOOK_SECRET: z.string().optional(),
 
   UPLOAD_DIR: z.string().default('./uploads'),
   PUBLIC_MEDIA_URL: z.string().default('http://localhost:4000/media'),

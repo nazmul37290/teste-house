@@ -5,12 +5,18 @@ import { createMailTransport } from './integrations/mail';
 import { processEmailJob } from './jobs/email.processor';
 import {
   bullConnection,
+  createPaymentsQueue,
   EMAIL_QUEUE,
+  EXPIRE_JOB,
+  PAYMENT_JOB_EVERY_MS,
+  PAYMENTS_QUEUE,
+  RECONCILE_JOB,
   REVALIDATE_QUEUE,
   type EmailJob,
   type RevalidateJob,
 } from './jobs/queues';
 import { processRevalidateJob } from './jobs/revalidate.processor';
+import { expireUnpaidOrders, reconcilePayments } from './services/payment.service';
 
 /** Background worker: same image as the API, started with `node dist/worker.js`. */
 const env = loadEnv();
@@ -47,12 +53,45 @@ if (!env.REVALIDATE_SECRET) {
   );
 }
 
-console.log(`Worker started (${env.NODE_ENV}): ${EMAIL_QUEUE}, ${REVALIDATE_QUEUE}`);
+// Payments: verify open attempts and cancel online orders not paid in time, every 5 minutes.
+const paymentsQueue = createPaymentsQueue(env.REDIS_URL);
+const paymentsWorker = new Worker(
+  PAYMENTS_QUEUE,
+  async (job) => {
+    if (job.name === RECONCILE_JOB) return { verified: await reconcilePayments(deps) };
+    if (job.name === EXPIRE_JOB) return { cancelled: await expireUnpaidOrders(deps) };
+    return null;
+  },
+  { connection: bullConnection(env.REDIS_URL), concurrency: 1 },
+);
+paymentsWorker.on('failed', (job, err) => {
+  console.error(`${job?.name} failed: ${err.message}`);
+});
+await paymentsQueue.upsertJobScheduler(
+  RECONCILE_JOB,
+  { every: PAYMENT_JOB_EVERY_MS },
+  { name: RECONCILE_JOB },
+);
+await paymentsQueue.upsertJobScheduler(
+  EXPIRE_JOB,
+  { every: PAYMENT_JOB_EVERY_MS },
+  { name: EXPIRE_JOB },
+);
+
+console.log(
+  `Worker started (${env.NODE_ENV}): ${EMAIL_QUEUE}, ${REVALIDATE_QUEUE}, ${PAYMENTS_QUEUE}` +
+    (Object.keys(deps.gateways).length ? '' : ' (no payment gateway configured)'),
+);
 
 async function shutdown(signal: string) {
   console.log(`${signal} received, closing worker`);
   setTimeout(() => process.exit(1), 10_000).unref();
-  await Promise.all([emailWorker.close(), revalidateWorker.close()]);
+  await Promise.all([
+    emailWorker.close(),
+    revalidateWorker.close(),
+    paymentsWorker.close(),
+    paymentsQueue.close(),
+  ]);
   await closeDeps(deps);
   process.exit(0);
 }

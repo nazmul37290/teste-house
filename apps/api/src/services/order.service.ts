@@ -31,14 +31,19 @@ import { businessRule } from './role.service';
 
 export type OrderDeps = Pick<
   Deps,
-  'prisma' | 'redis' | 'env' | 'emailQueue' | 'revalidateQueue' | 'publicMediaUrl'
+  'prisma' | 'redis' | 'env' | 'emailQueue' | 'revalidateQueue' | 'publicMediaUrl' | 'gateways'
 >;
 type Tx = Prisma.TransactionClient;
 
 /** Cash on Delivery with scope DHAKA_ONLY is offered only in this zone (seeded code). */
 export const INSIDE_DHAKA_ZONE_CODE = 'inside-dhaka';
-/** Methods checkout can take today; UDDOKTAPAY joins when its adapter exists (Phase 7). */
-export const CHECKOUT_METHOD_CODES = ['COD'];
+/** Methods with no gateway behind them. Online methods are usable only when their gateway is set up. */
+export const OFFLINE_METHOD_CODES = ['COD'];
+export const ONLINE_METHOD_CODES = ['UDDOKTAPAY'];
+const supportedCodes = (deps: Pick<OrderDeps, 'gateways'>) => [
+  ...OFFLINE_METHOD_CODES,
+  ...Object.keys(deps.gateways),
+];
 
 const paisaOf = (d: { toFixed(n: number): string }) => parsePaisa(d.toFixed(2));
 const money = (p: Paisa) => formatPaisa(p);
@@ -216,8 +221,9 @@ function methodProblem(
   m: MethodRow,
   zone: Zone,
   grandTotal: Paisa,
+  supported: string[],
 ): { reason: string; message: string } | null {
-  if (!m.isActive || !CHECKOUT_METHOD_CODES.includes(m.code))
+  if (!m.isActive || !supported.includes(m.code))
     return { reason: 'PAYMENT_METHOD_UNAVAILABLE', message: `${m.name} is not available` };
   const config = readPaymentMethodConfig(m.config);
   if (
@@ -242,14 +248,14 @@ function methodProblem(
   return null;
 }
 
-async function usableMethods(db: Tx, zone: Zone, grandTotal: Paisa) {
+async function usableMethods(db: Tx, zone: Zone, grandTotal: Paisa, supported: string[]) {
   const methods = await db.paymentMethod.findMany({
     where: { isActive: true },
     select: { id: true, code: true, name: true, isActive: true, config: true },
     orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
   });
   return methods
-    .filter((m) => !methodProblem(m, zone, grandTotal))
+    .filter((m) => !methodProblem(m, zone, grandTotal, supported))
     .map((m) => ({ code: m.code, name: m.name }));
 }
 
@@ -356,7 +362,7 @@ export async function quote(
   return {
     ...breakdown(lines, totals, zone),
     coupon: couponInfo,
-    paymentMethods: await usableMethods(db, zone, totals.grandTotal),
+    paymentMethods: await usableMethods(db, zone, totals.grandTotal, supportedCodes(deps)),
   };
 }
 export type Quote = Awaited<ReturnType<typeof quote>>;
@@ -449,7 +455,7 @@ export async function placeOrder(deps: OrderDeps, ctx: PlaceOrderContext, input:
       }
 
       const totals = price(lines, zone, coupon);
-      const problem = methodProblem(method, zone, totals.grandTotal);
+      const problem = methodProblem(method, zone, totals.grandTotal, supportedCodes(deps));
       if (problem) throw businessRule(problem.reason, problem.message);
 
       if (
@@ -459,7 +465,7 @@ export async function placeOrder(deps: OrderDeps, ctx: PlaceOrderContext, input:
         const fresh = {
           ...breakdown(lines, totals, zone),
           coupon: coupon ? { code: coupon.code, applied: true } : null,
-          paymentMethods: await usableMethods(tx, zone, totals.grandTotal),
+          paymentMethods: await usableMethods(tx, zone, totals.grandTotal, supportedCodes(deps)),
         };
         throw new AppError('PRICE_CHANGED', 'Prices have changed. Please check the new total.', [
           { reason: 'PRICE_CHANGED', quote: fresh },
@@ -477,6 +483,8 @@ export async function placeOrder(deps: OrderDeps, ctx: PlaceOrderContext, input:
           contactPhone: input.contact.phone,
           contactEmail,
           paymentMethodId: method.id,
+          // Online orders wait for the gateway; COD is collected on delivery.
+          paymentStatus: ONLINE_METHOD_CODES.includes(method.code) ? 'PENDING' : 'UNPAID',
           deliveryZoneId: zone.id,
           couponId: coupon?.id ?? null,
           couponCode: coupon?.code ?? null,
@@ -586,7 +594,7 @@ export async function placeOrder(deps: OrderDeps, ctx: PlaceOrderContext, input:
   }
 
   await afterOrderPlaced(deps, ctx, created);
-  return { created: true, order: await orderView(deps, created.id) };
+  return { created: true, orderId: created.id, order: await orderView(deps, created.id) };
 }
 
 function findByKey(deps: OrderDeps, key: string) {
@@ -606,7 +614,7 @@ async function existingOrder(
       { reason: 'IDEMPOTENCY_MISMATCH' },
     ]);
   }
-  return { created: false, order: await orderView(deps, order.id) };
+  return { created: false, orderId: order.id, order: await orderView(deps, order.id) };
 }
 
 /** After commit: cart cleanup, emails, low-stock checks, storefront refresh. None of it may fail the order. */
@@ -648,13 +656,14 @@ async function sendPlacedEmails(deps: OrderDeps, orderId: string) {
       discountTotal: true,
       deliveryCharge: true,
       grandTotal: true,
-      paymentMethod: { select: { name: true } },
+      paymentMethod: { select: { name: true, code: true } },
       address: { select: { district: true } },
       items: { select: { productName: true, variantName: true, quantity: true, lineTotal: true } },
     },
   });
   const app = deps.env.APP_URL.replace(/\/+$/, '');
-  if (o.contactEmail) {
+  // Online orders get their first email when the payment confirms them (or cancels them on expiry).
+  if (o.contactEmail && !ONLINE_METHOD_CODES.includes(o.paymentMethod.code)) {
     await enqueueEmail(deps, {
       template: 'order-placed',
       to: o.contactEmail,
