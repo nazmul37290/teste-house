@@ -540,6 +540,9 @@ Phases 11 and 12 of `development-plan.md` have the full list. In short:
 
 ## 9. After launch: deploys, migrations, backups
 
+The full runbook (server hardening, backup scripts and the monthly restore drill, uptime monitors, Sentry, load test) is in `docs/operations.md`; the acceptance test before launch is `docs/uat-checklist.md`.
+
+
 **Deploying a change:** commit, push to `main`, and Dokploy rebuilds. The api container runs any new migrations before it starts. If a build fails, the old container keeps running, so the site stays up. Read the build log in Dokploy.
 
 **Rolling back:** redeploy an earlier deployment from the Dokploy history, or `git revert` the bad commit and push. A migration is not undone by redeploying old code. That is why destructive schema changes are done in two steps (`database.md` section 7).

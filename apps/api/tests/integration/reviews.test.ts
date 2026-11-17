@@ -261,3 +261,15 @@ describe('moderation', () => {
     expect(await prisma.auditLog.count({ where: { entityId: id } })).toBe(4);
   });
 });
+
+describe('rate limits', () => {
+  it('allows 10 review submissions per hour per customer', async () => {
+    const c = as((await registerCustomer(ctx)).cookie);
+    for (let i = 0; i < 10; i++) {
+      expect((await c.post('/me/reviews', { productId: randomUUID() })).status).toBe(400);
+    }
+    const blocked = await c.post('/me/reviews', { productId: randomUUID() });
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers['retry-after']).toBeDefined();
+  });
+});

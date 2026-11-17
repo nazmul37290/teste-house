@@ -6,3 +6,9 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
   - sharp
+# Accepted audit findings (docs/security-review.md). Each entry says why it cannot reach production.
+auditConfig:
+  ignoreGhsas:
+    # picomatch ReDoS: only via vitest, an optional peer of better-auth; test tooling, never run
+    # in the shop and never given untrusted globs. No patched version exists yet. Re-check monthly.
+    - GHSA-fc5q-39xc-vjpf

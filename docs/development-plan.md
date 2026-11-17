@@ -114,12 +114,12 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 11: Hardening and launch prep
 
-- [ ] Security checklist from `design.md` section 12 reviewed item by item
-- [ ] Rate limits tuned; Turnstile if bots appear
-- [ ] Backups configured and a restore tested
-- [ ] Load test of browse and checkout paths
-- [ ] Error tracking and uptime monitoring
-- [ ] User acceptance test with the owner (full order to delivery on staging)
+- [x] Security checklist from `design.md` section 12 reviewed item by item (`docs/security-review.md`; server items listed for the owner)
+- [x] Rate limits tuned; Turnstile if bots appear (table in `api-conventions.md` section 4; Turnstile deferred until bots appear)
+- [ ] Backups configured and a restore tested (scripts and restore drill done locally, `docs/operations.md`; scheduling on the server is the owner's)
+- [x] Load test of browse and checkout paths (results in `docs/operations.md`; repeat on staging)
+- [ ] Error tracking and uptime monitoring (Sentry wired, off until `SENTRY_DSN` is set; uptime monitors are set up by the owner, `docs/operations.md`)
+- [ ] User acceptance test with the owner (full order to delivery on staging; script in `docs/uat-checklist.md`)
 
 ## Phase 12: Go live
 

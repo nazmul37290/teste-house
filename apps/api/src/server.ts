@@ -1,8 +1,10 @@
 import { loadEnv } from './config/env';
 import { createApp } from './app';
 import { closeDeps, createDeps } from './deps';
+import { initSentry } from './lib/sentry';
 
 const env = loadEnv();
+initSentry(env, 'api');
 const deps = createDeps(env);
 const app = createApp(deps);
 

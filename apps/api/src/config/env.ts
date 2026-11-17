@@ -43,6 +43,11 @@ const schema = z.object({
   UDDOKTAPAY_BASE_URL: z.string().optional(),
   UDDOKTAPAY_API_KEY: z.string().optional(),
 
+  // Error tracking (optional): off when SENTRY_DSN is empty.
+  SENTRY_DSN: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+
   UPLOAD_DIR: z.string().default('./uploads'),
   PUBLIC_MEDIA_URL: z.string().default('http://localhost:4000/media'),
   // Storefront cache refresh (docs/design.md section 9): the worker posts changed cache tags to the

@@ -23,12 +23,14 @@ import {
   type RevalidateJob,
 } from './jobs/queues';
 import { processRevalidateJob } from './jobs/revalidate.processor';
+import { initSentry, Sentry } from './lib/sentry';
 import { bookShipment, onBookingFailed, syncShipments } from './services/courier.service';
 import { cleanupOrphanReviewPhotos } from './services/media.service';
 import { expireUnpaidOrders, reconcilePayments } from './services/payment.service';
 
 /** Background worker: same image as the API, started with `node dist/worker.js`. */
 const env = loadEnv();
+initSentry(env, 'worker');
 const deps = createDeps(env);
 const mail = createMailTransport(env);
 
@@ -41,6 +43,8 @@ const emailWorker = new Worker<EmailJob>(
   },
 );
 emailWorker.on('failed', (job, err) => {
+  if (job && job.attemptsMade >= (job.opts.attempts ?? 1))
+    Sentry.captureException(err, { tags: { job: job.name } });
   // Recipient and template only; never the message body or links (they carry tokens).
   console.error(`email.send job ${job?.id} (${job?.data.template}) failed: ${err.message}`);
 });
@@ -75,6 +79,7 @@ const paymentsWorker = new Worker(
   { connection: bullConnection(env.REDIS_URL), concurrency: 1 },
 );
 paymentsWorker.on('failed', (job, err) => {
+  Sentry.captureException(err, { tags: { job: job?.name ?? 'payments' } });
   console.error(`${job?.name} failed: ${err.message}`);
 });
 await paymentsQueue.upsertJobScheduler(
@@ -109,6 +114,8 @@ const courierWorker = new Worker(
   { connection: bullConnection(env.REDIS_URL), concurrency: 2 },
 );
 courierWorker.on('failed', (job, err) => {
+  if (job && job.attemptsMade >= (job.opts.attempts ?? 1))
+    Sentry.captureException(err, { tags: { job: job.name } });
   console.error(`${job?.name} ${job?.id} failed: ${err.message}`);
   // Out of retries: tell staff on the order (the order itself is left as it was).
   if (job?.name === BOOK_JOB && job.attemptsMade >= (job.opts.attempts ?? 1)) {

@@ -154,6 +154,9 @@ See `integrations.md`. Summary:
 
 ## 12. Security checklist
 
+Reviewed item by item in Phase 11: `docs/security-review.md` (status, evidence, server actions).
+
+
 - HTTPS only, HSTS, Helmet headers, strict CORS, Cloudflare WAF and bot protection.
 - Zod validation on all inputs, reject unknown fields; Prisma only (no string-built SQL).
 - Auth via Better Auth (`auth.md`); real client IP from `cf-connecting-ip` only, and the origin accepts traffic only from Cloudflare so that header cannot be spoofed.
@@ -189,7 +192,8 @@ See `integrations.md`. Summary:
 | UddoktaPay | `UDDOKTAPAY_BASE_URL` (the merchant's installation), `UDDOKTAPAY_API_KEY` (also authenticates the webhook) |
 | Files | `UPLOAD_DIR`, `PUBLIC_MEDIA_URL` |
 | Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` (web and api/worker, same value, at least 16 chars), `WEB_INTERNAL_URL` (api/worker: internal address of the web app for revalidation) |
-| Optional | `SENTRY_DSN`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
+| Error tracking (optional) | api/worker: `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`; web runtime: `SENTRY_DSN`; web build arguments: `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` (see `operations.md` section 3) |
+| Optional (later) | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
 
 Keep `.env.example` in sync with this table.
 

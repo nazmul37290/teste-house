@@ -78,14 +78,17 @@ export function accountRouter(deps: Deps): Router {
     res.json({ data: await wishlist.wishlistIds(deps.prisma, me(req)) });
   });
   router.post('/me/wishlist', async (req, res) => {
+    await enforceRateLimit(deps.redis, `wishlist:${me(req)}`, 120, 60);
     const { productId } = wishlistAddSchema.parse(req.body);
     res.status(201).json({ data: await wishlist.addToWishlist(deps.prisma, me(req), productId) });
   });
   router.post('/me/wishlist/merge', async (req, res) => {
+    await enforceRateLimit(deps.redis, `wishlist:${me(req)}`, 120, 60);
     const { productIds } = wishlistMergeSchema.parse(req.body);
     res.json({ data: await wishlist.mergeWishlist(deps.prisma, me(req), productIds) });
   });
   router.delete('/me/wishlist/:id', async (req, res) => {
+    await enforceRateLimit(deps.redis, `wishlist:${me(req)}`, 120, 60);
     const { id } = idParamSchema.parse(req.params);
     res.json({ data: await wishlist.removeFromWishlist(deps.prisma, me(req), id) });
   });
@@ -102,10 +105,12 @@ export function accountRouter(deps: Deps): Router {
     res.json({ data: await reviews.eligibility(deps.prisma, me(req), productId) });
   });
   router.post('/me/reviews', async (req, res) => {
+    await enforceRateLimit(deps.redis, `review:${me(req)}`, 10, 3600);
     const input = createReviewSchema.parse(req.body);
     res.status(201).json({ data: await reviews.createReview(deps, me(req), input) });
   });
   router.patch('/me/reviews/:id', async (req, res) => {
+    await enforceRateLimit(deps.redis, `review:${me(req)}`, 10, 3600);
     const input = updateReviewSchema.parse(req.body);
     const { id } = idParamSchema.parse(req.params);
     res.json({ data: await reviews.updateReview(deps, me(req), id, input) });

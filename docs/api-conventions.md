@@ -124,3 +124,29 @@ Better Auth paths above are its standard endpoints under `basePath` (names confi
 | Staff | `GET/POST /admin/roles`, `GET/PATCH/DELETE /admin/roles/:id`, `PUT /admin/roles/:id/permissions`, `GET /admin/permissions` [`roles.manage`; `GET /admin/roles` also `users.manage`]. `GET/POST /admin/users`, `GET/PATCH /admin/users/:id` (name, role, `isActive`), `PUT /admin/users/:id/password` [`users.manage`]. No `DELETE` for staff: deactivate instead (see `design.md` section 4). Business-rule reasons: `SYSTEM_ROLE`, `UNKNOWN_ROLE`, `CANNOT_DEACTIVATE_SELF`, `CANNOT_CHANGE_OWN_ROLE`, `USE_CHANGE_PASSWORD`, `LAST_SUPER_ADMIN`; `409` with `ROLE_IN_USE` |
 | Settings | `GET/PUT /admin/settings` [`settings.manage`]. `PUT` takes any subset of the keys in `SETTING_DEFINITIONS` (unknown keys are rejected) and audits only the keys that changed. Public subset: `GET /settings/public` (no auth, `Cache-Control: public, max-age=60`) |
 | Audit | `GET /admin/audit-logs` [`audit.view`] |
+
+## 4. Rate limits
+
+All limits are fixed windows in Redis (`apps/api/src/lib/rate-limit.ts`) unless noted; over the limit the answer is `429 RATE_LIMITED` with `Retry-After`. "IP" is the client IP from Cloudflare in production (`cf-connecting-ip`).
+
+| Route | Key | Limit |
+|---|---|---|
+| `POST /auth/login` | identifier | progressive lockout: 3 free attempts, then growing delays up to 60 s, locked at 10 failures in 15 min (`lib/lockout.ts`) |
+| `POST /auth/login` | IP | 50 failures per 15 min (loose: mobile carriers share IPs) |
+| `POST /auth/register` | IP | 10 per hour |
+| `/auth/request-password-reset`, `/auth/send-verification-email` | Better Auth | 3 per 5 min |
+| Other Better Auth customer routes | Better Auth | 100 per min |
+| `POST /admin/auth/sign-in/email` | Better Auth | 5 per min |
+| `GET /search/suggest` | IP | 60 per min |
+| `POST /checkout/quote` | IP | 60 per min |
+| `POST /orders` | IP | 10 per min |
+| `POST /orders/pay` | IP | 10 per min |
+| `POST /orders/track` | IP | 10 per min |
+| `POST /payments/uddoktapay/confirm` | IP | 30 per min |
+| Cart writes (`POST/PATCH/DELETE /cart/items`) | IP | 120 per min |
+| `POST/PATCH /me/reviews` | customer | 10 per hour |
+| `POST /me/review-photos` | customer | 20 per hour |
+| Wishlist writes | customer | 120 per min |
+
+Cloudflare rate-limiting rules and Turnstile can be added in front if bots appear (`docs/security-review.md`).
+

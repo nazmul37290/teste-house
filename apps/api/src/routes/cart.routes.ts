@@ -3,6 +3,8 @@ import { Router, type Request, type Response } from 'express';
 import type { Deps } from '../deps';
 import { optionalCustomer } from '../middleware/require-customer';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
+import { clientIp } from '../lib/client-ip';
+import { enforceRateLimit } from '../lib/rate-limit';
 import * as cart from '../services/cart.service';
 
 export const CART_COOKIE = 'shop_cart';
@@ -52,8 +54,11 @@ export async function resolveCartId(
 export function cartRouter(deps: Deps): Router {
   const router = Router();
   const svc = { prisma: deps.prisma, publicMediaUrl: deps.publicMediaUrl };
-  router.use('/cart', optionalCustomer(deps), (_req, res, next) => {
+  router.use('/cart', optionalCustomer(deps), async (req, res, next) => {
     res.set('Cache-Control', 'private, no-store');
+    // Cart writes create rows (guest carts, lines): 120 per minute per IP is far above real use.
+    if (req.method !== 'GET')
+      await enforceRateLimit(deps.redis, `cart:${clientIp(req, deps.env)}`, 120, 60);
     next();
   });
 

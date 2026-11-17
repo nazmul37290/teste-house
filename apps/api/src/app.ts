@@ -8,6 +8,7 @@ import { ADMIN_AUTH_BASE_PATH } from './auth/admin-auth';
 import { CUSTOMER_AUTH_BASE_PATH } from './auth/customer-auth';
 import type { Deps } from './deps';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
+import { Sentry } from './lib/sentry';
 import { adminAuthRouter } from './routes/admin-auth.routes';
 import { adminRouter } from './routes/admin.routes';
 import { customerAuthRouter } from './routes/customer-auth.routes';
@@ -71,6 +72,8 @@ export function createApp(deps: Deps): Express {
   app.use('/api/v1/admin', adminRouter(deps));
 
   app.use(notFoundHandler);
+  // Reports unexpected (5xx) errors to Sentry when it is configured; 4xx AppErrors are not sent.
+  if (env.SENTRY_DSN) Sentry.setupExpressErrorHandler(app);
   app.use(errorHandler);
   return app;
 }
