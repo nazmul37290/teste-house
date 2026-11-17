@@ -3,6 +3,8 @@ import {
   idParamSchema,
   ORDER_NUMBER_PATTERN,
   updateProfileSchema,
+  wishlistAddSchema,
+  wishlistMergeSchema,
 } from '@shop/shared';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
@@ -10,6 +12,7 @@ import type { Deps } from '../deps';
 import { currentCustomer, requireCustomer } from '../middleware/require-customer';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import * as account from '../services/account.service';
+import * as wishlist from '../services/wishlist.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
 
 const orderNumberParam = (req: Request) =>
@@ -57,6 +60,26 @@ export function accountRouter(deps: Deps): Router {
   router.delete('/me/addresses/:id', async (req, res) => {
     await account.deleteAddress(deps.prisma, me(req), idParamSchema.parse(req.params).id);
     res.status(204).end();
+  });
+
+  const shop = { prisma: deps.prisma, publicMediaUrl: deps.publicMediaUrl };
+  router.get('/me/wishlist', async (req, res) => {
+    res.json({ data: await wishlist.listWishlist(shop, me(req)) });
+  });
+  router.get('/me/wishlist/ids', async (req, res) => {
+    res.json({ data: await wishlist.wishlistIds(deps.prisma, me(req)) });
+  });
+  router.post('/me/wishlist', async (req, res) => {
+    const { productId } = wishlistAddSchema.parse(req.body);
+    res.status(201).json({ data: await wishlist.addToWishlist(deps.prisma, me(req), productId) });
+  });
+  router.post('/me/wishlist/merge', async (req, res) => {
+    const { productIds } = wishlistMergeSchema.parse(req.body);
+    res.json({ data: await wishlist.mergeWishlist(deps.prisma, me(req), productIds) });
+  });
+  router.delete('/me/wishlist/:id', async (req, res) => {
+    const { id } = idParamSchema.parse(req.params);
+    res.json({ data: await wishlist.removeFromWishlist(deps.prisma, me(req), id) });
   });
 
   router.get('/me/orders', async (req, res) => {

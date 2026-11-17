@@ -6,6 +6,7 @@ import { JsonLd } from '@/components/shop/json-ld';
 import { ProductGrid } from '@/components/shop/product-card';
 import { absoluteUrl } from '@/lib/site';
 import { getProduct, resolveRedirect } from '@/lib/storefront';
+import { WishlistButton } from '@/components/shop/wishlist-button';
 import { BuyBox } from './buy-box';
 import { Gallery } from './gallery';
 
@@ -125,6 +126,7 @@ export default async function ProductPage({ params }: Props) {
             ) : null}
           </div>
           <BuyBox variants={product.variants} />
+          <WishlistButton productId={product.id} name={product.name} variant="text" />
           {product.tags.length ? (
             <ul className="flex flex-wrap gap-2">
               {product.tags.map((t) => (

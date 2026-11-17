@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Alert, Button, Field, Input } from '@/components/ui';
 import { customerAuthClient } from '@/lib/auth-client';
+import { resetWishlist } from '@/lib/wishlist-client';
 import type { Status } from '@/lib/api-types';
 
 /**
@@ -64,6 +65,7 @@ export function AccountActions({
 
   async function signOut() {
     await customerAuthClient.signOut();
+    resetWishlist();
     router.replace('/');
     router.refresh();
   }

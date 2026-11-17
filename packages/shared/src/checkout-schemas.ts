@@ -207,3 +207,26 @@ export const trackOrderSchema = z.strictObject({
   phone: phoneSchema,
 });
 export type TrackOrderInput = z.output<typeof trackOrderSchema>;
+
+// Wishlist ---------------------------------------------------------------------------------------
+
+export const MAX_WISHLIST_ITEMS = 200;
+export const wishlistAddSchema = z.strictObject({ productId: z.uuid() });
+export const wishlistMergeSchema = z.strictObject({
+  productIds: z.array(z.uuid()).max(100),
+});
+/** `?ids=a,b,c` for showing a guest's wishlist (kept in the browser). */
+export const productIdsQuerySchema = z.object({
+  ids: z
+    .string()
+    .max(50 * 37)
+    .transform((v) => [
+      ...new Set(
+        v
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ])
+    .pipe(z.array(z.uuid()).max(50)),
+});

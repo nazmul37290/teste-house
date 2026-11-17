@@ -8,6 +8,7 @@ export type ShopImage = {
 };
 
 export type ProductCard = {
+  id: string;
   slug: string;
   name: string;
   brand: { name: string; slug: string } | null;
@@ -73,6 +74,7 @@ export type ProductVariant = {
 };
 
 export type ProductDetail = {
+  id: string;
   slug: string;
   name: string;
   shortDescription: string | null;

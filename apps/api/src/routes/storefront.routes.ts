@@ -1,4 +1,9 @@
-import { publicProductQuerySchema, slugSchema, suggestQuerySchema } from '@shop/shared';
+import {
+  productIdsQuerySchema,
+  publicProductQuerySchema,
+  slugSchema,
+  suggestQuerySchema,
+} from '@shop/shared';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import type { Deps } from '../deps';
@@ -21,6 +26,11 @@ export function storefrontRouter(deps: Deps): Router {
     const query = publicProductQuerySchema.parse(req.query);
     const { items, total, facets } = await storefront.listProducts(svc, query);
     res.json({ data: items, meta: { page: query.page, pageSize: query.pageSize, total, facets } });
+  });
+  // Cards for a guest's wishlist (ids kept in the browser). Registered before /products/:slug.
+  router.get('/products/cards', async (req, res) => {
+    const { ids } = productIdsQuerySchema.parse(req.query);
+    res.json({ data: await storefront.cardsByIds(svc, ids) });
   });
   router.get('/products/:slug', async (req, res) => {
     res.json({ data: await storefront.getProduct(svc, slugParam(req)) });

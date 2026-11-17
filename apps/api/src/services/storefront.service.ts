@@ -52,6 +52,7 @@ function toCard(p: CardRow, base: string) {
   }));
   const cheapest = offers.reduce((a, b) => (b.effective < a.effective ? b : a), offers[0]!);
   return {
+    id: p.id,
     slug: p.slug,
     name: p.name,
     brand: p.brand,
@@ -78,6 +79,18 @@ async function cards(deps: StorefrontDeps, ids: string[]): Promise<ProductCard[]
     const row = byId.get(id);
     return row ? [toCard(row, deps.publicMediaUrl)] : [];
   });
+}
+
+/** Cards for these product ids, in the same order, leaving out anything not visible in the shop. */
+export async function cardsByIds(deps: StorefrontDeps, ids: string[]): Promise<ProductCard[]> {
+  if (!ids.length) return [];
+  const visible = new Set(
+    await repo.visibleProductIds(deps.prisma, { id: { in: ids } }, { createdAt: 'desc' }, ids.length),
+  );
+  return cards(
+    deps,
+    ids.filter((id) => visible.has(id)),
+  );
 }
 
 // Categories -------------------------------------------------------------------------------------
@@ -360,6 +373,7 @@ export async function getProduct(deps: StorefrontDeps, slug: string) {
   ).slice(0, 8);
 
   return {
+    id: p.id,
     slug: p.slug,
     name: p.name,
     shortDescription: p.shortDescription,

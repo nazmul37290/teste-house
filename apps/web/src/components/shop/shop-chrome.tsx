@@ -29,6 +29,12 @@ export async function ShopHeader() {
           <SearchBox />
         </div>
         <Link
+          href="/wishlist"
+          className="hidden shrink-0 text-sm font-medium text-neutral-700 hover:text-neutral-900 sm:inline"
+        >
+          Wishlist
+        </Link>
+        <Link
           href="/account"
           className="shrink-0 text-sm font-medium text-neutral-700 hover:text-neutral-900"
         >

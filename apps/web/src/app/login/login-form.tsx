@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { Alert, Button, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
+import { resetWishlist } from '@/lib/wishlist-client';
 
 export function LoginForm({ next }: { next: string }) {
   const router = useRouter();
@@ -21,6 +22,7 @@ export function LoginForm({ next }: { next: string }) {
         method: 'POST',
         body: { identifier: form.get('identifier'), password: form.get('password') },
       });
+      resetWishlist(); // the next page merges this browser's saved products into the account
       router.replace(next);
       router.refresh();
     } catch (err) {

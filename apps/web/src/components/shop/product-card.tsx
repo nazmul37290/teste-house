@@ -2,11 +2,16 @@ import Link from 'next/link';
 import type { ProductCard as Card } from '@/lib/storefront-types';
 import { Price } from './bits';
 import { ShopImage } from './shop-image';
+import { Stars } from './stars';
+import { WishlistButton } from './wishlist-button';
 
 export function ProductCard({ product, priority = false }: { product: Card; priority?: boolean }) {
   const href = `/product/${product.slug}`;
   return (
-    <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <span className="absolute right-2 top-2 z-10">
+        <WishlistButton productId={product.id} name={product.name} />
+      </span>
       <Link href={href} className="relative block bg-neutral-50">
         {product.image ? (
           <ShopImage
@@ -42,6 +47,9 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
         </h3>
         {product.variantName ? (
           <p className="text-xs text-neutral-500">{product.variantName}</p>
+        ) : null}
+        {product.ratingCount > 0 ? (
+          <Stars value={product.ratingAvg} count={product.ratingCount} size="sm" />
         ) : null}
         <div className="mt-auto pt-2">
           <Price
