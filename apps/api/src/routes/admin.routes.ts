@@ -1,6 +1,8 @@
 import { Router, type Request } from 'express';
 import {
   adminOrderListQuerySchema,
+  adminPaymentListQuerySchema,
+  recordRefundSchema,
   changeOrderStatusSchema,
   editOrderSchema,
   hasPermission,
@@ -32,6 +34,7 @@ import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
 import * as adminOrders from '../services/admin-order.service';
 import * as coupons from '../services/coupon.service';
+import * as paymentAdmin from '../services/payment-admin.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
 import * as marketing from '../services/marketing.service';
 import * as shipping from '../services/shipping.service';
@@ -258,6 +261,16 @@ export function adminRouter(deps: Deps): Router {
     res.json({
       data: await adminOrders.editOrder(deps, actorFrom(req, deps.env), pid(req), input),
     });
+  });
+  router.post('/orders/:id/refunds', requirePermission('payments.refund'), async (req, res) => {
+    const input = recordRefundSchema.parse(req.body);
+    await paymentAdmin.recordRefund(deps.prisma, actorFrom(req, deps.env), pid(req), input);
+    res.status(201).json({ data: await adminOrders.getOrder(deps.prisma, pid(req)) });
+  });
+  router.get('/payments', requirePermission('orders.view'), async (req, res) => {
+    const q = adminPaymentListQuerySchema.parse(req.query);
+    const { items, total } = await paymentAdmin.listPayments(deps.prisma, q);
+    res.json({ data: items, meta: { page: q.page, pageSize: q.pageSize, total } });
   });
   router.post('/orders/:id/notes', requirePermission('orders.add_note'), async (req, res) => {
     const { note } = orderNoteSchema.parse(req.body);

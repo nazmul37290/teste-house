@@ -148,7 +148,7 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 ## 6. Seed data
 
-**Permissions** (key, module): `products.view|create|update|delete`, `categories.manage`, `brands.manage`, `media.upload`, `inventory.view|adjust`, `orders.view|update_status|edit|cancel|book_courier|add_note`, `customers.view|block`, `reviews.moderate`, `coupons.manage`, `marketing.manage` (banners, sections, redirects), `payments.toggle`, `shipping.manage`, `settings.manage`, `roles.manage`, `users.manage`, `reports.view`, `audit.view`.
+**Permissions** (key, module): `products.view|create|update|delete`, `categories.manage`, `brands.manage`, `media.upload`, `inventory.view|adjust`, `orders.view|update_status|edit|cancel|book_courier|add_note`, `customers.view|block`, `reviews.moderate`, `coupons.manage`, `marketing.manage` (banners, sections, redirects), `payments.toggle|refund`, `shipping.manage`, `settings.manage`, `roles.manage`, `users.manage`, `reports.view`, `audit.view`. Roles that already exist keep their permissions when the seed runs again; grant new keys (such as `payments.refund`, added in Phase 7) in Roles.
 
 **Roles:** `Super Admin` (system), `Manager` (everything except `roles.manage`, `users.manage`, `settings.manage`), `Salesman` (`products.view`, `orders.view`, `orders.update_status`, `orders.add_note`, `customers.view`).
 

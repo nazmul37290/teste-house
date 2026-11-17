@@ -272,7 +272,12 @@ export type AdminOrder = import('./order-types').OrderView & {
     amount: string;
     status: string;
     gatewayTxnId: string | null;
+    gatewayInvoiceId: string | null;
+    failureReason: string | null;
+    paidAt: string | null;
     createdAt: string;
+    method: { name: string };
+    refunds: { id: string; amount: string; reason: string | null; by: string | null; at: string }[];
   }[];
   allowedTransitions: import('./order-types').OrderStatus[];
   editable: boolean;

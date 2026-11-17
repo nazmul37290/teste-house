@@ -138,7 +138,27 @@ export async function getOrder(prisma: Db, id: string) {
         orderBy: { createdAt: 'asc' },
       },
       payments: {
-        select: { id: true, amount: true, status: true, gatewayTxnId: true, createdAt: true },
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          gatewayTxnId: true,
+          gatewayInvoiceId: true,
+          failureReason: true,
+          paidAt: true,
+          createdAt: true,
+          method: { select: { name: true } },
+          refunds: {
+            select: {
+              id: true,
+              amount: true,
+              reason: true,
+              createdAt: true,
+              createdBy: { select: { name: true } },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
+        },
         orderBy: { createdAt: 'asc' },
       },
     },
@@ -167,7 +187,17 @@ export async function getOrder(prisma: Db, id: string) {
       by: n.adminUser?.name ?? null,
       at: n.createdAt,
     })),
-    payments: meta.payments.map((p) => ({ ...p, amount: p.amount.toFixed(2) })),
+    payments: meta.payments.map((p) => ({
+      ...p,
+      amount: p.amount.toFixed(2),
+      refunds: p.refunds.map((r) => ({
+        id: r.id,
+        amount: r.amount.toFixed(2),
+        reason: r.reason,
+        by: r.createdBy?.name ?? null,
+        at: r.createdAt,
+      })),
+    })),
     allowedTransitions: ORDER_TRANSITIONS[view.status],
     editable: EDITABLE.includes(view.status),
     risk: await riskInfo(prisma, {

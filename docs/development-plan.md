@@ -89,7 +89,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] `PaymentGateway` adapter, charge creation, return page
 - [x] Webhook plus verify, amount check, idempotency
 - [x] Unpaid order expiry job, stock release
-- [ ] Admin toggle and payment records view; refunds recorded manually
+- [x] Admin toggle and payment records view; refunds recorded manually
 
 ## Phase 8: Steadfast
 

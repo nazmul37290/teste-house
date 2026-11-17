@@ -337,3 +337,70 @@ export function OrderEditor({ order }: { order: AdminOrder }) {
     </div>
   );
 }
+
+/** Records money already returned to the customer (the gateway is not called; PAY-7). */
+export function RefundForm({
+  orderId,
+  paymentId,
+  remaining,
+}: {
+  orderId: string;
+  paymentId: string;
+  remaining: string;
+}) {
+  const { busy, status, run, fieldError } = useAction();
+  const [open, setOpen] = useState(false);
+  if (remaining === '0.00') return null;
+  if (!open) {
+    return (
+      <button type="button" className="mt-1 text-xs underline" onClick={() => setOpen(true)}>
+        Record a refund (up to {formatTaka(remaining)})
+      </button>
+    );
+  }
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const ok = await run(
+      () =>
+        api(`/admin/orders/${orderId}/refunds`, {
+          method: 'POST',
+          body: {
+            paymentId,
+            amount: String(form.get('amount')).trim(),
+            reason: String(form.get('reason')).trim(),
+          },
+        }),
+      'Refund recorded.',
+    );
+    if (ok) setOpen(false);
+  }
+  return (
+    <form onSubmit={onSubmit} className="mt-2 space-y-2 rounded-md bg-neutral-50 p-3">
+      {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
+      <p className="text-xs text-neutral-600">
+        Return the money first (bKash, bank, ...), then record it here.
+      </p>
+      <Field label="Amount (Tk)" htmlFor={`rf-amount-${paymentId}`} error={fieldError('amount')}>
+        <Input
+          id={`rf-amount-${paymentId}`}
+          name="amount"
+          required
+          inputMode="decimal"
+          defaultValue={remaining}
+        />
+      </Field>
+      <Field label="Reason" htmlFor={`rf-reason-${paymentId}`} error={fieldError('reason')}>
+        <Input id={`rf-reason-${paymentId}`} name="reason" required minLength={3} maxLength={300} />
+      </Field>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={busy}>
+          Record refund
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}

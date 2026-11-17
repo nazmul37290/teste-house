@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { moneySchema } from './catalog-schemas';
 import { MAX_CART_LINE_QUANTITY } from './checkout-schemas';
+import { parsePaisa } from './money';
 import { addressInput } from './schemas';
 
 /** Admin order management (docs/api-conventions.md, Admin > Orders). */
@@ -86,3 +88,35 @@ export function dhakaDayRange(from?: string, to?: string): { gte?: Date; lt?: Da
     ...(to ? { lt: new Date(start(to).getTime() + 86_400_000) } : {}),
   };
 }
+
+export const PAYMENT_ATTEMPT_STATUSES = [
+  'INITIATED',
+  'PENDING',
+  'SUCCESS',
+  'FAILED',
+  'CANCELLED',
+] as const;
+
+export const adminPaymentListQuerySchema = z
+  .object({
+    q: z.string().trim().max(60).optional(),
+    status: z.enum(PAYMENT_ATTEMPT_STATUSES).optional(),
+    method: z.string().trim().toUpperCase().max(30).optional(),
+    from: dhakaDay.optional(),
+    to: dhakaDay.optional(),
+    page: z.coerce.number().int().min(1).max(10000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  })
+  .refine((v) => !v.from || !v.to || v.from <= v.to, {
+    message: 'The end date is before the start date',
+    path: ['to'],
+  });
+export type AdminPaymentListQuery = z.output<typeof adminPaymentListQuerySchema>;
+
+/** A refund recorded by staff after returning money outside the system (PAY-7). */
+export const recordRefundSchema = z.strictObject({
+  paymentId: z.uuid(),
+  amount: moneySchema.refine((v) => parsePaisa(v) > 0, 'Must be more than 0'),
+  reason: z.string().trim().min(3).max(300),
+});
+export type RecordRefundInput = z.output<typeof recordRefundSchema>;

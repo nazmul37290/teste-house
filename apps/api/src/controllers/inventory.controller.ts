@@ -34,11 +34,9 @@ export function inventoryController(deps: Deps) {
       });
     }),
     receive: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await inventory.receiveStock(deps, actor(req), receiveStockSchema.parse(req.body)),
-        });
+      res.status(201).json({
+        data: await inventory.receiveStock(deps, actor(req), receiveStockSchema.parse(req.body)),
+      });
     }),
   };
 }

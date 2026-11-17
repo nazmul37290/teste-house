@@ -29,6 +29,7 @@ export const PERMISSIONS = [
     description: 'Manage banners, sections, redirects',
   },
   { key: 'payments.toggle', module: 'settings', description: 'Enable or disable payment methods' },
+  { key: 'payments.refund', module: 'orders', description: 'Record refunds of online payments' },
   { key: 'shipping.manage', module: 'settings', description: 'Manage delivery zones and charges' },
   { key: 'settings.manage', module: 'settings', description: 'Manage store settings' },
   { key: 'roles.manage', module: 'staff', description: 'Manage roles and permissions' },

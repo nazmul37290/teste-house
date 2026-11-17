@@ -3,7 +3,14 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { expireUnpaidOrders, reconcilePayments } from '../../src/services/payment.service';
 import { createFakeGateway } from './fake-gateway';
-import { createTestContext, ourRouteHeaders, uniquePhone } from './helpers';
+import { SUPER_ADMIN_ROLE } from '@shop/shared';
+import {
+  adminHeaders,
+  adminSession,
+  createTestContext,
+  ourRouteHeaders,
+  uniquePhone,
+} from './helpers';
 import { makeProduct, uid } from './fixtures';
 
 const WEBHOOK_KEY = 'test-uddoktapay-key-0123456789';
@@ -245,5 +252,82 @@ describe('expiry and reconciliation', () => {
     });
     const note = await prisma.orderNote.findFirstOrThrow({ where: { orderId: order.id } });
     expect(note.note).toContain('after the order was cancelled');
+  });
+});
+
+describe('refunds and payment records', () => {
+  async function paidOrder(price = '500') {
+    const p = await makeProduct(ctx, [{ price }]);
+    const { order, payment } = await placeOnline(p.variantIds[0]!);
+    const invoice = fake.invoiceFor(payment.id);
+    fake.settle(invoice, 'SUCCESS', { txnId: `TX${uid()}` });
+    await confirm(invoice);
+    return { order, payment };
+  }
+
+  it('records partial and full refunds, never more than was paid', async () => {
+    const h = adminHeaders((await adminSession(ctx, SUPER_ADMIN_ROLE)).cookie);
+    const { order, payment } = await paidOrder(); // Tk 560 with delivery
+    const refund = (amount: string) =>
+      request(ctx.app)
+        .post(`/api/v1/admin/orders/${order.id}/refunds`)
+        .set(h)
+        .send({ paymentId: payment.id, amount, reason: 'One jar arrived broken' });
+
+    const part = await refund('100');
+    expect(part.status).toBe(201);
+    expect(part.body.data.paymentStatus).toBe('PARTIALLY_REFUNDED');
+    expect(part.body.data.payments[0].refunds).toHaveLength(1);
+
+    const tooMuch = await refund('460.01');
+    expect(tooMuch.body.error.details[0]).toEqual({
+      reason: 'REFUND_TOO_LARGE',
+      maxAmount: '460.00',
+    });
+    const rest = await refund('460');
+    expect(rest.body.data.paymentStatus).toBe('REFUNDED');
+    expect(
+      await prisma.auditLog.count({ where: { entityId: order.id, action: 'payment.refund' } }),
+    ).toBe(2);
+  });
+
+  it('refuses refunds of unpaid attempts and without the permission', async () => {
+    const h = adminHeaders((await adminSession(ctx, SUPER_ADMIN_ROLE)).cookie);
+    const salesman = adminHeaders((await adminSession(ctx, 'Salesman')).cookie);
+    const p = await makeProduct(ctx, [{ price: '100' }]);
+    const { order, payment } = await placeOnline(p.variantIds[0]!);
+    const body = { paymentId: payment.id, amount: '10', reason: 'Test refund' };
+    const unpaid = await request(ctx.app)
+      .post(`/api/v1/admin/orders/${order.id}/refunds`)
+      .set(h)
+      .send(body);
+    expect(unpaid.body.error.details[0].reason).toBe('PAYMENT_NOT_PAID');
+    const forbidden = await request(ctx.app)
+      .post(`/api/v1/admin/orders/${order.id}/refunds`)
+      .set(salesman)
+      .send(body);
+    expect(forbidden.status).toBe(403);
+    const other = await request(ctx.app)
+      .post(`/api/v1/admin/orders/${randomUUID()}/refunds`)
+      .set(h)
+      .send(body);
+    expect(other.status).toBe(404);
+  });
+
+  it('lists payment attempts with filters', async () => {
+    const h = adminHeaders((await adminSession(ctx, SUPER_ADMIN_ROLE)).cookie);
+    const { order } = await paidOrder('120');
+    const res = await request(ctx.app)
+      .get(`/api/v1/admin/payments?q=${order.orderNumber}&status=SUCCESS`)
+      .set(h);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      status: 'SUCCESS',
+      amount: '180.00',
+      refunded: '0.00',
+      order: { orderNumber: order.orderNumber },
+      method: { code: 'UDDOKTAPAY' },
+    });
   });
 });

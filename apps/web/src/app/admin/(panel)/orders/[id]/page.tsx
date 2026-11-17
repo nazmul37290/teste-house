@@ -1,3 +1,4 @@
+import { formatPaisa, parsePaisa } from '@shop/shared';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -11,7 +12,8 @@ import { ApiError } from '@/lib/api-types';
 import { apiServer } from '@/lib/api-server';
 import { formatDhaka } from '@/lib/format';
 import { STATUS_LABEL, STATUS_TONE } from '@/lib/order-types';
-import { NotesForm, OrderEditor, StatusActions } from './order-admin-actions';
+import { formatTaka } from '@/lib/money';
+import { NotesForm, OrderEditor, RefundForm, StatusActions } from './order-admin-actions';
 
 export const metadata: Metadata = { title: 'Order' };
 
@@ -66,7 +68,8 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               <Totals {...order} />
             </div>
             <p className="mt-3 text-sm text-neutral-600">
-              {order.paymentMethod.name} · payment {order.paymentStatus.toLowerCase()}
+              {order.paymentMethod.name} · payment{' '}
+              {order.paymentStatus.toLowerCase().replace(/_/g, ' ')}
               {order.deliveryZone ? ` · zone ${order.deliveryZone.name}` : ''}
             </p>
           </Card>
@@ -165,6 +168,48 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                   <span className="mt-1 block text-neutral-600">Note: {a.deliveryNote}</span>
                 ) : null}
               </p>
+            </Card>
+          ) : null}
+          {order.payments.length ? (
+            <Card title="Online payments">
+              <ul className="space-y-3 text-sm">
+                {order.payments.map((p) => (
+                  <li key={p.id} className="border-l-2 border-neutral-200 pl-3">
+                    <p>
+                      <span className="font-medium">{formatTaka(p.amount)}</span> ·{' '}
+                      {p.status.toLowerCase()}
+                      <span className="text-xs text-neutral-500">
+                        {' '}
+                        · {formatDhaka(p.createdAt)}
+                      </span>
+                    </p>
+                    {p.gatewayTxnId ? (
+                      <p className="font-mono text-xs text-neutral-600">
+                        Transaction {p.gatewayTxnId}
+                      </p>
+                    ) : null}
+                    {p.failureReason ? (
+                      <p className="text-xs text-red-700">{p.failureReason}</p>
+                    ) : null}
+                    {p.refunds.map((r) => (
+                      <p key={r.id} className="text-xs text-neutral-600">
+                        Refunded {formatTaka(r.amount)} · {r.reason} · {r.by ?? 'staff'} ·{' '}
+                        {formatDhaka(r.at)}
+                      </p>
+                    ))}
+                    {p.status === 'SUCCESS' && can(admin, 'payments.refund') ? (
+                      <RefundForm
+                        orderId={order.id}
+                        paymentId={p.id}
+                        remaining={formatPaisa(
+                          parsePaisa(p.amount) -
+                            p.refunds.reduce((n, r) => n + parsePaisa(r.amount), 0),
+                        )}
+                      />
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
             </Card>
           ) : null}
           <Card title="Internal notes">

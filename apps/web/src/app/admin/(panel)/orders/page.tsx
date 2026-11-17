@@ -71,7 +71,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <option value="">Any payment</option>
             {PAYMENT_STATUSES.map((s) => (
               <option key={s} value={s}>
-                {s.toLowerCase().replace('_', ' ')}
+                {s.toLowerCase().replace(/_/g, ' ')}
               </option>
             ))}
           </Select>
@@ -130,7 +130,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     </Badge>
                   </td>
                   <td className="py-2 pr-3 text-xs">
-                    {o.paymentMethod.code} · {o.paymentStatus.toLowerCase()}
+                    {o.paymentMethod.code} · {o.paymentStatus.toLowerCase().replace(/_/g, ' ')}
                   </td>
                   <td className="py-2 text-right font-medium">{formatTaka(o.grandTotal)}</td>
                 </tr>

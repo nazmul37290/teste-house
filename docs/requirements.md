@@ -135,7 +135,7 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 ## 12. Roles and permissions (RBAC)
 
 - Tables: `Role`, `Permission`, `RolePermission`; each `AdminUser` has one role (upgradeable to many later). RBAC is our own code; Better Auth only authenticates admins (sign-up disabled, optional TOTP 2FA).
-- Permission key convention `module.action`: `products.view|create|update|delete`, `orders.view|update_status|book_courier|cancel`, `inventory.adjust`, `customers.view|block`, `coupons.manage`, `reviews.moderate`, `payments.toggle`, `shipping.manage`, `settings.manage`, `roles.manage`, `users.manage`, `reports.view`.
+- Permission key convention `module.action`: `products.view|create|update|delete`, `orders.view|update_status|book_courier|cancel`, `inventory.adjust`, `customers.view|block`, `coupons.manage`, `reviews.moderate`, `payments.toggle|refund`, `shipping.manage`, `settings.manage`, `roles.manage`, `users.manage`, `reports.view`.
 - Keys are declared in `packages/shared` and seeded by migration; roles and assignments are edited in the admin UI.
 - **Super Admin** is a system role: always has every permission; cannot be edited or deleted.
 - Enforced on the API; the UI only hides controls.

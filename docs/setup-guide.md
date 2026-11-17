@@ -255,12 +255,12 @@ What you can try today:
 | http://localhost:3000/category/honey-spreads, `/product/<slug>`, `/search?q=honey` | Shop pages: filters, sort, search suggestions. Change a price in `/admin/products` and reload the product page: it updates within a couple of seconds |
 | `/admin/banners`, `/admin/homepage` | Home page banners and sections |
 | http://localhost:3000/sitemap.xml | The sitemap search engines read |
-| Add to cart, then http://localhost:3000/checkout | Place a Cash on Delivery order (inside Dhaka by default; COD scope is in `/admin/payments`). The confirmation email lands in Mailpit |
+| Add to cart, then http://localhost:3000/checkout | Place a Cash on Delivery order (inside Dhaka by default; COD scope is in `/admin/payment-methods`). The confirmation email lands in Mailpit |
 | http://localhost:3000/track | Track an order with its number and phone |
 | Online payment (UddoktaPay sandbox) | In `.env` set `UDDOKTAPAY_BASE_URL=https://sandbox.uddoktapay.com` and the sandbox API key published in UddoktaPay's API docs, restart `pnpm dev`, choose UddoktaPay at checkout. On the sandbox page pick bKash, type any transaction id and phone, choose Completed, press VERIFY. The sandbox sends you to `http://localhost/payment/return?...` without the port: add `:3000` after `localhost` and press Enter. The order shows as paid and confirmed |
 | http://localhost:3000/account/orders | A signed-in customer's orders: cancel, invoice PDF, order again; saved addresses under Addresses |
 | `/admin/orders` | Orders: filters, status buttons, edit items or address, notes, invoice and packing slip |
-| `/admin/shipping`, `/admin/payments`, `/admin/coupons` | Delivery zones and charges, payment methods and COD scope, coupons |
+| `/admin/shipping`, `/admin/payment-methods`, `/admin/coupons`, `/admin/payments` (payment records) | Delivery zones and charges, payment methods and COD scope, coupons |
 
 Stop `pnpm dev` with `Ctrl+C`. If `pnpm dev` says a port is in use, an earlier `pnpm dev` is still running in another terminal: use that one, or stop it first.
 

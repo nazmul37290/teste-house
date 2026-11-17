@@ -181,7 +181,7 @@ export async function applyVerification(deps: PaymentDeps, v: VerifiedPayment) {
       if (v.status === 'PENDING') {
         await tx.payment.update({
           where: { id: payment.id },
-          data: { ...base, status: 'PENDING' },
+          data: { ...base, status: 'PENDING', failureReason: null },
         });
         if (order.status === 'PENDING' && order.paymentStatus === 'FAILED') {
           await tx.order.update({ where: { id: order.id }, data: { paymentStatus: 'PENDING' } });

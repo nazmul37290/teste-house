@@ -110,16 +110,14 @@ export function productController(deps: Deps) {
       );
       // A failed apply is a business-rule error carrying the per-row report.
       if (!dryRun && !report.ok) {
-        res
-          .status(422)
-          .json({
-            error: {
-              code: 'BUSINESS_RULE',
-              message: 'Fix the errors in the file first',
-              details: [{ reason: 'CSV_INVALID' }],
-            },
-            data: report,
-          });
+        res.status(422).json({
+          error: {
+            code: 'BUSINESS_RULE',
+            message: 'Fix the errors in the file first',
+            details: [{ reason: 'CSV_INVALID' }],
+          },
+          data: report,
+        });
         return;
       }
       res.json({ data: report });

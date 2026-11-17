@@ -30,15 +30,13 @@ export function taxonomyController(deps: Deps) {
       res.json({ data: await categories.listCategories(deps) });
     }),
     createCategory: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await categories.createCategory(
-            deps,
-            actor(req),
-            createCategorySchema.parse(req.body),
-          ),
-        });
+      res.status(201).json({
+        data: await categories.createCategory(
+          deps,
+          actor(req),
+          createCategorySchema.parse(req.body),
+        ),
+      });
     }),
     updateCategory: h(async (req, res) => {
       res.json({
@@ -59,11 +57,9 @@ export function taxonomyController(deps: Deps) {
       res.json({ data: await brands.listBrands(deps) });
     }),
     createBrand: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await brands.createBrand(prisma, actor(req), createBrandSchema.parse(req.body)),
-        });
+      res.status(201).json({
+        data: await brands.createBrand(prisma, actor(req), createBrandSchema.parse(req.body)),
+      });
     }),
     updateBrand: h(async (req, res) => {
       res.json({
@@ -102,15 +98,13 @@ export function taxonomyController(deps: Deps) {
       res.json({ data: await attributes.listAttributes(prisma) });
     }),
     createAttribute: h(async (req, res) => {
-      res
-        .status(201)
-        .json({
-          data: await attributes.createAttribute(
-            prisma,
-            actor(req),
-            createAttributeSchema.parse(req.body),
-          ),
-        });
+      res.status(201).json({
+        data: await attributes.createAttribute(
+          prisma,
+          actor(req),
+          createAttributeSchema.parse(req.body),
+        ),
+      });
     }),
     updateAttribute: h(async (req, res) => {
       res.json({
