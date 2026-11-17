@@ -389,6 +389,11 @@ export async function expireUnpaidOrders(deps: PaymentDeps, now = new Date()) {
         where: { orderId: order.id, status: { in: ['INITIATED', 'PENDING'] } },
         data: { status: 'CANCELLED', failureReason: 'Order expired' },
       });
+      // Nothing was paid: an expired order is UNPAID, not still waiting for a payment.
+      await deps.prisma.order.updateMany({
+        where: { id: order.id, paymentStatus: { in: ['PENDING', 'FAILED'] } },
+        data: { paymentStatus: 'UNPAID' },
+      });
       cancelled += 1;
     } catch (err) {
       console.error(

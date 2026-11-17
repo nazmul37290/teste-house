@@ -199,7 +199,7 @@ describe('expiry and reconciliation', () => {
       data: { placedAt: new Date(Date.now() - 31 * 60_000) },
     });
     expect(await expireUnpaidOrders(ctx.deps)).toBeGreaterThanOrEqual(1);
-    expect(await orderOf(order.id)).toMatchObject({ status: 'CANCELLED' });
+    expect(await orderOf(order.id)).toMatchObject({ status: 'CANCELLED', paymentStatus: 'UNPAID' });
     expect(
       (await prisma.productVariant.findUniqueOrThrow({ where: { id: p.variantIds[0] } })).stockQty,
     ).toBe(5);
