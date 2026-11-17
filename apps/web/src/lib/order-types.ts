@@ -93,3 +93,28 @@ export type OrderView = {
 
 /** The order just placed, kept for the confirmation page (this tab only). */
 export const LAST_ORDER_KEY = 'shop:last-order';
+
+/** A saved customer address (/me/addresses). */
+export type SavedAddress = {
+  id: string;
+  label: string | null;
+  recipientName: string;
+  phone: string;
+  division: string;
+  district: string;
+  upazila: string | null;
+  addressLine: string;
+  postalCode: string | null;
+  isDefault: boolean;
+};
+
+/** A row of the customer's order history (/me/orders). */
+export type OrderListItem = {
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: string;
+  placedAt: string;
+  grandTotal: string;
+  itemCount: number;
+  paymentMethod: { name: string };
+};

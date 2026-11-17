@@ -81,12 +81,12 @@ Not part of this API but called by it: the web app's `POST /api/revalidate` (bod
 | POST | `/auth/change-email` | Better Auth. Add or change email (verification to the new address) |
 
 Better Auth paths above are its standard endpoints under `basePath` (names confirmed against 1.7.25). Our `/auth/login` and `/auth/register` are mounted before Better Auth's catch-all and need the `X-Requested-With` header. Better Auth's own `/auth/sign-up/email`, `/auth/sign-in/email` and `/auth/update-user` return 404 over HTTP for customers (see `auth.md` section 2). The email links bring the customer back to the web pages `/email-verified` and `/reset-password`.
-| GET/PATCH | `/me` | Profile |
-| POST | `/me/change-password` | |
-| GET/POST/PATCH/DELETE | `/me/addresses`, `/me/addresses/:id` | Saved addresses |
-| GET | `/me/orders`, `/me/orders/:id` | History and detail with timeline |
-| POST | `/me/orders/:id/cancel` | Only PENDING or CONFIRMED |
-| GET | `/me/orders/:id/invoice` | PDF |
+| GET/PATCH | `/me` | Profile (`name`, `phone`, `email` (null for the placeholder), `emailVerified`); `PATCH` changes the name only. Passwords change through Better Auth's `POST /auth/change-password` |
+| GET/POST, PUT/DELETE | `/me/addresses`, `/me/addresses/:id` | Saved addresses (up to 10, `422 TOO_MANY_ADDRESSES`). `PUT` replaces the whole address. The first address is the default; `isDefault: true` moves the default; deleting the default makes the newest remaining one the default. Place names are checked like order addresses |
+| GET | `/me/orders?page=&pageSize=`, `/me/orders/:number` | History (newest first) and detail with timeline and `canCancel`. By order number (`ORD-000123`); another customer's order is 404 |
+| POST | `/me/orders/:number/cancel` | Body `{ reason? }`. Only PENDING or CONFIRMED (`422 CANNOT_CANCEL`). Restores stock (`CANCEL_RELEASE`) and the coupon use, writes history (source CUSTOMER), emails `order-cancelled` |
+| POST | `/me/orders/:number/reorder` | Adds the order's still-available items to the cart (as much as stock allows); returns `{ added, skipped[] }` |
+| GET | `/me/orders/:number/invoice` | PDF (`application/pdf`, attachment) |
 | GET/POST/DELETE | `/me/wishlist`, `/me/wishlist/:productId` | Wishlist |
 | POST | `/me/reviews` | Create review (delivered purchase required) |
 

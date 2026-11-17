@@ -16,6 +16,13 @@ export type EmailTemplates = {
     url: string;
   };
   'order-placed': OrderEmailData & { trackUrl: string };
+  'order-confirmed': OrderEmailData & { trackUrl: string };
+  'order-cancelled': {
+    name: string;
+    orderNumber: string;
+    byCustomer: boolean;
+    reason: string | null;
+  };
   'admin-new-order': {
     orderNumber: string;
     customerName: string;
@@ -145,6 +152,31 @@ Thank you! We have received your order ${o.orderNumber}. We will call or message
 ${t.text}
 
 Track your order: ${o.trackUrl}`,
+    };
+  },
+  'order-confirmed': (o, brand) => {
+    const t = orderTable(o);
+    return {
+      subject: `Order ${o.orderNumber} confirmed – ${brand.name}`,
+      html: layout(
+        brand,
+        `<p>Hi ${escapeHtml(o.name)},</p><p>Your order <strong>${escapeHtml(o.orderNumber)}</strong> is confirmed. We are getting it ready.</p>${t.html}${button(o.trackUrl, 'Track your order')}`,
+      ),
+      text: `Hi ${o.name},\n\nYour order ${o.orderNumber} is confirmed. We are getting it ready.\n\n${t.text}\n\nTrack your order: ${o.trackUrl}`,
+    };
+  },
+  'order-cancelled': ({ name, orderNumber, byCustomer, reason }, brand) => {
+    const why = byCustomer
+      ? 'As you asked, we have cancelled your order'
+      : 'We are sorry: we had to cancel your order';
+    const note = reason && !byCustomer ? `Reason: ${reason}` : '';
+    return {
+      subject: `Order ${orderNumber} cancelled – ${brand.name}`,
+      html: layout(
+        brand,
+        `<p>Hi ${escapeHtml(name)},</p><p>${why} <strong>${escapeHtml(orderNumber)}</strong>.</p>${note ? `<p>${escapeHtml(note)}</p>` : ''}<p>Nothing is due for this order. If you have questions, reply to this email.</p>`,
+      ),
+      text: `Hi ${name},\n\n${why} ${orderNumber}.\n${note ? `${note}\n` : ''}Nothing is due for this order. If you have questions, reply to this email.`,
     };
   },
   'admin-new-order': (o, brand) => ({

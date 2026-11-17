@@ -29,26 +29,56 @@ export const orderItemInput = z.strictObject({
   quantity: z.number().int().min(1).max(1000),
 });
 
+/** Address fields shared by order addresses and saved customer addresses. */
+const addressFields = {
+  recipientName: z.string().trim().min(2).max(100),
+  phone,
+  division: z.string().trim().min(2).max(50),
+  district: z.string().trim().min(2).max(50),
+  upazila: z
+    .string()
+    .trim()
+    .max(50)
+    .optional()
+    .transform((v) => v || undefined),
+  addressLine: z.string().trim().min(5).max(300),
+  postalCode: z
+    .string()
+    .trim()
+    .max(10)
+    .optional()
+    .transform((v) => v || undefined),
+};
+
+/** The district must be in the division and the upazila in the district (bundled dataset). */
+const geoCheck = (
+  a: { division: string; district: string; upazila?: string },
+  ctx: z.RefinementCtx,
+) => {
+  const geo = checkBdAddress(a.division, a.district, a.upazila);
+  if (!geo.ok) ctx.addIssue({ code: 'custom', path: [geo.path], message: `Unknown ${geo.path}` });
+};
+
 export const addressInput = z
+  .strictObject({ ...addressFields, deliveryNote: z.string().trim().max(300).optional() })
+  .superRefine(geoCheck);
+
+/** A saved address of a signed-in customer (/me/addresses). */
+export const customerAddressSchema = z
   .strictObject({
-    recipientName: z.string().trim().min(2).max(100),
-    phone,
-    division: z.string().trim().min(2).max(50),
-    district: z.string().trim().min(2).max(50),
-    upazila: z
+    ...addressFields,
+    label: z
       .string()
       .trim()
-      .max(50)
+      .max(30)
       .optional()
       .transform((v) => v || undefined),
-    addressLine: z.string().trim().min(5).max(300),
-    postalCode: z.string().trim().max(10).optional(),
-    deliveryNote: z.string().trim().max(300).optional(),
+    isDefault: z.boolean().optional(),
   })
-  .superRefine((a, ctx) => {
-    const geo = checkBdAddress(a.division, a.district, a.upazila);
-    if (!geo.ok) ctx.addIssue({ code: 'custom', path: [geo.path], message: `Unknown ${geo.path}` });
-  });
+  .superRefine(geoCheck);
+export type CustomerAddressInput = z.output<typeof customerAddressSchema>;
+
+export const updateProfileSchema = z.strictObject({ name: z.string().trim().min(2).max(100) });
 
 export const contactInput = z.strictObject({
   name: z.string().trim().min(2).max(100),

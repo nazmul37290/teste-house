@@ -79,8 +79,8 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [x] Concurrency tests (last unit, coupon usage limit) and database CHECK tests
 - [x] Payment method listing with admin toggles and COD scope
 - [x] Order confirmation page, guest tracking (order number + phone)
-- [ ] Customer area: profile, addresses, order history, cancel, invoice PDF
-- [ ] Guest-order linking on email verification
+- [x] Customer area: profile, addresses, order history, cancel, invoice PDF
+- [x] Guest-order linking on email verification (hook from Phase 3; linked orders show in the order history)
 - [ ] Order emails (placed, confirmed, cancelled)
 - [ ] Admin order management: list, detail, status machine, edit, notes, invoice and packing slip
 

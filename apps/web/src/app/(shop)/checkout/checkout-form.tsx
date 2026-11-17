@@ -1,42 +1,36 @@
 'use client';
 
-import { BD_DIVISIONS, districtsOf, upazilasOf } from '@shop/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { AddressFields, EMPTY_ADDRESS, type AddressValue } from '@/components/shop/address-fields';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
-import { Field, Input, Select, Textarea } from '@/components/ui';
+import { Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
 import { cartApi, useCart } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
-import { LAST_ORDER_KEY, type OrderView, type Quote } from '@/lib/order-types';
+import { LAST_ORDER_KEY, type OrderView, type Quote, type SavedAddress } from '@/lib/order-types';
 
 type Contact = { name: string; phone: string; email: string };
-type Address = {
-  division: string;
-  district: string;
-  upazila: string;
-  addressLine: string;
-  deliveryNote: string;
-};
+type Profile = { name: string; phone: string; email: string | null };
+
+const NEW_ADDRESS = 'new';
 
 /**
  * Single-page checkout (CHK-2). The totals shown come from POST /checkout/quote; the order sends
  * the quoted total only as `expectedGrandTotal`, so a price change is caught (PRICE_CHANGED)
- * instead of charging a different amount silently.
+ * instead of charging a different amount silently. Signed-in customers get their details filled in
+ * and can deliver to a saved address.
  */
 export function CheckoutForm() {
   const router = useRouter();
   const { cart } = useCart();
   const [contact, setContact] = useState<Contact>({ name: '', phone: '', email: '' });
-  const [address, setAddress] = useState<Address>({
-    division: '',
-    district: '',
-    upazila: '',
-    addressLine: '',
-    deliveryNote: '',
-  });
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS);
+  const [deliveryNote, setDeliveryNote] = useState('');
+  const [saved, setSaved] = useState<SavedAddress[]>([]);
+  const [addressChoice, setAddressChoice] = useState(NEW_ADDRESS);
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<string | undefined>();
   const [method, setMethod] = useState('');
@@ -48,17 +42,46 @@ export function CheckoutForm() {
   // One key per checkout: a double click or a retry after a network error never makes two orders.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
+  // Signed in? Fill in the contact details and offer saved addresses (guests get 401 and skip this).
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [profile, addresses] = await Promise.all([
+          api<Profile>('/me'),
+          api<SavedAddress[]>('/me/addresses'),
+        ]);
+        if (cancelled) return;
+        setContact((c) => ({
+          name: c.name || profile.name,
+          phone: c.phone || profile.phone,
+          email: c.email || (profile.email ?? ''),
+        }));
+        setSaved(addresses);
+        if (addresses.length) setAddressChoice(addresses[0]!.id); // the default comes first
+      } catch {
+        // Guest checkout.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const savedAddress = saved.find((a) => a.id === addressChoice) ?? null;
+  const district = savedAddress ? savedAddress.district : address.district;
+
   const items = useMemo(
     () => (cart?.items ?? []).map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
     [cart],
   );
   const itemsKey = JSON.stringify(items);
 
-  // Re-quote whenever the cart, district or coupon changes (debounced).
-  // Keyed on the serialized items: every cart broadcast makes a new array with the same content.
+  // Re-quote whenever the cart, district or coupon changes (debounced). Keyed on the serialized
+  // items: every cart broadcast makes a new array with the same content.
   useEffect(() => {
     const lines = JSON.parse(itemsKey) as typeof items;
-    if (!lines.length || !address.district || cart?.hasProblems) {
+    if (!lines.length || !district || cart?.hasProblems) {
       setQuote(null);
       return;
     }
@@ -69,8 +92,9 @@ export function CheckoutForm() {
           method: 'POST',
           body: {
             items: lines,
-            district: address.district,
+            district,
             ...(coupon ? { couponCode: coupon } : {}),
+            ...(contact.phone.trim().length >= 11 ? { phone: contact.phone.trim() } : {}),
           },
         });
         if (cancelled) return;
@@ -82,18 +106,18 @@ export function CheckoutForm() {
       } catch (err) {
         if (cancelled) return;
         setQuote(null);
-        setQuoteError(err instanceof ApiError ? err.message : 'Could not calculate the total');
+        setQuoteError(
+          err instanceof ApiError && err.code !== 'VALIDATION_ERROR'
+            ? err.message
+            : 'Could not calculate the total',
+        );
       }
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [itemsKey, address.district, coupon, cart?.hasProblems]);
-
-  const districts = address.division ? districtsOf(address.division) : [];
-  const upazilas = address.district ? upazilasOf(address.division, address.district) : [];
-  const setAddr = (patch: Partial<Address>) => setAddress((a) => ({ ...a, ...patch }));
+  }, [itemsKey, district, coupon, cart?.hasProblems, contact.phone]);
 
   async function placeOrder(e: FormEvent) {
     e.preventDefault();
@@ -101,6 +125,7 @@ export function CheckoutForm() {
     setPlacing(true);
     setMessage(null);
     setFieldErrors({});
+    const note = deliveryNote.trim();
     try {
       const order = await api<OrderView>('/orders', {
         method: 'POST',
@@ -112,17 +137,22 @@ export function CheckoutForm() {
             phone: contact.phone,
             ...(contact.email.trim() ? { email: contact.email.trim() } : {}),
           },
-          address: {
-            recipientName: contact.name,
-            phone: contact.phone,
-            division: address.division,
-            district: address.district,
-            ...(address.upazila ? { upazila: address.upazila } : {}),
-            addressLine: address.addressLine,
-            ...(address.deliveryNote.trim() ? { deliveryNote: address.deliveryNote.trim() } : {}),
-          },
+          ...(savedAddress
+            ? { addressId: savedAddress.id }
+            : {
+                address: {
+                  recipientName: contact.name,
+                  phone: contact.phone,
+                  division: address.division,
+                  district: address.district,
+                  ...(address.upazila ? { upazila: address.upazila } : {}),
+                  addressLine: address.addressLine,
+                  ...(note ? { deliveryNote: note } : {}),
+                },
+              }),
           paymentMethodCode: method,
           ...(coupon && quote.coupon?.applied ? { couponCode: coupon } : {}),
+          ...(note && savedAddress ? { customerNote: note } : {}),
           expectedGrandTotal: quote.grandTotal,
         },
       });
@@ -229,83 +259,67 @@ export function CheckoutForm() {
 
         <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
           <h2 className="font-semibold">Delivery address</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Division" htmlFor="co-division" error={err('address.division')}>
-              <Select
-                id="co-division"
-                required
-                value={address.division}
-                onChange={(e) => setAddr({ division: e.target.value, district: '', upazila: '' })}
-              >
-                <option value="">Choose…</option>
-                {BD_DIVISIONS.map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="District" htmlFor="co-district" error={err('address.district')}>
-              <Select
-                id="co-district"
-                required
-                disabled={!address.division}
-                value={address.district}
-                onChange={(e) => setAddr({ district: e.target.value, upazila: '' })}
-              >
-                <option value="">Choose…</option>
-                {districts.map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Upazila / area" htmlFor="co-upazila" error={err('address.upazila')}>
-              <Select
-                id="co-upazila"
-                disabled={!address.district}
-                value={address.upazila}
-                onChange={(e) => setAddr({ upazila: e.target.value })}
-              >
-                <option value="">City area / not listed</option>
-                {upazilas.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <Field
-            label="Address"
-            htmlFor="co-line"
-            hint="House, road, area, landmark."
-            error={err('address.addressLine')}
-          >
-            <Textarea
-              id="co-line"
-              required
-              minLength={5}
-              maxLength={300}
-              rows={2}
-              autoComplete="street-address"
-              value={address.addressLine}
-              onChange={(e) => setAddr({ addressLine: e.target.value })}
+          {saved.length ? (
+            <div className="space-y-2">
+              {saved.map((a) => (
+                <label
+                  key={a.id}
+                  className="flex items-start gap-2 rounded-md border border-neutral-200 p-3 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="addressChoice"
+                    className="mt-1"
+                    checked={addressChoice === a.id}
+                    onChange={() => setAddressChoice(a.id)}
+                  />
+                  <span>
+                    <span className="font-medium">{a.label ?? a.recipientName}</span>
+                    <span className="block text-neutral-600">
+                      {a.recipientName}, {a.phone} · {a.addressLine},{' '}
+                      {a.upazila ? `${a.upazila}, ` : ''}
+                      {a.district}
+                    </span>
+                  </span>
+                </label>
+              ))}
+              <label className="flex items-center gap-2 rounded-md border border-neutral-200 p-3 text-sm">
+                <input
+                  type="radio"
+                  name="addressChoice"
+                  checked={addressChoice === NEW_ADDRESS}
+                  onChange={() => setAddressChoice(NEW_ADDRESS)}
+                />
+                A new address
+              </label>
+            </div>
+          ) : null}
+          {!savedAddress ? (
+            <AddressFields
+              idPrefix="co"
+              value={address}
+              onChange={setAddress}
+              error={(f) => err(`address.${f}`)}
             />
-          </Field>
+          ) : null}
           <Field label="Note for the delivery (optional)" htmlFor="co-note">
             <Input
               id="co-note"
               maxLength={300}
-              value={address.deliveryNote}
-              onChange={(e) => setAddr({ deliveryNote: e.target.value })}
+              value={deliveryNote}
+              onChange={(e) => setDeliveryNote(e.target.value)}
             />
           </Field>
         </section>
 
         <section className="space-y-3 rounded-lg border border-neutral-200 p-4">
           <h2 className="font-semibold">Payment</h2>
-          {!address.district ? (
+          {!district ? (
             <p className="text-sm text-neutral-500">Choose your district to see payment options.</p>
           ) : quote && quote.paymentMethods.length === 0 ? (
             <p className="text-sm text-red-700">
-              No payment method is available for {address.district}. Cash on Delivery may be limited
-              to some areas.
+              No payment method is available for {district}. Cash on Delivery may be limited to some
+              areas.
             </p>
           ) : (
             (quote?.paymentMethods ?? []).map((m) => (
@@ -395,9 +409,7 @@ export function CheckoutForm() {
         ) : (
           <p className="text-sm text-neutral-500">
             {quoteError ??
-              (address.district
-                ? 'Calculating…'
-                : 'Choose your district to see the delivery charge.')}
+              (district ? 'Calculating…' : 'Choose your district to see the delivery charge.')}
           </p>
         )}
 
