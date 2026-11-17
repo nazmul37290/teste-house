@@ -254,6 +254,7 @@ What you can try today:
 | `/admin/security` | Turn on two-factor authentication (scan the QR code with an authenticator app) and change your password |
 | http://localhost:3000/category/honey-spreads, `/product/<slug>`, `/search?q=honey` | Shop pages: filters, sort, search suggestions. Change a price in `/admin/products` and reload the product page: it updates within a couple of seconds |
 | `/admin/banners`, `/admin/homepage` | Home page banners and sections |
+| Analytics (GTM) | Put your container id (GTM-XXXXXXX) in `/admin/settings`. The cookie banner appears; in GTM press Preview and open the shop: the events (`view_item`, `add_to_cart`, `purchase`, ...) show in Tag Assistant, and in GA4 under Admin > DebugView. Leave the setting empty to turn tracking off |
 | http://localhost:3000/sitemap.xml | The sitemap search engines read |
 | Add to cart, then http://localhost:3000/checkout | Place a Cash on Delivery order (inside Dhaka by default; COD scope is in `/admin/payment-methods`). The confirmation email lands in Mailpit |
 | http://localhost:3000/track | Track an order with its number and phone |

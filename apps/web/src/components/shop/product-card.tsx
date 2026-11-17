@@ -1,4 +1,6 @@
+import { analyticsItem } from '@shop/shared';
 import Link from 'next/link';
+import { ItemListTracker } from '@/components/analytics/item-list-tracker';
 import type { ProductCard as Card } from '@/lib/storefront-types';
 import { Price } from './bits';
 import { ShopImage } from './shop-image';
@@ -10,7 +12,18 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
   return (
     <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white">
       <span className="absolute right-2 top-2 z-10">
-        <WishlistButton productId={product.id} name={product.name} />
+        <WishlistButton
+          productId={product.id}
+          name={product.name}
+          item={analyticsItem({
+            sku: product.sku,
+            name: product.name,
+            brand: product.brand?.name,
+            category: product.category,
+            variant: product.variantName,
+            price: product.price,
+          })}
+        />
       </span>
       <Link href={href} className="relative block bg-neutral-50">
         {product.image ? (
@@ -68,16 +81,23 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
 
 export function ProductGrid({
   products,
+  listName,
   priorityFirst = false,
 }: {
   products: Card[];
+  /** Name of the list for analytics (view_item_list / select_item). */
+  listName: string;
   priorityFirst?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+    <ItemListTracker
+      listName={listName}
+      products={products}
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4"
+    >
       {products.map((p, i) => (
         <ProductCard key={p.slug} product={p} priority={priorityFirst && i < 2} />
       ))}
-    </div>
+    </ItemListTracker>
   );
 }

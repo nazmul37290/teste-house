@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { Breadcrumbs, PlainText } from '@/components/shop/bits';
 import { JsonLd } from '@/components/shop/json-ld';
 import { ProductListing } from '@/components/shop/product-listing';
+import { storeName } from '@/lib/api-server';
 import { absoluteUrl } from '@/lib/site';
 import { getCategory, listProducts, resolveRedirect, type ListParams } from '@/lib/storefront';
 
@@ -17,9 +18,25 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   if (!category) return {};
   const filtered = FILTER_KEYS.filter((k) => query[k] !== undefined).length;
   const page = Number(query.page ?? 1);
+  const name = await storeName();
+  const title = category.seoTitle || category.name;
+  const description =
+    category.seoDescription ||
+    category.description?.slice(0, 160) ||
+    `Buy ${category.name} online from ${name}. Cash on Delivery and delivery across Bangladesh.`;
+  const image = category.image?.urls['1000'];
   return {
-    title: category.seoTitle || category.name,
-    description: category.seoDescription || category.description?.slice(0, 160) || undefined,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      siteName: name,
+      url: `/category/${slug}`,
+      images: image ? [{ url: image, alt: category.image!.altText }] : undefined,
+    },
+    twitter: { card: image ? 'summary_large_image' : 'summary' },
     // Filtered views point search engines at the plain category; several filters at once are not indexed.
     alternates: {
       canonical: page > 1 && !filtered ? `/category/${slug}?page=${page}` : `/category/${slug}`,
@@ -83,6 +100,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         params={query}
         basePath={`/category/${slug}`}
         emptyText="No products match these filters."
+        listName={category.name}
       />
     </div>
   );

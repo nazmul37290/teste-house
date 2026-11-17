@@ -158,6 +158,7 @@ export function productCards(prisma: Db, ids: string[]) {
       ratingAvg: true,
       ratingCount: true,
       brand: { select: { name: true, slug: true } },
+      category: { select: { name: true } },
       images: {
         orderBy: { sortOrder: 'asc' },
         take: 1,
@@ -166,6 +167,7 @@ export function productCards(prisma: Db, ids: string[]) {
       variants: {
         where: { isActive: true },
         select: {
+          sku: true,
           price: true,
           salePrice: true,
           stockQty: true,

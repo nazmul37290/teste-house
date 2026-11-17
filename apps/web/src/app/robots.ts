@@ -7,7 +7,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/cart', '/checkout', '/account', '/api'],
+        // Private or per-visitor pages (they are also noindex).
+        disallow: [
+          '/admin',
+          '/cart',
+          '/checkout',
+          '/account',
+          '/api',
+          '/wishlist',
+          '/order/',
+          '/payment/',
+          '/track',
+        ],
       },
     ],
     sitemap: `${site}/sitemap.xml`,

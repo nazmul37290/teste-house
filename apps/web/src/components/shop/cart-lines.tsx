@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { cartLineItem, trackEcommerce } from '@/lib/analytics';
 import { cartApi, PROBLEM_TEXT, type Cart } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
 import { ShopImage } from './shop-image';
@@ -48,7 +49,13 @@ export function CartLines({
                   type="button"
                   aria-label={`One less ${line.productName}`}
                   disabled={busy || line.quantity <= 1}
-                  onClick={() => void change(() => cartApi.setQuantity(line.id, line.quantity - 1))}
+                  onClick={() =>
+                    void change(async () => {
+                      const next = await cartApi.setQuantity(line.id, line.quantity - 1);
+                      trackEcommerce('remove_from_cart', { items: [cartLineItem(line, 1)] });
+                      return next;
+                    })
+                  }
                   className="px-2.5 py-1 text-sm disabled:opacity-40"
                 >
                   −
@@ -69,7 +76,13 @@ export function CartLines({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void change(() => cartApi.remove(line.id))}
+                onClick={() =>
+                  void change(async () => {
+                    const next = await cartApi.remove(line.id);
+                    trackEcommerce('remove_from_cart', { items: [cartLineItem(line)] });
+                    return next;
+                  })
+                }
                 className="text-xs text-neutral-500 underline hover:text-neutral-900"
               >
                 Remove

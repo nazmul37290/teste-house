@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TrackOnce } from '@/components/analytics/track-once';
 import { ProductListing } from '@/components/shop/product-listing';
 import { listProducts, type ListParams } from '@/lib/storefront';
 
@@ -33,7 +34,9 @@ export default async function SearchPage({ searchParams }: Props) {
         params={query}
         basePath="/search"
         emptyText="Nothing found. Try another word or check the spelling."
+        listName="Search results"
       />
+      <TrackOnce id={term} kind="search" term={term} />
     </div>
   );
 }

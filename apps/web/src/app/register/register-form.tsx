@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { Alert, Button, Field, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
+import { track } from '@/lib/analytics';
 import { resetWishlist } from '@/lib/wishlist-client';
 
 export function RegisterForm({
@@ -36,6 +37,7 @@ export function RegisterForm({
         },
       });
       resetWishlist(); // the next page merges this browser's saved products into the account
+      track('sign_up', { method: 'phone' });
       router.replace(next);
       router.refresh();
     } catch (err) {

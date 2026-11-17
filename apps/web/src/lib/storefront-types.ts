@@ -22,6 +22,8 @@ export type ProductCard = {
   ratingAvg: number;
   ratingCount: number;
   badges: { featured: boolean; newArrival: boolean; bestSeller: boolean };
+  sku: string;
+  category: string | null;
 };
 
 export type Facets = {

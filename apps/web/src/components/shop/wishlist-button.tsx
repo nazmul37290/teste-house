@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import type { AnalyticsItem } from '@shop/shared';
+import { trackEcommerce } from '@/lib/analytics';
 import { useWishlist } from '@/lib/wishlist-client';
 
 /** Heart toggle for one product (cards and the product page). */
@@ -8,10 +10,13 @@ export function WishlistButton({
   productId,
   name,
   variant = 'icon',
+  item,
 }: {
   productId: string;
   name: string;
   variant?: 'icon' | 'text';
+  /** For the add_to_wishlist event. */
+  item?: AnalyticsItem;
 }) {
   const { ids, toggle } = useWishlist();
   const [busy, setBusy] = useState(false);
@@ -21,7 +26,9 @@ export function WishlistButton({
   async function onClick() {
     setBusy(true);
     try {
+      const adding = !saved;
       await toggle(productId);
+      if (adding && item) trackEcommerce('add_to_wishlist', { items: [item] });
     } finally {
       setBusy(false);
     }

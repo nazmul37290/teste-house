@@ -12,6 +12,8 @@ export type CartLine = {
   sku: string;
   productName: string;
   productSlug: string;
+  brand: string | null;
+  category: string | null;
   variantName: string;
   image: ShopImage | null;
   unitPrice: string;

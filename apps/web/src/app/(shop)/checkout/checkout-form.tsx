@@ -1,11 +1,13 @@
 'use client';
 
+import { moneyToNumber } from '@shop/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AddressFields, EMPTY_ADDRESS, type AddressValue } from '@/components/shop/address-fields';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
 import { Field, Input } from '@/components/ui';
+import { cartLineItem, trackEcommerce } from '@/lib/analytics';
 import { api } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
 import { cartApi, useCart } from '@/lib/cart-client';
@@ -26,6 +28,18 @@ const NEW_ADDRESS = 'new';
 export function CheckoutForm() {
   const router = useRouter();
   const { cart } = useCart();
+  // begin_checkout once, when the cart has loaded with items.
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || !cart?.items.length) return;
+    checkoutTracked.current = true;
+    trackEcommerce('begin_checkout', {
+      items: cart.items.map((l) => cartLineItem(l)),
+      value: moneyToNumber(cart.subtotal),
+    });
+  }, [cart]);
+  // add_shipping_info once per district, when the server quote for it arrives.
+  const shippingTrackedFor = useRef<string | null>(null);
   const [contact, setContact] = useState<Contact>({ name: '', phone: '', email: '' });
   const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS);
   const [deliveryNote, setDeliveryNote] = useState('');
@@ -99,6 +113,14 @@ export function CheckoutForm() {
         });
         if (cancelled) return;
         setQuote(q);
+        if (shippingTrackedFor.current !== district && cart) {
+          shippingTrackedFor.current = district;
+          trackEcommerce('add_shipping_info', {
+            shipping_tier: q.zone.name,
+            value: moneyToNumber(q.grandTotal),
+            items: cart.items.map((l) => cartLineItem(l)),
+          });
+        }
         setQuoteError(null);
         setMethod((m) =>
           q.paymentMethods.some((p) => p.code === m) ? m : (q.paymentMethods[0]?.code ?? ''),
@@ -123,6 +145,13 @@ export function CheckoutForm() {
     e.preventDefault();
     if (!quote || !method) return;
     setPlacing(true);
+    if (cart) {
+      trackEcommerce('add_payment_info', {
+        payment_type: method,
+        value: moneyToNumber(quote.grandTotal),
+        items: cart.items.map((l) => cartLineItem(l)),
+      });
+    }
     setMessage(null);
     setFieldErrors({});
     const note = deliveryNote.trim();

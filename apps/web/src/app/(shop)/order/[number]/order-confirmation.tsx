@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ItemRows, Totals } from '@/components/shop/order-summary';
 import { PayNowButton } from '@/components/shop/pay-now-button';
+import { trackPurchaseOnce } from '@/lib/analytics';
 import { LAST_ORDER_KEY, type OrderView } from '@/lib/order-types';
 
 /**
@@ -24,6 +25,8 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
       found = null;
     }
     setOrder(found);
+    // COD orders are complete here. Online orders count when the payment is verified (return page).
+    if (found && found.paymentMethod.code === 'COD') trackPurchaseOnce(found);
   }, [orderNumber]);
 
   if (order === undefined) return null;

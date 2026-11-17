@@ -1,6 +1,7 @@
 'use client';
 
-import { MAX_CART_LINE_QUANTITY } from '@shop/shared';
+import { analyticsItem, MAX_CART_LINE_QUANTITY } from '@shop/shared';
+import { trackEcommerce } from '@/lib/analytics';
 import { useState } from 'react';
 import { Price } from '@/components/shop/bits';
 import { cartApi, cartErrorText, openCartDrawer } from '@/lib/cart-client';
@@ -11,7 +12,14 @@ import type { ProductVariant } from '@/lib/storefront-types';
  * Variant choice, price, stock state and add to cart (disabled for sold-out variants, BRW-4).
  * Prices shown here are for display; the server calculates every order total itself.
  */
-export function BuyBox({ variants }: { variants: ProductVariant[] }) {
+export function BuyBox({
+  variants,
+  product,
+}: {
+  variants: ProductVariant[];
+  /** For the add_to_cart event. */
+  product: { name: string; brand: string | null; category: string | null };
+}) {
   const firstInStock = variants.findIndex((v) => v.inStock);
   const [index, setIndex] = useState(firstInStock >= 0 ? firstInStock : 0);
   const v = variants[index]!;
@@ -24,6 +32,19 @@ export function BuyBox({ variants }: { variants: ProductVariant[] }) {
     setMessage(null);
     try {
       await cartApi.add(v.id, quantity);
+      trackEcommerce('add_to_cart', {
+        items: [
+          analyticsItem({
+            sku: v.sku,
+            name: product.name,
+            brand: product.brand,
+            category: product.category,
+            variant: v.name,
+            price: v.price,
+            quantity,
+          }),
+        ],
+      });
       setQuantity(1);
       openCartDrawer();
     } catch (err) {

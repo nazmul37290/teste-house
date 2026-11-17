@@ -46,6 +46,7 @@ type CardRow = Awaited<ReturnType<typeof repo.productCards>>[number];
 /** "From" price = cheapest effective price; regularPrice set when that variant is on sale. */
 function toCard(p: CardRow, base: string) {
   const offers = p.variants.map((v) => ({
+    sku: v.sku,
     effective: paisa(v.salePrice ?? v.price),
     regular: paisa(v.price),
     onSale: v.salePrice !== null,
@@ -67,6 +68,9 @@ function toCard(p: CardRow, base: string) {
     ratingAvg: Number(p.ratingAvg.toFixed(2)),
     ratingCount: p.ratingCount,
     badges: { featured: p.isFeatured, newArrival: p.isNewArrival, bestSeller: p.isBestSeller },
+    /** For analytics item payloads: the SKU of the variant whose price is shown, and the category. */
+    sku: cheapest.sku,
+    category: p.category?.name ?? null,
   };
 }
 export type ProductCard = ReturnType<typeof toCard>;

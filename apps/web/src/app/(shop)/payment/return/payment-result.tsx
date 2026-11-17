@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { PayNowButton } from '@/components/shop/pay-now-button';
+import { trackPurchaseOnce } from '@/lib/analytics';
 import { api } from '@/lib/api-client';
 import { LAST_ORDER_KEY, type OrderView } from '@/lib/order-types';
 
@@ -42,12 +43,19 @@ export function PaymentResult({
     if (!invoiceId) return;
     setChecking(true);
     try {
-      setResult(
-        await api<Confirmed>('/payments/uddoktapay/confirm', {
-          method: 'POST',
-          body: { invoiceId },
-        }),
-      );
+      const confirmed = await api<Confirmed>('/payments/uddoktapay/confirm', {
+        method: 'POST',
+        body: { invoiceId },
+      });
+      setResult(confirmed);
+      // purchase only once the server verified the payment (values from the saved order view).
+      const saved = lastOrder();
+      if (
+        (confirmed.outcome === 'PAID' || confirmed.outcome === 'ALREADY_PAID') &&
+        saved?.orderNumber === confirmed.orderNumber
+      ) {
+        trackPurchaseOnce(saved);
+      }
       setFailed(false);
     } catch {
       setFailed(true);

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { moneyToNumber } from '@shop/shared';
+import { cartLineItem, trackEcommerce } from '@/lib/analytics';
 import { onCartOpen, useCart } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
 import { CartLines } from './cart-lines';
@@ -15,6 +17,16 @@ export function CartButton() {
   const pathname = usePathname();
 
   useEffect(() => onCartOpen(() => setOpen(true)), []);
+  // view_cart each time the drawer opens with something in it.
+  useEffect(() => {
+    if (open && cart?.items.length) {
+      trackEcommerce('view_cart', {
+        items: cart.items.map((l) => cartLineItem(l)),
+        value: moneyToNumber(cart.subtotal),
+      });
+    }
+    // Only on opening, not on every cart change while open.
+  }, [open]);
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     const d = dialog.current;

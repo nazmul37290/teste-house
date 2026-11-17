@@ -140,11 +140,14 @@ export function ProductListing({
   params,
   basePath,
   emptyText,
+  listName,
 }: {
   data: ProductPage;
   params: ListParams;
   basePath: string;
   emptyText: string;
+  /** For analytics: the category name or "Search results". */
+  listName: string;
 }) {
   const href = (page: number) => {
     const qs = new URLSearchParams();
@@ -178,7 +181,7 @@ export function ProductListing({
           </Suspense>
         </div>
         {data.items.length ? (
-          <ProductGrid products={data.items} priorityFirst />
+          <ProductGrid products={data.items} listName={listName} priorityFirst />
         ) : (
           <p className="py-12 text-center text-neutral-500">{emptyText}</p>
         )}

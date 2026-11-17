@@ -104,7 +104,8 @@ interface MailTransport {
 ## 4. Google Tag Manager
 
 - Container ID from setting `gtm.containerId` (public setting).
-- Event contract and `purchase` deduplication are in `design.md` section 10. Do not push events from more than one place per action; use the `track()` helper only.
+- Event contract, consent and `purchase` deduplication are in `design.md` section 10. Do not push events from more than one place per action; use the helpers in `apps/web/src/lib/analytics.ts` only.
+- In GTM: a GA4 Configuration (Google tag) with the measurement id, and a GA4 Event tag with trigger "Custom Event" matching the event names above and "Send Ecommerce data" from the data layer. Consent: built-in consent checks on (the page sets Consent Mode v2 defaults).
 
 ## 5. Cloudflare
 

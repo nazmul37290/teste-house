@@ -6,6 +6,8 @@ import { JsonLd } from '@/components/shop/json-ld';
 import { ProductGrid } from '@/components/shop/product-card';
 import { absoluteUrl } from '@/lib/site';
 import { getProduct, getReviews, resolveRedirect } from '@/lib/storefront';
+import { analyticsItem } from '@shop/shared';
+import { TrackOnce } from '@/components/analytics/track-once';
 import { ReviewsSection } from '@/components/shop/reviews-section';
 import { Stars } from '@/components/shop/stars';
 import { WishlistButton } from '@/components/shop/wishlist-button';
@@ -47,6 +49,16 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
   const reviews = await getReviews(slug);
+  const analyticsProduct = {
+    name: product.name,
+    brand: product.brand?.name ?? null,
+    category: product.breadcrumbs.at(-1)?.name ?? null,
+  };
+  // view_item: the variant shown first (in stock if possible), as the buy box shows it.
+  const shown = product.variants.find((v) => v.inStock) ?? product.variants[0]!;
+  const viewItems = [
+    analyticsItem({ sku: shown.sku, variant: shown.name, price: shown.price, ...analyticsProduct }),
+  ];
 
   const facts: [string, string | null][] = [
     ['Ingredients', product.ingredients],
@@ -141,8 +153,14 @@ export default async function ProductPage({ params }: Props) {
               <p className="text-neutral-700">{product.shortDescription}</p>
             ) : null}
           </div>
-          <BuyBox variants={product.variants} />
-          <WishlistButton productId={product.id} name={product.name} variant="text" />
+          <BuyBox variants={product.variants} product={analyticsProduct} />
+          <WishlistButton
+            productId={product.id}
+            name={product.name}
+            variant="text"
+            item={viewItems[0]}
+          />
+          <TrackOnce id={product.id} kind="ecommerce" event="view_item" items={viewItems} />
           {product.tags.length ? (
             <ul className="flex flex-wrap gap-2">
               {product.tags.map((t) => (
@@ -205,7 +223,7 @@ export default async function ProductPage({ params }: Props) {
       {product.related.length ? (
         <section>
           <SectionHeading title="You may also like" />
-          <ProductGrid products={product.related} />
+          <ProductGrid products={product.related} listName="Related products" />
         </section>
       ) : null}
     </div>

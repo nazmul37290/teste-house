@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPublicSettings, storeName } from '@/lib/api-server';
 import { getCategories } from '@/lib/storefront';
+import { CookieSettingsLink } from '@/components/analytics/consent-and-gtm';
 import { CartButton } from './cart-button';
 import { SearchBox } from './search-box';
 
@@ -110,6 +111,9 @@ export async function ShopFooter() {
               <Link href="/terms" className="hover:underline">
                 Terms and conditions
               </Link>
+            </li>
+            <li>
+              <CookieSettingsLink />
             </li>
           </ul>
         </div>

@@ -105,6 +105,8 @@ const itemSelect = {
         select: {
           name: true,
           slug: true,
+          brand: { select: { name: true } },
+          category: { select: { name: true } },
           status: true,
           deletedAt: true,
           images: {
@@ -147,6 +149,8 @@ function toLine(item: ItemRow, base: string) {
     sku: v.sku,
     productName: v.product.name,
     productSlug: v.product.slug,
+    brand: v.product.brand?.name ?? null,
+    category: v.product.category?.name ?? null,
     variantName: v.name,
     image: media ? imageOf(base, media) : null,
     unitPrice: formatPaisa(unit),

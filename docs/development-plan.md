@@ -107,10 +107,10 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 10: GTM, consent, SEO audit
 
-- [ ] GTM provider, `track()` helper, all ecommerce events
-- [ ] Consent banner with Consent Mode v2
-- [ ] Verify in GTM preview and GA4 DebugView; `purchase` dedup check
-- [ ] SEO audit: Lighthouse, structured data validation, sitemap check
+- [x] GTM provider, `track()` helper, all ecommerce events
+- [x] Consent banner with Consent Mode v2
+- [ ] Verify in GTM preview and GA4 DebugView; `purchase` dedup check (dataLayer and dedup verified in a browser; GTM preview / DebugView need the owner's container)
+- [ ] SEO audit: Lighthouse, structured data validation, sitemap check (structured data, sitemap, metadata, robots done; Lighthouse needs permission to run)
 
 ## Phase 11: Hardening and launch prep
 

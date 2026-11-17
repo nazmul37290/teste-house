@@ -1,12 +1,24 @@
 'use client';
 
+import { moneyToNumber } from '@shop/shared';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+import { cartLineItem, trackEcommerce } from '@/lib/analytics';
 import { CartLines } from '@/components/shop/cart-lines';
 import { useCart } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
 
 export function CartPageView() {
   const { cart, error, change } = useCart();
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (tracked.current || !cart?.items.length) return;
+    tracked.current = true;
+    trackEcommerce('view_cart', {
+      items: cart.items.map((l) => cartLineItem(l)),
+      value: moneyToNumber(cart.subtotal),
+    });
+  }, [cart]);
 
   if (!cart) {
     return <p className="mt-6 text-sm text-neutral-500">{error ?? 'Loading your cart…'}</p>;

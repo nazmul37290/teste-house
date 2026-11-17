@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
 import { PlainText, SectionHeading } from '@/components/shop/bits';
@@ -72,7 +73,11 @@ function Section({ section, first }: { section: HomeSection; first: boolean }) {
               }
             />
           ) : null}
-          <ProductGrid products={section.products} priorityFirst={first} />
+          <ProductGrid
+            products={section.products}
+            listName={section.title ?? 'Home'}
+            priorityFirst={first}
+          />
         </section>
       );
     case 'CATEGORY_GRID':
@@ -128,6 +133,21 @@ function Section({ section, first }: { section: HomeSection; first: boolean }) {
         </section>
       );
   }
+}
+
+/** Home: canonical, description (settings, else a plain default) and social preview tags. */
+export async function generateMetadata(): Promise<Metadata> {
+  const [settings, name] = await Promise.all([getPublicSettings(), storeName()]);
+  const title = settings['seo.defaultTitle']?.trim() || name;
+  const description =
+    settings['seo.defaultDescription']?.trim() ||
+    `Order from ${name} online. Cash on Delivery and delivery across Bangladesh.`;
+  return {
+    description,
+    alternates: { canonical: '/' },
+    openGraph: { type: 'website', title, description, siteName: name, url: '/' },
+    twitter: { card: 'summary' },
+  };
 }
 
 export default async function HomePage() {
