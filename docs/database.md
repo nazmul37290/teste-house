@@ -136,9 +136,13 @@ CREATE INDEX idx_products_slug_trgm ON products USING gin (slug gin_trgm_ops);
 
 **Slugs and redirects.** Slugs are generated from the name when left empty (`slugify()` in `packages/shared`; names without Latin letters need a typed slug) and never change on rename. An explicit slug change inserts a `redirects` row (`/category/old` -> `/category/new`, 301; products use `/product/...`), points earlier redirects at the new path so there are no chains, and removes any redirect from the new path (it is a live page again). Phase 5 serves them.
 
-**Ratings.** After a review is approved, rejected or deleted, recompute `products.ratingAvg` and `ratingCount` from approved reviews.
+**Ratings.** After a review is created, edited, approved, rejected or deleted, recompute `products.ratingAvg` (two decimals) and `ratingCount` from approved reviews, in the same transaction; the product page cache tag is refreshed.
 
-**Reviews allowed** only when the customer has an order item for the product whose order is `DELIVERED`; set `isVerifiedPurchase` and `orderItemId`.
+**Review photos.** Up to 3 per review, uploaded through the normal image pipeline into `media` under `reviews/` (kept out of the admin media library). A fresh upload is reserved for its customer for 24 h (Redis); unattached ones are deleted hourly.
+
+**Wishlist.** `wishlist_items` per customer (max 200). Guests keep product ids in the browser (localStorage); the first signed-in page view merges them into the account and clears the local list.
+
+**Reviews allowed** only when the customer has an order item for the product whose order is `DELIVERED`; set `isVerifiedPurchase` and `orderItemId`. Customers may edit (back to PENDING unless auto-approve) or delete their own review. Text is plain text, never rendered as HTML.
 
 **Inventory.** Every stock change is one atomic statement (`UPDATE ... SET "stockQty" = "stockQty" + n WHERE ... AND "stockQty" + n >= 0 RETURNING "stockQty"`) in the same transaction as its `stock_movements` row, whose `balanceAfter` is the returned value, so concurrent changes never overdraw or record wrong balances. Adjustments need a reason (`ADJUSTMENT`); goods received are a `PURCHASE`, optionally as a batch (`batchNo` unique per variant, optional manufacture and expiry dates, `qtyRemaining` tracked when an adjustment names the batch).
 

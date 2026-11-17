@@ -107,7 +107,7 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 - 1 to 5 stars, optional title, text and photos.
 - Reviews are `PENDING` until approved (auto-approve setting available).
 - Product keeps `ratingAvg` and `ratingCount`; exposed as Product schema for SEO.
-- One review per customer per product.
+- One review per customer per product. The author may edit it (it is moderated again) or delete it; up to 3 photos (decided in Phase 9).
 
 ## 10. Notifications
 

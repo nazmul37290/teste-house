@@ -1,6 +1,8 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import {
+  adminReviewListQuerySchema,
+  reviewReplySchema,
   adminOrderListQuerySchema,
   adminPaymentListQuerySchema,
   recordRefundSchema,
@@ -35,6 +37,7 @@ import { MAX_CSV_BYTES } from '../services/product-csv.service';
 import { actorFrom } from '../services/audit.service';
 import * as adminOrders from '../services/admin-order.service';
 import * as coupons from '../services/coupon.service';
+import * as reviewAdmin from '../services/review.service';
 import * as courier from '../services/courier.service';
 import * as paymentAdmin from '../services/payment-admin.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
@@ -332,6 +335,35 @@ export function adminRouter(deps: Deps): Router {
         .send(await renderOrderPdf(deps.prisma, id, kind));
     });
   }
+
+  // Reviews.
+  router.get('/reviews', requirePermission('reviews.moderate'), async (req, res) => {
+    const q = adminReviewListQuerySchema.parse(req.query);
+    const { items, total } = await reviewAdmin.adminList(deps, q);
+    res.json({ data: items, meta: { page: q.page, pageSize: q.pageSize, total } });
+  });
+  for (const [action, status] of [
+    ['approve', 'APPROVED'],
+    ['reject', 'REJECTED'],
+  ] as const) {
+    router.post(
+      `/reviews/:id/${action}`,
+      requirePermission('reviews.moderate'),
+      async (req, res) => {
+        await reviewAdmin.setStatus(deps, actorFrom(req, deps.env), pid(req), status);
+        res.status(204).end();
+      },
+    );
+  }
+  router.post('/reviews/:id/reply', requirePermission('reviews.moderate'), async (req, res) => {
+    const { reply } = reviewReplySchema.parse(req.body);
+    await reviewAdmin.reply(deps, actorFrom(req, deps.env), pid(req), reply);
+    res.status(204).end();
+  });
+  router.delete('/reviews/:id', requirePermission('reviews.moderate'), async (req, res) => {
+    await reviewAdmin.adminDelete(deps, actorFrom(req, deps.env), pid(req));
+    res.status(204).end();
+  });
 
   // Shipping, payment methods and coupons.
   router.get('/delivery-zones', requirePermission('shipping.manage'), async (_req, res) => {

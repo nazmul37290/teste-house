@@ -1,5 +1,6 @@
 import {
   productIdsQuerySchema,
+  publicReviewsQuerySchema,
   publicProductQuerySchema,
   slugSchema,
   suggestQuerySchema,
@@ -9,6 +10,7 @@ import { z } from 'zod';
 import type { Deps } from '../deps';
 import { clientIp } from '../lib/client-ip';
 import { enforceRateLimit } from '../lib/rate-limit';
+import * as reviews from '../services/review.service';
 import * as storefront from '../services/storefront.service';
 
 const slugParam = (req: Request) => z.object({ slug: slugSchema }).parse(req.params).slug;
@@ -31,6 +33,11 @@ export function storefrontRouter(deps: Deps): Router {
   router.get('/products/cards', async (req, res) => {
     const { ids } = productIdsQuerySchema.parse(req.query);
     res.json({ data: await storefront.cardsByIds(svc, ids) });
+  });
+  router.get('/products/:slug/reviews', async (req, res) => {
+    const { page } = publicReviewsQuerySchema.parse(req.query);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ data: await reviews.publicReviews(deps, slugParam(req), page) });
   });
   router.get('/products/:slug', async (req, res) => {
     res.json({ data: await storefront.getProduct(svc, slugParam(req)) });

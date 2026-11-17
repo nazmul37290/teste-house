@@ -52,6 +52,7 @@ export function createEmailQueue(redisUrl: string): EmailQueue {
 export const PAYMENTS_QUEUE = 'payments.maintenance';
 export const RECONCILE_JOB = 'payment.reconcile';
 export const EXPIRE_JOB = 'order.expire-unpaid';
+export const MEDIA_CLEANUP_JOB = 'media.cleanup';
 export const PAYMENT_JOB_EVERY_MS = 5 * 60_000;
 
 export function createPaymentsQueue(redisUrl: string): Queue {

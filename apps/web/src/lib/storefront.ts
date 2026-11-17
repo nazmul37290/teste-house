@@ -9,6 +9,7 @@ import type {
   ProductDetail,
   ProductPage,
   ProductCard,
+  ReviewPage,
 } from './storefront-types';
 
 const API = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
@@ -42,6 +43,11 @@ export const getCategory = cache((slug: string) =>
 );
 export const getProduct = cache((slug: string) =>
   orNull(shopFetch<ProductDetail>(`/products/${slug}`, [`product:${slug}`])),
+);
+
+/** First page of approved reviews, cached with the product (refreshed when a review changes). */
+export const getReviews = cache((slug: string) =>
+  orNull(shopFetch<ReviewPage>(`/products/${slug}/reviews`, [`product:${slug}`])),
 );
 
 export type ListParams = Record<string, string | string[] | undefined>;

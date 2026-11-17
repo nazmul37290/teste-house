@@ -114,3 +114,22 @@ export type HomeSection =
   | { type: 'TEXT'; title: string | null; text: string };
 
 export type Homepage = { hero: HeroBanner[]; sections: HomeSection[] };
+
+export type ReviewItem = {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  isVerifiedPurchase: boolean;
+  adminReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  author: string;
+  images: ShopImage[];
+};
+
+export type ReviewPage = {
+  summary: { average: number; count: number; stars: Record<string, number> };
+  items: ReviewItem[];
+  meta: { page: number; pageSize: number; total: number };
+};

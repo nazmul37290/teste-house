@@ -15,6 +15,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/media', label: 'Media', permission: 'media.upload' },
   { href: '/admin/banners', label: 'Banners', permission: 'marketing.manage' },
   { href: '/admin/homepage', label: 'Homepage', permission: 'marketing.manage' },
+  { href: '/admin/reviews', label: 'Reviews', permission: 'reviews.moderate' },
   { href: '/admin/coupons', label: 'Coupons', permission: 'coupons.manage' },
   { href: '/admin/shipping', label: 'Delivery zones', permission: 'shipping.manage' },
   { href: '/admin/payments', label: 'Payments', permission: 'orders.view' },

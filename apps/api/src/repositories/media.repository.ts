@@ -23,7 +23,7 @@ export function createMedia(
     width: number;
     height: number;
     altText: string;
-    uploadedById: string;
+    uploadedById: string | null;
   },
 ) {
   return prisma.media.create({ data, select: mediaSelect });
@@ -41,9 +41,11 @@ export async function listMedia(
   prisma: Client,
   query: { page: number; pageSize: number; q?: string },
 ) {
-  const where: Prisma.MediaWhereInput = query.q
-    ? { altText: { contains: query.q, mode: 'insensitive' } }
-    : {};
+  // Customers' review photos are not part of the shop's media library.
+  const where: Prisma.MediaWhereInput = {
+    NOT: { path: { startsWith: 'reviews/' } },
+    ...(query.q ? { altText: { contains: query.q, mode: 'insensitive' } } : {}),
+  };
   const [items, total] = await Promise.all([
     prisma.media.findMany({
       where,

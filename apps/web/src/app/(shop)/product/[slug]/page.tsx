@@ -5,7 +5,9 @@ import { Breadcrumbs, PlainText, SectionHeading } from '@/components/shop/bits';
 import { JsonLd } from '@/components/shop/json-ld';
 import { ProductGrid } from '@/components/shop/product-card';
 import { absoluteUrl } from '@/lib/site';
-import { getProduct, resolveRedirect } from '@/lib/storefront';
+import { getProduct, getReviews, resolveRedirect } from '@/lib/storefront';
+import { ReviewsSection } from '@/components/shop/reviews-section';
+import { Stars } from '@/components/shop/stars';
 import { WishlistButton } from '@/components/shop/wishlist-button';
 import { BuyBox } from './buy-box';
 import { Gallery } from './gallery';
@@ -44,6 +46,7 @@ export default async function ProductPage({ params }: Props) {
     if (moved) permanentRedirect(moved);
     notFound();
   }
+  const reviews = await getReviews(slug);
 
   const facts: [string, string | null][] = [
     ['Ingredients', product.ingredients],
@@ -77,6 +80,14 @@ export default async function ProductPage({ params }: Props) {
             reviewCount: product.ratingCount,
           }
         : undefined,
+    review: reviews?.items.slice(0, 5).map((r) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: r.author },
+      datePublished: r.createdAt.slice(0, 10),
+      reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 },
+      name: r.title ?? undefined,
+      reviewBody: r.body ?? undefined,
+    })),
   };
   const breadcrumbLd = {
     '@context': 'https://schema.org',
@@ -121,6 +132,11 @@ export default async function ProductPage({ params }: Props) {
               </Link>
             ) : null}
             <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{product.name}</h1>
+            {product.ratingCount > 0 ? (
+              <a href="#reviews" className="inline-block">
+                <Stars value={product.ratingAvg} count={product.ratingCount} />
+              </a>
+            ) : null}
             {product.shortDescription ? (
               <p className="text-neutral-700">{product.shortDescription}</p>
             ) : null}
@@ -183,6 +199,8 @@ export default async function ProductPage({ params }: Props) {
           ) : null}
         </section>
       </div>
+
+      <ReviewsSection productId={product.id} slug={product.slug} page={reviews} />
 
       {product.related.length ? (
         <section>

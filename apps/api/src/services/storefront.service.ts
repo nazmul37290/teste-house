@@ -85,7 +85,12 @@ async function cards(deps: StorefrontDeps, ids: string[]): Promise<ProductCard[]
 export async function cardsByIds(deps: StorefrontDeps, ids: string[]): Promise<ProductCard[]> {
   if (!ids.length) return [];
   const visible = new Set(
-    await repo.visibleProductIds(deps.prisma, { id: { in: ids } }, { createdAt: 'desc' }, ids.length),
+    await repo.visibleProductIds(
+      deps.prisma,
+      { id: { in: ids } },
+      { createdAt: 'desc' },
+      ids.length,
+    ),
   );
   return cards(
     deps,

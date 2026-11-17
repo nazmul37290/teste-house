@@ -120,7 +120,7 @@ See `integrations.md`. Summary:
 | `payments.maintenance`: `payment.reconcile`, `order.expire-unpaid` | Every 5 minutes (BullMQ job schedulers): re-verify open online payments; cancel online orders unpaid after 30 minutes (stock and coupon released) |
 | (no own queue) | Low-stock alert: checked right after each committed stock change (`checkLowStock()`); the email itself goes through `email.send` (`admin-low-stock`) |
 | `cache.revalidate` | After a successful admin write (catalog, inventory, media, banners, homepage sections, settings) the API enqueues the matching tags (`catalog`, `homepage`, `settings`); the worker POSTs them to the web app's `POST /api/revalidate` at `WEB_INTERNAL_URL` with the `x-revalidate-secret` header. Jobs for the same tags within one second collapse into one (job id from the tags), 5 attempts with backoff. Without `REVALIDATE_SECRET` nothing is enqueued and pages refresh on their 5-minute timer |
-| `media.cleanup` | Remove orphaned files after a grace period |
+| `media.cleanup` (on `payments.maintenance`, hourly) | Delete review photos never attached to a review after 24 h (files, then rows). Shop images are never removed automatically |
 | `token.cleanup` | Delete expired refresh and verification tokens |
 
 ## 9. SEO implementation

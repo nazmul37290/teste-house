@@ -3,16 +3,24 @@ import {
   idParamSchema,
   ORDER_NUMBER_PATTERN,
   updateProfileSchema,
+  createReviewSchema,
+  reviewEligibilityQuerySchema,
+  updateReviewSchema,
   wishlistAddSchema,
   wishlistMergeSchema,
 } from '@shop/shared';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import type { Deps } from '../deps';
+import { AppError } from '../lib/errors';
 import { currentCustomer, requireCustomer } from '../middleware/require-customer';
 import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import * as account from '../services/account.service';
 import * as wishlist from '../services/wishlist.service';
+import * as reviews from '../services/review.service';
+import { uploadMedia } from '../services/media.service';
+import { singleUpload } from '../middleware/upload';
+import { enforceRateLimit } from '../lib/rate-limit';
 import { renderOrderPdf } from '../services/order-pdf.service';
 
 const orderNumberParam = (req: Request) =>
@@ -80,6 +88,49 @@ export function accountRouter(deps: Deps): Router {
   router.delete('/me/wishlist/:id', async (req, res) => {
     const { id } = idParamSchema.parse(req.params);
     res.json({ data: await wishlist.removeFromWishlist(deps.prisma, me(req), id) });
+  });
+
+  // Reviews (delivered purchases only).
+  router.get('/me/reviews', async (req, res) => {
+    res.json({ data: await reviews.myReviews(deps.prisma, me(req)) });
+  });
+  router.get('/me/reviews/to-review', async (req, res) => {
+    res.json({ data: await reviews.toReview(deps.prisma, me(req)) });
+  });
+  router.get('/me/reviews/eligibility', async (req, res) => {
+    const { productId } = reviewEligibilityQuerySchema.parse(req.query);
+    res.json({ data: await reviews.eligibility(deps.prisma, me(req), productId) });
+  });
+  router.post('/me/reviews', async (req, res) => {
+    const input = createReviewSchema.parse(req.body);
+    res.status(201).json({ data: await reviews.createReview(deps, me(req), input) });
+  });
+  router.patch('/me/reviews/:id', async (req, res) => {
+    const input = updateReviewSchema.parse(req.body);
+    const { id } = idParamSchema.parse(req.params);
+    res.json({ data: await reviews.updateReview(deps, me(req), id, input) });
+  });
+  router.delete('/me/reviews/:id', async (req, res) => {
+    await reviews.deleteOwnReview(deps, me(req), idParamSchema.parse(req.params).id);
+    res.status(204).end();
+  });
+  // A review photo: same checks as admin uploads (magic bytes, re-encode, random name).
+  router.post('/me/review-photos', async (req, res, next) => {
+    await enforceRateLimit(deps.redis, `review-photo:${me(req)}`, 20, 3600);
+    singleUpload('file')(req, res, next);
+  });
+  router.post('/me/review-photos', async (req, res) => {
+    if (!req.file)
+      throw new AppError('VALIDATION_ERROR', 'Choose a photo', [
+        { path: 'file', message: 'Required' },
+      ]);
+    const media = await uploadMedia(deps, null, {
+      body: req.file.buffer,
+      altText: 'Photo from a customer review',
+      folder: 'reviews',
+    });
+    await reviews.reservePhoto(deps, media.id, me(req));
+    res.status(201).json({ data: { id: media.id, urls: media.urls } });
   });
 
   router.get('/me/orders', async (req, res) => {

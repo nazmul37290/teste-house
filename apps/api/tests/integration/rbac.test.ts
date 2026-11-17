@@ -316,9 +316,14 @@ describe('staff accounts', () => {
       api(a.cookie).patch(`/users/${b.id}`, { isActive: false }),
       api(b.cookie).patch(`/users/${a.id}`, { isActive: false }),
     ]);
+    // Exactly one wins. The other is refused either by the last-Super-Admin rule (422) or, when the
+    // winner committed before the loser's request was authenticated, because the loser is now
+    // deactivated (403). Both keep the invariant below.
     const statuses = results.map((r) => r.status).sort();
-    expect(statuses).toEqual([200, 422]);
-    expect(reasonOf(results.find((r) => r.status === 422)!)).toBe('LAST_SUPER_ADMIN');
+    expect(statuses[0]).toBe(200);
+    expect([403, 422]).toContain(statuses[1]);
+    const refused = results.find((r) => r.status !== 200)!;
+    if (refused.status === 422) expect(reasonOf(refused)).toBe('LAST_SUPER_ADMIN');
     expect(
       await prisma.adminUser.count({ where: { isActive: true, role: { isSystem: true } } }),
     ).toBe(1);

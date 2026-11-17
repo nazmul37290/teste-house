@@ -101,9 +101,9 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 ## Phase 9: Reviews, ratings, wishlist
 
-- [ ] Wishlist (guest local, merge on login)
-- [ ] Reviews with delivered-purchase check, photos, moderation, rating aggregation
-- [ ] Rating shown on product and in JSON-LD
+- [x] Wishlist (guest local, merge on login)
+- [x] Reviews with delivered-purchase check, photos, moderation, rating aggregation
+- [x] Rating shown on product and in JSON-LD
 
 ## Phase 10: GTM, consent, SEO audit
 

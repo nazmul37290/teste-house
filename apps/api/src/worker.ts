@@ -14,6 +14,7 @@ import {
   createPaymentsQueue,
   EMAIL_QUEUE,
   EXPIRE_JOB,
+  MEDIA_CLEANUP_JOB,
   PAYMENT_JOB_EVERY_MS,
   PAYMENTS_QUEUE,
   RECONCILE_JOB,
@@ -23,6 +24,7 @@ import {
 } from './jobs/queues';
 import { processRevalidateJob } from './jobs/revalidate.processor';
 import { bookShipment, onBookingFailed, syncShipments } from './services/courier.service';
+import { cleanupOrphanReviewPhotos } from './services/media.service';
 import { expireUnpaidOrders, reconcilePayments } from './services/payment.service';
 
 /** Background worker: same image as the API, started with `node dist/worker.js`. */
@@ -67,6 +69,7 @@ const paymentsWorker = new Worker(
   async (job) => {
     if (job.name === RECONCILE_JOB) return { verified: await reconcilePayments(deps) };
     if (job.name === EXPIRE_JOB) return { cancelled: await expireUnpaidOrders(deps) };
+    if (job.name === MEDIA_CLEANUP_JOB) return { removed: await cleanupOrphanReviewPhotos(deps) };
     return null;
   },
   { connection: bullConnection(env.REDIS_URL), concurrency: 1 },
@@ -83,6 +86,12 @@ await paymentsQueue.upsertJobScheduler(
   EXPIRE_JOB,
   { every: PAYMENT_JOB_EVERY_MS },
   { name: EXPIRE_JOB },
+);
+// Hourly, on the same maintenance queue: review photos uploaded but never used.
+await paymentsQueue.upsertJobScheduler(
+  MEDIA_CLEANUP_JOB,
+  { every: 60 * 60_000 },
+  { name: MEDIA_CLEANUP_JOB },
 );
 
 // Courier: one booking job per order (retried with backoff), and a status sync every 30 minutes.
