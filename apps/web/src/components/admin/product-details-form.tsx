@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { ImageListPicker, type ImageItem } from '@/components/admin/image-list-picker';
 import { MediaPicker, type PickedImage } from '@/components/admin/media-picker';
 import { Alert, Button, Card, Field, Input, Select, Textarea } from '@/components/ui';
 import { api } from '@/lib/api-client';
@@ -15,7 +16,10 @@ const text = (form: FormData, key: string) => {
 
 type Fact = { name: string; amount: string };
 
-/** Product fields (not variants or images). Creates a draft, or saves an existing product. */
+/**
+ * Product fields. Creates a draft (with its images, if chosen), or saves an existing product. On the
+ * edit page images and variants have their own sections.
+ */
 export function ProductDetailsForm({
   product,
   lookups,
@@ -26,6 +30,8 @@ export function ProductDetailsForm({
   const router = useRouter();
   const { busy, status, run, fieldError } = useAction();
   const [facts, setFacts] = useState<Fact[]>(product?.nutritionFacts ?? []);
+  // New products only: images chosen before the first save (the edit page has its own section).
+  const [images, setImages] = useState<ImageItem[]>([]);
   const [tagIds, setTagIds] = useState(new Set(product?.tags.map((t) => t.id) ?? []));
   const [ogImage, setOgImage] = useState<PickedImage>(
     product?.ogImage && product.ogImageId
@@ -66,9 +72,18 @@ export function ProductDetailsForm({
         'Product saved.',
       );
     } else {
-      const created = await run(() =>
-        api<ProductDetail>('/admin/products', { method: 'POST', body }),
-      );
+      const created = await run(async () => {
+        const p = await api<ProductDetail>('/admin/products', { method: 'POST', body });
+        if (images.length) {
+          // Attached right after creation. If this fails (for example without products.update),
+          // the product still exists and images can be added on its page.
+          await api(`/admin/products/${p.id}/images`, {
+            method: 'PUT',
+            body: { mediaIds: images.map((i) => i.mediaId) },
+          }).catch(() => undefined);
+        }
+        return p;
+      });
       if (created) router.push(`/admin/products/${created.id}`);
     }
   }
@@ -216,6 +231,15 @@ export function ProductDetailsForm({
           </Field>
         </div>
       </Card>
+
+      {!product ? (
+        <Card
+          title="Images"
+          description="Upload or choose from the media library. The first image is the main one; change the order with the arrows."
+        >
+          <ImageListPicker items={images} onChange={setImages} />
+        </Card>
+      ) : null}
 
       <Card title="Food information">
         <div className="grid gap-4 sm:grid-cols-2">

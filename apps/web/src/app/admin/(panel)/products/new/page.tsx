@@ -20,7 +20,7 @@ export default async function NewProductPage() {
       </p>
       <PageHeader
         title="New product"
-        description="Save the details first; variants and images come next."
+        description="Fill in the details and add images; sizes (variants) come on the next page."
       />
       <div className="max-w-4xl">
         {lookups.categories.length === 0 ? (
