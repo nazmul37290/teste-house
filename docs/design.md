@@ -131,7 +131,7 @@ See `integrations.md`. Summary:
 - JSON-LD component renders `Product` (with `Offer`, `availability`, `priceCurrency: BDT`, `aggregateRating` when rating count > 0), `BreadcrumbList`, `Organization`, `WebSite`.
 - `app/sitemap.ts` (one sitemap: home, categories, products from `GET /sitemap-data`; split into several only if it nears 50,000 URLs; legal placeholder pages are left out while they are `noindex`) and `app/robots.ts` (disallow `/admin`, `/cart`, `/checkout`, `/account`, `/api`).
 - Listing pages with filters: canonical to the unfiltered URL; `noindex` on multi-filter combinations; `rel` links for pagination.
-- Images via `next/image` with a custom loader that picks our pre-generated WebP width (200/500/1000/1600, the next one up), so Next never re-encodes (`images.imageSizes`/`deviceSizes` in `next.config.ts` are set to exactly those widths, so each `srcset` entry is a distinct file); system font stack, no web font download; explicit width/height, priority only for the LCP image.
+- Images via `next/image` with a custom loader that picks our pre-generated WebP width (200/500/1000/1600, the next one up), so Next never re-encodes (`images.imageSizes`/`deviceSizes` in `next.config.ts` are set to exactly those widths, so each `srcset` entry is a distinct file); two web fonts self-hosted at build time by `next/font` (no request to Google from visitors' browsers, `display: swap`), see section 16; explicit width/height, priority only for the LCP image.
 - JSON-LD is rendered as a `<script type="application/ld+json">` with `<` escaped, so text from the catalog can never close the script tag.
 
 ## 10. GTM and analytics
@@ -200,3 +200,28 @@ Keep `.env.example` in sync with this table.
 ## 15. Local development
 
 `docker compose -f docker/compose.dev.yml up` starts Postgres and Redis (and optionally Mailpit for email testing). `pnpm dev` runs web and api with hot reload. Seed creates the Super Admin from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (dev only).
+
+## 16. Design system (storefront and admin)
+
+Brand: **Teste House** (name and logo come from the `store.name` and `store.logo` settings; the logo PNGs live in `apps/web/public/brand/`, app icons in `apps/web/src/app/`). Tokens are Tailwind v4 `@theme` variables in `apps/web/src/app/globals.css`; components use the token names, never raw hex.
+
+| Token | Hex | Use |
+|---|---|---|
+| `petrol` | #003442 | Brand ink from the logo: primary buttons, headings, header band, footer |
+| `petrol-soft` / `petrol-tint` | #0F4C5C / #E3EEF0 | Hover on petrol / selected and info backgrounds |
+| `haldi` / `haldi-soft` | #E8A317 / #FBEFD2 | The one warm accent (sale tag, cart count, star fill, hero stroke). Always with petrol text, never yellow text on a light background |
+| `rice` / `surface` | #F6F7F4 / #FFFFFF | Page background / cards, inputs, drawers |
+| `line` | #DCE3E4 | Borders and dividers |
+| `ink` / `ink-muted` | #14262B / #4E6066 | Text / secondary text (both AA on rice and white) |
+| `success`, `warning`, `danger` (+ `-soft`) | #1E7A4C, #A15C07, #B42318 | States |
+
+Tailwind's `neutral-*` scale is remapped to petrol-tinted greys, so older classes stay on brand.
+
+- **Type:** headings in Young Serif (one weight, `font-display`, H1/H2 and the hero only), body and UI in Hind Siliguri (400 to 700; it also covers Bengali for a later Bangla version). Sentence case everywhere, no all-caps labels.
+- **Shape:** radius by hierarchy: 8 px controls (`rounded-control`), 12 px cards (`rounded-card`), 20 px hero, banners and gallery (`rounded-feature`). Cards are flat with a border; the single shadow (`shadow-raised`) is only for raised layers: sticky header after scroll, drawers, popovers, toasts.
+- **Motion:** only in answer to the shopper: cart drawer and filter sheet slide in, toasts, accordion, carousel swipe. Nothing animates on page load; `prefers-reduced-motion` turns transitions off.
+- **Building blocks:** `components/ui.tsx` (Button and `buttonClass`, inputs, Field, Alert, Card, Badge, PageHeader, AuthCard), `components/toast.tsx` (`toast()` from any client code, one `<Toaster />` in the root layout, no dependency), `components/carousel.tsx` (native scroll snap, arrows on wider screens, no autoplay), `components/shop/icons.tsx` (line icons), `components/auth-shell.tsx` (logo above sign-in cards).
+- **Content rule:** the storefront states only facts the system enforces. The home page facts and FAQ come from `GET /store-facts` (payment methods and delivery zones); testimonials are real approved reviews from `GET /reviews/recent` and the section hides when there are none. No invented numbers, no stock photos, no returns answer until the policy exists.
+- **Product cards:** price and stock state first; one-tap add (with a toast) when the product has a single in-stock variant (`quickAddVariantId`), otherwise an Options link.
+- **Phones first:** search under the logo, category shelf that scrolls, filter sheet, swipeable gallery, bottom add-to-cart bar on product pages, admin menu folded into a top bar. Verified with Playwright at 1440x900, 768x1024 and 390x844 (no console errors, no broken images, no horizontal scroll).
+

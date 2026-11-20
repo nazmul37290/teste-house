@@ -3,7 +3,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/generated/**', '**/coverage/**'] },
+  { ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/generated/**', '**/coverage/**', '.playwright-mcp/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
