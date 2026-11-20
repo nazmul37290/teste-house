@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, apiUpload } from '@/lib/api-client';
 import { ApiError } from '@/lib/api-types';
+import { customerAuthClient } from '@/lib/auth-client';
+import { toast } from '@/components/toast';
+import { buttonClass } from '@/components/ui';
 
 type Eligibility = {
   canReview: boolean;
@@ -31,7 +34,13 @@ export function WriteReview({ productId }: { productId: string }) {
 
   useEffect(() => {
     let alive = true;
-    api<Eligibility>(`/me/reviews/eligibility?productId=${productId}`)
+    // Guests get 200 + null from get-session, instead of a 401 from the eligibility check.
+    customerAuthClient
+      .getSession()
+      .then(({ data }) => {
+        if (!data) throw new ApiError(401, 'UNAUTHENTICATED', 'Sign in');
+        return api<Eligibility>(`/me/reviews/eligibility?productId=${productId}`);
+      })
       .then((e) => alive && setState(e))
       .catch((err: unknown) => {
         if (alive) setState(err instanceof ApiError && err.status === 401 ? 'guest' : null);
@@ -48,7 +57,7 @@ export function WriteReview({ productId }: { productId: string }) {
         Bought this?{' '}
         <Link
           href={`/login?next=${encodeURIComponent(`${pathname}#reviews`)}`}
-          className="underline"
+          className="font-semibold text-petrol underline"
         >
           Sign in
         </Link>{' '}
@@ -62,7 +71,7 @@ export function WriteReview({ productId }: { productId: string }) {
         You reviewed this product
         {state.review.status === 'PENDING' ? ' (waiting for approval)' : ''}
         {state.review.status === 'REJECTED' ? ' (not published)' : ''}.{' '}
-        <Link href="/account/reviews" className="underline">
+        <Link href="/account/reviews" className="font-semibold text-petrol underline">
           Your reviews
         </Link>
       </p>
@@ -71,11 +80,7 @@ export function WriteReview({ productId }: { productId: string }) {
   if (!state.canReview) return null;
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
-      >
+      <button type="button" onClick={() => setOpen(true)} className={buttonClass('primary', 'md')}>
         Write a review
       </button>
     );
@@ -145,6 +150,11 @@ export function ReviewForm({
             method: 'POST',
             body: { ...body, productId },
           });
+      toast(
+        res.status === 'APPROVED'
+          ? 'Review published. Thank you.'
+          : 'Review sent. It appears once we have checked it.',
+      );
       onDone(res.status);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong');
@@ -153,7 +163,7 @@ export function ReviewForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-neutral-200 p-3">
+    <form onSubmit={onSubmit} className="space-y-4 rounded-card border border-line bg-surface p-5">
       <fieldset>
         <legend className="mb-1 text-sm font-medium">Your rating</legend>
         <div className="flex gap-1">
@@ -164,7 +174,7 @@ export function ReviewForm({
               aria-label={`${n} star${n > 1 ? 's' : ''}`}
               aria-pressed={rating === n}
               onClick={() => setRating(n)}
-              className={`text-2xl leading-none ${n <= rating ? 'text-amber-500' : 'text-neutral-300'}`}
+              className={`text-2xl leading-none ${n <= rating ? 'text-haldi' : 'text-neutral-300'}`}
             >
               ★
             </button>
@@ -177,7 +187,7 @@ export function ReviewForm({
         placeholder="Title (optional)"
         defaultValue={initial?.title ?? ''}
         aria-label="Review title"
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        className="w-full rounded-control border border-line bg-surface px-3 py-2 text-[15px] focus:border-petrol focus:outline-none focus:ring-2 focus:ring-petrol/15"
       />
       <textarea
         name="body"
@@ -186,7 +196,7 @@ export function ReviewForm({
         placeholder="What did you think? (optional)"
         defaultValue={initial?.body ?? ''}
         aria-label="Review text"
-        className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        className="w-full rounded-control border border-line bg-surface px-3 py-2 text-[15px] focus:border-petrol focus:outline-none focus:ring-2 focus:ring-petrol/15"
       />
       <div className="space-y-2">
         <div className="flex gap-2">
@@ -216,15 +226,11 @@ export function ReviewForm({
         ) : null}
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm font-semibold text-danger">
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={busy} className={buttonClass('primary', 'md')}>
         {busy ? 'Sending…' : reviewId ? 'Save review' : 'Send review'}
       </button>
     </form>

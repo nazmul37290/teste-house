@@ -16,10 +16,10 @@ export function SortSelect() {
   const pathname = usePathname();
   const params = useSearchParams();
   return (
-    <label className="flex items-center gap-2 text-sm text-neutral-600">
-      Sort
+    <label className="flex items-center gap-2 text-sm text-ink-muted">
+      <span className="sr-only sm:not-sr-only">Sort</span>
       <select
-        className="rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900"
+        className="h-10 rounded-control border border-line bg-surface px-3 text-sm font-semibold text-ink focus:border-petrol focus:outline-none focus:ring-2 focus:ring-petrol/15"
         value={params.get('sort') ?? ''}
         onChange={(e) => {
           const next = new URLSearchParams(params);

@@ -17,10 +17,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const term = (Array.isArray(query.q) ? query.q[0] : query.q)?.trim() ?? '';
   if (!term) {
     return (
-      <div className="py-12 text-center">
-        <h1 className="text-2xl font-bold">Search</h1>
-        <p className="mt-2 text-neutral-600">
-          Type what you are looking for in the search box above.
+      <div className="mx-auto max-w-lg py-16 text-center">
+        <h1 className="font-display text-[32px] text-petrol">Search the shop</h1>
+        <p className="mt-2 text-ink-muted">
+          Type a product, brand or ingredient in the search box above, for example honey or ghee.
         </p>
       </div>
     );
@@ -28,7 +28,9 @@ export default async function SearchPage({ searchParams }: Props) {
   const data = (await listProducts(query))!;
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-neutral-900">Results for “{term}”</h1>
+      <h1 className="font-display text-[28px] leading-tight text-petrol sm:text-[34px]">
+        Results for “{term}”
+      </h1>
       <ProductListing
         data={data}
         params={query}

@@ -72,9 +72,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         items={category.breadcrumbs.map((b) => ({ name: b.name, href: `/category/${b.slug}` }))}
       />
       <header className="space-y-3">
-        <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{category.name}</h1>
+        <h1 className="font-display text-[32px] leading-tight text-petrol sm:text-[40px]">
+          {category.name}
+        </h1>
         {category.description ? (
-          <div className="max-w-3xl text-sm">
+          <div className="max-w-3xl text-[15px] text-ink-muted">
             <PlainText text={category.description} />
           </div>
         ) : null}
@@ -86,9 +88,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 <li key={c.slug}>
                   <Link
                     href={`/category/${c.slug}`}
-                    className="inline-block rounded-full border border-neutral-300 px-3 py-1 text-sm hover:bg-neutral-100"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-petrol hover:text-petrol"
                   >
-                    {c.name} <span className="text-neutral-400">({c.productCount})</span>
+                    {c.name} <span className="font-normal text-ink-muted">{c.productCount}</span>
                   </Link>
                 </li>
               ))}

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { Breadcrumbs, PlainText, SectionHeading } from '@/components/shop/bits';
 import { JsonLd } from '@/components/shop/json-ld';
-import { ProductGrid } from '@/components/shop/product-card';
+import { ProductRow } from '@/components/shop/product-card';
 import { absoluteUrl } from '@/lib/site';
 import { getProduct, getReviews, resolveRedirect } from '@/lib/storefront';
 import { analyticsItem } from '@shop/shared';
@@ -120,66 +120,70 @@ export default async function ProductPage({ params }: Props) {
     ],
   };
   return (
-    <div className="space-y-10">
+    <div className="space-y-12 sm:space-y-16">
       <JsonLd data={[productLd, breadcrumbLd]} />
-      <Breadcrumbs
-        items={[
-          ...product.breadcrumbs.map((b) => ({ name: b.name, href: `/category/${b.slug}` })),
-          { name: product.name, href: `/product/${product.slug}` },
-        ]}
-      />
-      {/* min-w-0: grid items default to min-width:auto, so the 1000 px image would widen the page on phones. */}
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="min-w-0">
-          <Gallery images={product.images} name={product.name} />
-        </div>
-        <div className="min-w-0 space-y-6">
-          <div className="space-y-2">
-            {product.brand ? (
-              <Link
-                href={`/search?${new URLSearchParams({ q: product.brand.name, brand: product.brand.slug })}`}
-                className="text-sm uppercase tracking-wide text-neutral-500 hover:underline"
-              >
-                {product.brand.name}
-              </Link>
-            ) : null}
-            <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{product.name}</h1>
-            {product.ratingCount > 0 ? (
-              <a href="#reviews" className="inline-block">
-                <Stars value={product.ratingAvg} count={product.ratingCount} />
-              </a>
-            ) : null}
-            {product.shortDescription ? (
-              <p className="text-neutral-700">{product.shortDescription}</p>
+      <div className="space-y-5">
+        <Breadcrumbs
+          items={[
+            ...product.breadcrumbs.map((b) => ({ name: b.name, href: `/category/${b.slug}` })),
+            { name: product.name, href: `/product/${product.slug}` },
+          ]}
+        />
+        {/* min-w-0: grid items default to min-width:auto, so the 1000 px image would widen the page on phones. */}
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
+          <div className="min-w-0">
+            <Gallery images={product.images} name={product.name} />
+          </div>
+          <div className="min-w-0 space-y-6 lg:sticky lg:top-40 lg:self-start">
+            <div className="space-y-2">
+              {product.brand ? (
+                <Link
+                  href={`/search?${new URLSearchParams({ q: product.brand.name, brand: product.brand.slug })}`}
+                  className="text-sm font-semibold text-petrol hover:underline"
+                >
+                  {product.brand.name}
+                </Link>
+              ) : null}
+              <h1 className="font-display text-[30px] leading-[1.15] text-petrol sm:text-[38px]">
+                {product.name}
+              </h1>
+              {product.ratingCount > 0 ? (
+                <a href="#reviews" className="inline-block">
+                  <Stars value={product.ratingAvg} count={product.ratingCount} />
+                </a>
+              ) : null}
+              {product.shortDescription ? (
+                <p className="max-w-prose text-[17px] text-ink-muted">{product.shortDescription}</p>
+              ) : null}
+            </div>
+            <BuyBox variants={product.variants} product={analyticsProduct} />
+            <WishlistButton
+              productId={product.id}
+              name={product.name}
+              variant="text"
+              item={viewItems[0]}
+            />
+            <TrackOnce id={product.id} kind="ecommerce" event="view_item" items={viewItems} />
+            {product.tags.length ? (
+              <ul className="flex flex-wrap gap-2">
+                {product.tags.map((t) => (
+                  <li
+                    key={t.slug}
+                    className="rounded-full border border-line bg-surface px-3 py-1 text-[13px] text-ink-muted"
+                  >
+                    {t.name}
+                  </li>
+                ))}
+              </ul>
             ) : null}
           </div>
-          <BuyBox variants={product.variants} product={analyticsProduct} />
-          <WishlistButton
-            productId={product.id}
-            name={product.name}
-            variant="text"
-            item={viewItems[0]}
-          />
-          <TrackOnce id={product.id} kind="ecommerce" event="view_item" items={viewItems} />
-          {product.tags.length ? (
-            <ul className="flex flex-wrap gap-2">
-              {product.tags.map((t) => (
-                <li
-                  key={t.slug}
-                  className="rounded-full bg-neutral-100 px-3 py-1 text-xs text-neutral-700"
-                >
-                  {t.name}
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 rounded-card border border-line bg-surface p-5 sm:p-8 lg:grid-cols-[2fr_1fr] lg:gap-12">
         {product.description ? (
           <section className="min-w-0">
-            <h2 className="mb-3 text-lg font-semibold">Description</h2>
+            <h2 className="mb-3 font-display text-2xl text-petrol">About this product</h2>
             <PlainText text={product.description} />
           </section>
         ) : (
@@ -187,12 +191,12 @@ export default async function ProductPage({ params }: Props) {
         )}
         <section className="min-w-0 space-y-4">
           {facts.some(([, v]) => v) ? (
-            <dl className="space-y-3 text-sm">
+            <dl className="space-y-4 text-[15px]">
               {facts.map(([label, value]) =>
                 value ? (
                   <div key={label}>
-                    <dt className="font-semibold text-neutral-900">{label}</dt>
-                    <dd className="text-neutral-700">{value}</dd>
+                    <dt className="font-semibold text-ink">{label}</dt>
+                    <dd className="text-ink-muted">{value}</dd>
                   </div>
                 ) : null,
               )}
@@ -200,16 +204,14 @@ export default async function ProductPage({ params }: Props) {
           ) : null}
           {product.nutritionFacts?.length ? (
             <table className="w-full text-sm">
-              <caption className="mb-2 text-left font-semibold text-neutral-900">
-                Nutrition facts
-              </caption>
-              <tbody className="divide-y divide-neutral-200">
+              <caption className="mb-2 text-left font-semibold text-ink">Nutrition facts</caption>
+              <tbody className="divide-y divide-line">
                 {product.nutritionFacts.map((f) => (
                   <tr key={f.name}>
-                    <th scope="row" className="py-1.5 text-left font-normal text-neutral-700">
+                    <th scope="row" className="py-2 text-left font-normal text-ink-muted">
                       {f.name}
                     </th>
-                    <td className="py-1.5 text-right text-neutral-900">{f.amount}</td>
+                    <td className="py-2 text-right font-semibold text-ink">{f.amount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -223,7 +225,11 @@ export default async function ProductPage({ params }: Props) {
       {product.related.length ? (
         <section>
           <SectionHeading title="You may also like" />
-          <ProductGrid products={product.related} listName="Related products" />
+          <ProductRow
+            products={product.related}
+            listName="Related products"
+            label="You may also like"
+          />
         </section>
       ) : null}
     </div>
