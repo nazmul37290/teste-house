@@ -171,7 +171,7 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
         {categories.length === 0 ? (
           <p className="py-6 text-center text-sm text-neutral-500">No categories yet.</p>
         ) : null}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {categories.map((c) => (
             <li
               key={c.id}
@@ -202,7 +202,7 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
               </button>
               <button
                 type="button"
-                className="text-sm text-red-700 underline disabled:text-neutral-300 disabled:no-underline"
+                className="text-sm text-danger underline disabled:text-neutral-300 disabled:no-underline"
                 disabled={remove.busy || c.childCount > 0 || c.productCount > 0}
                 title={
                   c.childCount > 0 || c.productCount > 0

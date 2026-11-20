@@ -66,7 +66,7 @@ export function MediaPicker({
         {value ? (
           <button
             type="button"
-            className="text-sm text-red-700 underline"
+            className="text-sm text-danger underline"
             onClick={() => onChange(null)}
           >
             Remove
@@ -74,7 +74,7 @@ export function MediaPicker({
         ) : null}
       </div>
       {open ? (
-        <div className="space-y-4 rounded-md border border-neutral-200 bg-neutral-50 p-4">
+        <div className="space-y-4 rounded-control border border-line bg-neutral-50 p-4">
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -88,7 +88,7 @@ export function MediaPicker({
                 <button
                   type="button"
                   onClick={() => choose(m)}
-                  className="block w-full rounded border hover:ring-2 hover:ring-neutral-900"
+                  className="block w-full rounded border hover:ring-2 hover:ring-petrol"
                   title={m.altText}
                 >
                   <img

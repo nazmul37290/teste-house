@@ -54,7 +54,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             {can(admin, 'products.create') ? (
               <Link
                 href="/admin/products/new"
-                className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white hover:bg-neutral-700"
+                className="rounded-control bg-petrol px-4 py-2 font-medium text-white hover:bg-petrol-soft"
               >
                 New product
               </Link>

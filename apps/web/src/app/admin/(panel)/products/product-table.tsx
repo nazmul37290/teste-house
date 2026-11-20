@@ -43,7 +43,7 @@ export function ProductTable({
     <div className="space-y-3">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       {canUpdate && selected.size > 0 ? (
-        <div className="flex items-center gap-2 rounded-md bg-neutral-100 px-3 py-2 text-sm">
+        <div className="flex items-center gap-2 rounded-control bg-neutral-100 px-3 py-2 text-sm">
           <span>{selected.size} selected:</span>
           <Select
             value={bulkStatus}
@@ -95,7 +95,7 @@ export function ProductTable({
             <th className="pb-2">Stock</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-100">
+        <tbody className="divide-y divide-line">
           {items.map((p) => (
             <tr key={p.id}>
               {canUpdate ? (

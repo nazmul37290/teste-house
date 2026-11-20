@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { AuthCard } from '@/components/ui';
+import { AuthShell } from '@/components/auth-shell';
 import { safeNextPath } from '@/lib/format';
-import { storeName } from '@/lib/api-server';
 import { AdminLoginForm } from './admin-login-form';
 
 export const metadata: Metadata = { title: 'Admin sign in' };
@@ -13,8 +12,8 @@ export default async function AdminLoginPage({
 }) {
   const { next } = await searchParams;
   return (
-    <AuthCard title="Admin sign in" subtitle={await storeName()}>
+    <AuthShell title="Admin sign in" subtitle="For shop staff only.">
       <AdminLoginForm next={safeNextPath(next, '/admin')} />
-    </AuthCard>
+    </AuthShell>
   );
 }

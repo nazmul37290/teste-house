@@ -108,7 +108,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                 <th className="py-2 text-right">Refunded</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {items.map((p) => (
                 <tr key={p.id}>
                   <td className="py-2 pr-3 whitespace-nowrap">{formatDhaka(p.createdAt)}</td>

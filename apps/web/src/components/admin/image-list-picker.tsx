@@ -29,7 +29,7 @@ export function ImageListPicker({
     <div className="space-y-4">
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {items.map((img, i) => (
-          <li key={img.mediaId} className="space-y-2 rounded-md border border-neutral-200 p-2">
+          <li key={img.mediaId} className="space-y-2 rounded-control border border-line p-2">
             <img
               src={img.url}
               alt={img.altText}
@@ -58,7 +58,7 @@ export function ImageListPicker({
                 </button>
                 <button
                   type="button"
-                  className="text-red-700"
+                  className="text-danger"
                   onClick={() => onChange(items.filter((x) => x.mediaId !== img.mediaId))}
                 >
                   Remove

@@ -190,7 +190,7 @@ export function OrderEditor({ order }: { order: AdminOrder }) {
     <div className="space-y-5">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <div>
-        <ul className="divide-y divide-neutral-100 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {lines.map((l, i) => (
             <li key={l.variantId} className="flex items-center gap-3 py-2">
               <span className="min-w-0 flex-1">
@@ -215,7 +215,7 @@ export function OrderEditor({ order }: { order: AdminOrder }) {
               </div>
               <button
                 type="button"
-                className="text-xs text-red-700 underline disabled:opacity-40"
+                className="text-xs text-danger underline disabled:opacity-40"
                 disabled={lines.length === 1}
                 onClick={() => setLines(lines.filter((_, j) => j !== i))}
               >
@@ -241,7 +241,7 @@ export function OrderEditor({ order }: { order: AdminOrder }) {
             Add
           </Button>
         </div>
-        {lookupError ? <p className="mt-1 text-xs text-red-700">{lookupError}</p> : null}
+        {lookupError ? <p className="mt-1 text-xs text-danger">{lookupError}</p> : null}
       </div>
 
       <Field label="Reason for the change (shown in the history)" htmlFor="ed-note">
@@ -286,7 +286,7 @@ export function OrderEditor({ order }: { order: AdminOrder }) {
 
       {editAddress ? (
         <form
-          className="space-y-4 rounded-md border border-neutral-200 p-4"
+          className="space-y-4 rounded-control border border-line p-4"
           onSubmit={(e) => {
             e.preventDefault();
             void save(
@@ -376,7 +376,7 @@ export function RefundForm({
     if (ok) setOpen(false);
   }
   return (
-    <form onSubmit={onSubmit} className="mt-2 space-y-2 rounded-md bg-neutral-50 p-3">
+    <form onSubmit={onSubmit} className="mt-2 space-y-2 rounded-control bg-neutral-50 p-3">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <p className="text-xs text-neutral-600">
         Return the money first (bKash, bank, ...), then record it here.

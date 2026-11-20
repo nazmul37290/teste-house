@@ -114,7 +114,7 @@ export function CsvImport() {
                   <th className="pb-2">Result</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-line">
                 {rows.map((r) => (
                   <tr key={r.row} className="align-top">
                     <td className="py-2 text-neutral-500">{r.row}</td>
@@ -123,7 +123,7 @@ export function CsvImport() {
                     <td className="py-2">
                       <Badge tone={TONE[r.action]}>{r.action}</Badge>
                       {r.errors.length ? (
-                        <ul className="mt-1 list-disc pl-4 text-xs text-red-700">
+                        <ul className="mt-1 list-disc pl-4 text-xs text-danger">
                           {r.errors.map((e) => (
                             <li key={e}>{e}</li>
                           ))}

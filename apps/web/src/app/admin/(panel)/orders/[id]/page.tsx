@@ -88,7 +88,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
           <Card title="History">
             <ol className="space-y-2 text-sm">
               {order.history.map((h, i) => (
-                <li key={i} className="border-l-2 border-neutral-200 pl-3">
+                <li key={i} className="border-l-2 border-line pl-3">
                   <span className="font-medium">
                     {h.from === h.to ? 'Edited' : STATUS_LABEL[h.to as keyof typeof STATUS_LABEL]}
                   </span>{' '}
@@ -145,9 +145,11 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               </span>
             </p>
             {order.customerNote ? (
-              <p className="mt-3 rounded-md bg-amber-50 p-2 text-sm">Note: {order.customerNote}</p>
+              <p className="mt-3 rounded-control bg-warning-soft p-2 text-sm">
+                Note: {order.customerNote}
+              </p>
             ) : null}
-            <div className="mt-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-700">
+            <div className="mt-3 rounded-control bg-neutral-50 p-3 text-xs text-neutral-700">
               <p className="font-medium">
                 Earlier orders from this phone: {r.otherOrdersSamePhone}
               </p>
@@ -156,7 +158,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                   {r.delivered} delivered · {r.cancelled} cancelled · {r.returnedOrFailed} returned
                   or failed
                   {r.problemRate !== null ? (
-                    <span className={r.problemRate >= 50 ? ' font-semibold text-red-700' : ''}>
+                    <span className={r.problemRate >= 50 ? ' font-semibold text-danger' : ''}>
                       {' '}
                       · {r.problemRate}% not delivered
                     </span>
@@ -164,7 +166,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                 </p>
               ) : null}
               {r.sameIpLast24h ? (
-                <p className="mt-1 font-semibold text-amber-800">
+                <p className="mt-1 font-semibold text-warning">
                   {r.sameIpLast24h} other order(s) from the same IP in the last 24 hours
                 </p>
               ) : null}
@@ -190,7 +192,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             <Card title="Online payments">
               <ul className="space-y-3 text-sm">
                 {order.payments.map((p) => (
-                  <li key={p.id} className="border-l-2 border-neutral-200 pl-3">
+                  <li key={p.id} className="border-l-2 border-line pl-3">
                     <p>
                       <span className="font-medium">{formatTaka(p.amount)}</span> ·{' '}
                       {p.status.toLowerCase()}
@@ -205,7 +207,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                       </p>
                     ) : null}
                     {p.failureReason ? (
-                      <p className="text-xs text-red-700">{p.failureReason}</p>
+                      <p className="text-xs text-danger">{p.failureReason}</p>
                     ) : null}
                     {p.refunds.map((r) => (
                       <p key={r.id} className="text-xs text-neutral-600">

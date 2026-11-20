@@ -66,7 +66,7 @@ function ProductPicker({
             {names[p.id] ?? p.name}{' '}
             <button
               type="button"
-              className="text-xs text-red-700 underline"
+              className="text-xs text-danger underline"
               onClick={() => onChange(value.filter((x) => x.id !== p.id))}
             >
               remove
@@ -333,7 +333,7 @@ export function SectionsManager({
             <Alert tone={remove.status.tone}>{remove.status.text}</Alert>
           </div>
         ) : null}
-        <ol className="divide-y divide-neutral-100">
+        <ol className="divide-y divide-line">
           {sections.map((s) => (
             <li key={s.id} className="flex items-center gap-3 py-3">
               <span className="w-8 text-xs text-neutral-400">{s.sortOrder}</span>
@@ -353,7 +353,7 @@ export function SectionsManager({
               </button>
               <button
                 type="button"
-                className="text-sm text-red-700 underline"
+                className="text-sm text-danger underline"
                 disabled={remove.busy}
                 onClick={() => {
                   if (window.confirm('Delete this section?')) {

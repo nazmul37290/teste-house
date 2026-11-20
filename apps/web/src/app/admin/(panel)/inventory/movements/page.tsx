@@ -69,7 +69,7 @@ export default async function MovementsPage({
               <th className="pb-2">Details</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-line">
             {items.map((m) => (
               <tr key={m.id}>
                 <td className="py-2 whitespace-nowrap text-neutral-600">
@@ -91,7 +91,7 @@ export default async function MovementsPage({
                 <td className="py-2">
                   <span
                     className={
-                      m.quantity > 0 ? 'font-medium text-green-700' : 'font-medium text-red-700'
+                      m.quantity > 0 ? 'font-medium text-success' : 'font-medium text-danger'
                     }
                   >
                     {m.quantity > 0 ? `+${m.quantity}` : m.quantity}

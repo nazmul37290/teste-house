@@ -70,7 +70,7 @@ export function TagsManager({ tags }: { tags: Tag[] }) {
             ) : (
               <li
                 key={t.id}
-                className="flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-1 text-sm"
+                className="flex items-center gap-2 rounded-full border border-line px-3 py-1 text-sm"
               >
                 <span>{t.name}</span>
                 <span className="text-xs text-neutral-400">{t.productCount}</span>
@@ -83,7 +83,7 @@ export function TagsManager({ tags }: { tags: Tag[] }) {
                 </button>
                 <button
                   type="button"
-                  className="text-xs text-red-700 underline"
+                  className="text-xs text-danger underline"
                   onClick={() => {
                     if (
                       window.confirm(

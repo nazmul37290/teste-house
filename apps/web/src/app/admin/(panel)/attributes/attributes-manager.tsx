@@ -51,7 +51,7 @@ function AttributeCard({ attribute }: { attribute: Attribute }) {
             </button>
             <button
               type="button"
-              className="text-red-700 underline"
+              className="text-danger underline"
               disabled={busy}
               onClick={() => {
                 if (
@@ -70,14 +70,14 @@ function AttributeCard({ attribute }: { attribute: Attribute }) {
           {attribute.values.map((v) => (
             <li
               key={v.id}
-              className="flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-1 text-sm"
+              className="flex items-center gap-2 rounded-full border border-line px-3 py-1 text-sm"
             >
               {v.value}
               {v.variantCount > 0 ? <Badge>{v.variantCount}</Badge> : null}
               <button
                 type="button"
                 aria-label={`Remove ${v.value}`}
-                className="text-neutral-400 hover:text-red-700 disabled:opacity-30"
+                className="text-neutral-400 hover:text-danger disabled:opacity-30"
                 disabled={busy || v.variantCount > 0}
                 title={v.variantCount > 0 ? 'Used by variants' : 'Remove'}
                 onClick={() =>

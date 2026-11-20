@@ -118,7 +118,7 @@ function VariantForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-4 rounded-md border border-neutral-200 bg-neutral-50 p-4"
+      className="space-y-4 rounded-control border border-line bg-neutral-50 p-4"
     >
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -319,7 +319,7 @@ export function VariantsManager({
                 <th className="pb-2" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {product.variants.map((v) => (
                 <tr key={v.id}>
                   <td className="py-2">
@@ -360,7 +360,7 @@ export function VariantsManager({
                         </button>
                         <button
                           type="button"
-                          className="text-red-700 underline disabled:text-neutral-300 disabled:no-underline"
+                          className="text-danger underline disabled:text-neutral-300 disabled:no-underline"
                           disabled={remove.busy || v.hasHistory}
                           title={
                             v.hasHistory

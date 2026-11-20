@@ -15,7 +15,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`rounded-md px-3 py-2 text-sm ${active ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-neutral-100'}`}
+            className={`rounded-control px-3 py-2 text-sm ${active ? 'bg-petrol text-white' : 'text-neutral-700 hover:bg-neutral-100'}`}
           >
             {item.label}
           </Link>

@@ -32,7 +32,7 @@ export default async function RolesPage() {
                 <th className="pb-2">Staff</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {roles.map((role) => (
                 <tr key={role.id}>
                   <td className="py-3">

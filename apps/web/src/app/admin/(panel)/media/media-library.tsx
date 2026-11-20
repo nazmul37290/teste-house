@@ -64,7 +64,7 @@ export function MediaLibrary({
         ) : null}
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((m) => (
-            <li key={m.id} className="rounded-md border border-neutral-200 p-2">
+            <li key={m.id} className="rounded-control border border-line p-2">
               <img
                 src={m.urls['500']}
                 alt={m.altText}
@@ -117,7 +117,7 @@ export function MediaLibrary({
                     </button>
                     <button
                       type="button"
-                      className="text-red-700 underline"
+                      className="text-danger underline"
                       onClick={() => {
                         if (window.confirm('Delete this image? This cannot be undone.')) {
                           void run(

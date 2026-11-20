@@ -154,7 +154,7 @@ export function StockTable({ items, canAdjust }: { items: StockRow[]; canAdjust:
             <th className="pb-2" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-neutral-100">
+        <tbody className="divide-y divide-line">
           {items.map((row) => (
             <Fragment key={row.id}>
               <tr>

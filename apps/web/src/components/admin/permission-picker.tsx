@@ -33,7 +33,7 @@ export function PermissionPicker({
         return (
           <fieldset
             key={module}
-            className="rounded-md border border-neutral-200 p-3"
+            className="rounded-control border border-line p-3"
             disabled={disabled}
           >
             <legend className="px-1 text-sm font-semibold capitalize text-neutral-800">

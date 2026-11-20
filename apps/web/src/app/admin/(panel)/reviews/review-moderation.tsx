@@ -33,7 +33,7 @@ export function ReviewModeration({ review: r }: { review: AdminReview }) {
     api(`/admin/reviews/${r.id}${path}`, { method: 'POST', body });
 
   return (
-    <li className="space-y-2 rounded-lg border border-neutral-200 p-4 text-sm">
+    <li className="space-y-2 rounded-card border border-line p-4 text-sm">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <div className="flex flex-wrap items-center gap-3">
         <Stars value={r.rating} size="sm" />
@@ -123,7 +123,7 @@ export function ReviewModeration({ review: r }: { review: AdminReview }) {
         <button
           type="button"
           disabled={busy}
-          className="text-sm text-red-700 underline"
+          className="text-sm text-danger underline"
           onClick={() => {
             if (window.confirm('Delete this review for good?')) {
               void run(() => api(`/admin/reviews/${r.id}`, { method: 'DELETE' }), 'Deleted.');

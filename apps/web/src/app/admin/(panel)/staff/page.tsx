@@ -59,7 +59,7 @@ export default async function StaffPage({
                 <th className="pb-2">Last sign-in</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {staff.map((s) => (
                 <tr key={s.id}>
                   <td className="py-3">

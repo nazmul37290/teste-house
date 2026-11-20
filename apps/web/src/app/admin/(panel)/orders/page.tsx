@@ -130,7 +130,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 <th className="py-2 text-right">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {items.map((o) => (
                 <tr key={o.id} className="hover:bg-neutral-50">
                   <td className="py-2 pr-3">

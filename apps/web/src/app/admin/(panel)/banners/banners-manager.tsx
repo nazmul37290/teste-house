@@ -77,7 +77,7 @@ function BannerForm({ editing, onDone }: { editing: Banner | null; onDone: () =>
         <Input id="b-title" name="title" required maxLength={100} defaultValue={editing?.title} />
       </Field>
       <MediaPicker label="Image (wide, e.g. 1600 × 600)" value={image} onChange={setImage} />
-      {!image ? <p className="text-xs text-red-700">An image is required.</p> : null}
+      {!image ? <p className="text-xs text-danger">An image is required.</p> : null}
       <MediaPicker
         label="Mobile image (optional, e.g. 1000 × 1000)"
         value={mobile}
@@ -172,7 +172,7 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
         {banners.length === 0 ? (
           <p className="py-6 text-center text-sm text-neutral-500">No banners yet.</p>
         ) : null}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {banners.map((b) => {
             const state = liveState(b);
             return (
@@ -201,7 +201,7 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
                 </button>
                 <button
                   type="button"
-                  className="text-sm text-red-700 underline"
+                  className="text-sm text-danger underline"
                   disabled={remove.busy}
                   onClick={() => {
                     if (window.confirm(`Delete the banner "${b.title}"?`)) {

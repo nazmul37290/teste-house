@@ -219,7 +219,7 @@ export function CouponsManager({ coupons }: { coupons: Coupon[] }) {
         {coupons.length === 0 ? (
           <p className="py-6 text-center text-sm text-neutral-500">No coupons yet.</p>
         ) : null}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {coupons.map((c) => {
             const state = couponState(c);
             return (
@@ -246,7 +246,7 @@ export function CouponsManager({ coupons }: { coupons: Coupon[] }) {
                 {c.usedCount === 0 ? (
                   <button
                     type="button"
-                    className="text-sm text-red-700 underline"
+                    className="text-sm text-danger underline"
                     disabled={remove.busy}
                     onClick={() => {
                       if (window.confirm(`Delete the coupon ${c.code}?`)) {

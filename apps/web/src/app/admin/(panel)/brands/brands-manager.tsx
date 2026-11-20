@@ -115,7 +115,7 @@ export function BrandsManager({ brands }: { brands: Brand[] }) {
         {brands.length === 0 ? (
           <p className="py-4 text-sm text-neutral-500">No brands yet.</p>
         ) : null}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {brands.map((b) => (
             <li key={b.id} className="flex items-center gap-3 py-2">
               {b.logo ? (
@@ -140,7 +140,7 @@ export function BrandsManager({ brands }: { brands: Brand[] }) {
               </button>
               <button
                 type="button"
-                className="text-sm text-red-700 underline disabled:text-neutral-300 disabled:no-underline"
+                className="text-sm text-danger underline disabled:text-neutral-300 disabled:no-underline"
                 disabled={remove.busy || b.productCount > 0}
                 title={b.productCount > 0 ? 'Change the brand of its products first' : undefined}
                 onClick={() => {

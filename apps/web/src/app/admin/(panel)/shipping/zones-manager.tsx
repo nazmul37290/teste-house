@@ -110,9 +110,9 @@ function ZoneForm({
       <fieldset>
         <legend className="mb-1 text-sm font-medium">Districts ({districts.length} chosen)</legend>
         {fieldError('districts') ? (
-          <p className="text-xs text-red-700">{fieldError('districts')}</p>
+          <p className="text-xs text-danger">{fieldError('districts')}</p>
         ) : null}
-        <div className="max-h-72 space-y-3 overflow-y-auto rounded-md border border-neutral-200 p-3">
+        <div className="max-h-72 space-y-3 overflow-y-auto rounded-control border border-line p-3">
           {Object.entries(BD_GEO).map(([division, ds]) => (
             <div key={division}>
               <p className="text-xs font-semibold text-neutral-500 uppercase">{division}</p>
@@ -178,7 +178,7 @@ export function ZonesManager({ zones }: { zones: DeliveryZone[] }) {
         {zones.length === 0 ? (
           <p className="py-6 text-center text-sm text-neutral-500">No zones yet.</p>
         ) : null}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {zones.map((z) => (
             <li key={z.id} className="flex flex-wrap items-center gap-3 py-3">
               <div className="min-w-0 flex-1">
@@ -227,7 +227,7 @@ export function ZonesManager({ zones }: { zones: DeliveryZone[] }) {
               {z.orderCount === 0 ? (
                 <button
                   type="button"
-                  className="text-sm text-red-700 underline"
+                  className="text-sm text-danger underline"
                   disabled={action.busy}
                   onClick={() => {
                     if (window.confirm(`Delete the zone "${z.name}"?`)) {
