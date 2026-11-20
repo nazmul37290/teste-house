@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:pay-return": "node --env-file-if-exists=../../.env ../../scripts/dev/pay-return-redirect.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"

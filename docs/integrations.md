@@ -52,7 +52,7 @@ From the official docs (uddoktapay.readme.io, read 2026-11-17) and checked again
 - Verify `{base}/api/verify-payment` `{ invoice_id }`: `amount`, `fee`, `charged_amount` (strings), `invoice_id`, `metadata`, `payment_method`, `sender_number`, `transaction_id`, `date`, `status`. `COMPLETED` = paid; `PENDING` = pending; the sandbox returns an **empty status** for an invoice not paid yet (treated as pending); only `ERROR` on a known invoice is a failure; `{ status: "ERROR", message: "No Data Found" }` (unknown invoice) changes nothing.
 - Webhook: `POST` with the same header and the verify fields in the body. The docs say it is sent when an admin clicks "send webhook" in the UddoktaPay panel, so it cannot be relied on. We compare the header with our key (timing-safe), read only `invoice_id`, and run our own verify.
 - Refund `{base}/api/refund-payment` exists; we do not call it (refunds are recorded manually, PAY-7).
-- Sandbox quirk: the redirect drops the port of `redirect_url` (`http://localhost/payment/return?...`). Locally, add `:3000` by hand; real domains are unaffected.
+- Sandbox quirk: the redirect drops the port of `redirect_url` (`http://localhost/payment/return?...`, port 80). `pnpm dev` therefore also starts `scripts/dev/pay-return-redirect.mjs` (web `dev:pay-return`), which listens on localhost port 80 and forwards `/payment/*` to `APP_URL` with a 307. If port 80 is taken it says so and the rest of `pnpm dev` keeps running (then add `:3000` by hand). Real domains have no port, so production needs nothing.
 
 Adapter interface (`apps/api/src/integrations/payments/`):
 
