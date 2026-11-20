@@ -4,22 +4,32 @@ import { Alert, PageHeader } from '@/components/ui';
 import { adminForPage } from '@/lib/admin-page';
 import type { Category, HomepageSection } from '@/lib/admin-types';
 import { apiServer } from '@/lib/api-server';
+import type { HomeHighlight } from '@shop/shared';
+import { factsFrom } from '@/components/shop/home';
+import { getStoreFacts } from '@/lib/storefront';
+import { HighlightsEditor } from './highlights-editor';
 import { SectionsManager } from './sections-manager';
 
 export const metadata: Metadata = { title: 'Homepage' };
 
 export default async function HomepageSectionsPage() {
   if (!(await adminForPage('marketing.manage'))) return <NoAccess />;
-  const [sections, categories] = await Promise.all([
+  const [sections, categories, highlights, facts] = await Promise.all([
     apiServer<HomepageSection[]>('/admin/homepage-sections'),
     apiServer<Category[]>('/admin/categories'),
+    apiServer<HomeHighlight[]>('/admin/homepage/highlights'),
+    getStoreFacts(),
   ]);
   return (
     <>
       <PageHeader
         title="Homepage"
-        description="The blocks below the top banners, in order. Empty sections are hidden automatically."
+        description="The top slider shows the banners placed at “Home hero” (Banners page). Below it: the highlights strip, then the sections in order."
       />
+      <div className="mb-8">
+        <HighlightsEditor saved={highlights} automatic={factsFrom(facts)} />
+      </div>
+      <h2 className="mb-3 font-display text-xl text-petrol">Sections</h2>
       {sections.length === 0 ? (
         <div className="mb-6 max-w-3xl">
           <Alert tone="info">

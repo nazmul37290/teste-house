@@ -166,3 +166,57 @@ describe('homepage sections', () => {
     expect((await api.post('/banners', { title: 'x', imageId }, salesman)).status).toBe(403);
   });
 });
+
+describe('home highlights', () => {
+  const items = [
+    { icon: 'cash', title: 'Cash on delivery', text: 'Pay when it arrives.' },
+    { icon: 'truck', title: 'Fast delivery', text: '' },
+  ];
+
+  it('marketing saves up to four items; they are public; empty means automatic', async () => {
+    const manager = adminHeaders((await adminSession(ctx, 'Manager')).cookie);
+    try {
+      const saved = await api.put('/homepage/highlights', { items });
+      expect(saved.status).toBe(200);
+      expect(saved.body.data).toEqual(items);
+      expect(
+        (await request(ctx.app).get('/api/v1/admin/homepage/highlights').set(manager)).body.data,
+      ).toEqual(items);
+      const pub = await request(ctx.app).get('/api/v1/settings/public');
+      expect(pub.body.data['home.highlights']).toEqual(items);
+      expect(
+        await prisma.auditLog.count({
+          where: {
+            action: 'settings.update',
+            after: { path: ['home.highlights'], array_contains: [items[0]!] },
+          },
+        }),
+      ).toBeGreaterThan(0);
+
+      const cleared = await api.put('/homepage/highlights', { items: [] });
+      expect(cleared.body.data).toEqual([]);
+    } finally {
+      await api.put('/homepage/highlights', { items: [] });
+    }
+  });
+
+  it('validates the items and needs marketing.manage', async () => {
+    const five = Array.from({ length: 5 }, () => items[0]);
+    expect((await api.put('/homepage/highlights', { items: five })).status).toBe(400);
+    const badIcon = await api.put('/homepage/highlights', {
+      items: [{ icon: 'rocket', title: 'X', text: '' }],
+    });
+    expect(badIcon.status).toBe(400);
+    const noTitle = await api.put('/homepage/highlights', {
+      items: [{ icon: 'cash', title: ' ', text: '' }],
+    });
+    expect(noTitle.status).toBe(400);
+
+    const salesman = adminHeaders((await adminSession(ctx, 'Salesman')).cookie);
+    const denied = await request(ctx.app)
+      .put('/api/v1/admin/homepage/highlights')
+      .set(salesman)
+      .send({ items });
+    expect(denied.status).toBe(403);
+  });
+});

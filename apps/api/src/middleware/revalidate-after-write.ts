@@ -10,6 +10,8 @@ const TAGS_BY_PREFIX: [prefix: string, tags: string[]][] = [
   ['/settings', ['settings']],
   ['/banners', ['homepage']],
   ['/homepage-sections', ['homepage']],
+  // Highlights are a public setting.
+  ['/homepage', ['settings']],
   // The home page states payment and delivery facts (GET /store-facts).
   ['/delivery-zones', ['store-facts']],
   ['/payment-methods', ['store-facts']],

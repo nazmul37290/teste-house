@@ -1,3 +1,4 @@
+import type { HighlightIcon } from '@shop/shared';
 import type { SVGProps } from 'react';
 
 /** Line icons on a 24px grid, 1.8 stroke, currentColor. Decorative (aria-hidden). */
@@ -103,3 +104,17 @@ export const CheckIcon = (p: P) => (
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </Icon>
 );
+
+/** Icons offered for the home highlights strip (keys from packages/shared HIGHLIGHT_ICONS). */
+export const HIGHLIGHT_ICON: Record<HighlightIcon, (p: P) => React.JSX.Element> = {
+  cash: CashIcon,
+  truck: TruckIcon,
+  card: CardIcon,
+  route: RouteIcon,
+  phone: PhoneIcon,
+  bag: BagIcon,
+  heart: HeartIcon,
+  check: CheckIcon,
+  pin: PinIcon,
+  mail: MailIcon,
+};

@@ -2,6 +2,7 @@ import {
   PUBLIC_SETTING_KEYS,
   SETTING_DEFINITIONS,
   SETTING_KEYS,
+  type HomeHighlight,
   type SettingKey,
   type UpdateSettingsInput,
 } from '@shop/shared';
@@ -65,4 +66,20 @@ export async function updateSettings(
     });
   });
   return (await getAllSettings(prisma)).values;
+}
+
+/** The home page highlights strip (empty: automatic). Edited by marketing, not via all settings. */
+export async function getHomeHighlights(prisma: Db): Promise<HomeHighlight[]> {
+  const rows = await listSettings(prisma, { keys: ['home.highlights'] });
+  const parsed = SETTING_DEFINITIONS['home.highlights'].schema.safeParse(rows[0]?.value ?? []);
+  return parsed.success ? parsed.data : [];
+}
+
+export async function updateHomeHighlights(
+  prisma: Db,
+  actor: Actor,
+  items: HomeHighlight[],
+): Promise<HomeHighlight[]> {
+  await updateSettings(prisma, actor, { 'home.highlights': items } as UpdateSettingsInput);
+  return getHomeHighlights(prisma);
 }

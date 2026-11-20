@@ -20,6 +20,7 @@ import {
   idParamSchema,
   updateBannerSchema,
   updateSettingsSchema,
+  updateHomeHighlightsSchema,
 } from '@shop/shared';
 import { inventoryController } from '../controllers/inventory.controller';
 import { mediaController } from '../controllers/media.controller';
@@ -43,7 +44,12 @@ import * as paymentAdmin from '../services/payment-admin.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
 import * as marketing from '../services/marketing.service';
 import * as shipping from '../services/shipping.service';
-import { getAllSettings, updateSettings } from '../services/settings.service';
+import {
+  getAllSettings,
+  getHomeHighlights,
+  updateHomeHighlights,
+  updateSettings,
+} from '../services/settings.service';
 
 /**
  * /api/v1/admin/* (except /admin/auth, which belongs to adminAuth). Every route needs an admin
@@ -176,6 +182,15 @@ export function adminRouter(deps: Deps): Router {
   router.delete('/banners/:id', requirePermission('marketing.manage'), async (req, res) => {
     await marketing.deleteBanner(mk, actorFrom(req, deps.env), pid(req));
     res.status(204).end();
+  });
+  router.get('/homepage/highlights', requirePermission('marketing.manage'), async (_req, res) => {
+    res.json({ data: await getHomeHighlights(deps.prisma) });
+  });
+  router.put('/homepage/highlights', requirePermission('marketing.manage'), async (req, res) => {
+    const { items } = updateHomeHighlightsSchema.parse(req.body);
+    res.json({
+      data: await updateHomeHighlights(deps.prisma, actorFrom(req, deps.env), items),
+    });
   });
   router.get('/homepage-sections', requirePermission('marketing.manage'), async (_req, res) => {
     res.json({ data: await marketing.listSections(deps.prisma) });

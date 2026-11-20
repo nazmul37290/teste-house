@@ -1,4 +1,5 @@
 import 'server-only';
+import type { HomeHighlight } from '@shop/shared';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type { Attribute, Brand, Category, Tag } from './admin-types';
@@ -46,6 +47,8 @@ export const getAdminMe = cache(async (): Promise<AdminMe | null> => {
 });
 
 export type PublicSettings = {
+  /** Home page strip under the hero; empty means automatic (store facts). */
+  'home.highlights'?: HomeHighlight[];
   'store.name'?: string;
   'store.logo'?: string | null;
   'store.phone'?: string;

@@ -29,6 +29,38 @@ const absoluteHttpUrl = z
   .max(500)
   .describe('Absolute http(s) URL, also used in emails');
 
+/** Icons the home page highlights strip can show (drawn in apps/web components/shop/icons.tsx). */
+export const HIGHLIGHT_ICONS = [
+  'cash',
+  'truck',
+  'card',
+  'route',
+  'phone',
+  'bag',
+  'heart',
+  'check',
+  'pin',
+  'mail',
+] as const;
+export type HighlightIcon = (typeof HIGHLIGHT_ICONS)[number];
+export const MAX_HOME_HIGHLIGHTS = 4;
+
+export const homeHighlightSchema = z.strictObject({
+  icon: z.enum(HIGHLIGHT_ICONS),
+  title: z.string().trim().min(1, 'Add a title').max(60),
+  text: z.string().trim().max(140),
+});
+export type HomeHighlight = z.output<typeof homeHighlightSchema>;
+
+/**
+ * The strip under the home hero. Empty means "automatic": the storefront builds it from payment
+ * methods and delivery zones (GET /store-facts).
+ */
+const homeHighlightsSchema = z.array(homeHighlightSchema).max(MAX_HOME_HIGHLIGHTS);
+
+/** PUT /admin/homepage/highlights (marketing.manage). */
+export const updateHomeHighlightsSchema = z.strictObject({ items: homeHighlightsSchema });
+
 export const SETTING_DEFINITIONS = {
   'store.name': { group: 'store', isPublic: true, schema: z.string().trim().min(1).max(100) },
   'store.logo': { group: 'store', isPublic: true, schema: absoluteHttpUrl.nullable() },
@@ -48,6 +80,7 @@ export const SETTING_DEFINITIONS = {
         .regex(/^GTM-[A-Z0-9]{4,12}$/, 'Use the form GTM-XXXXXXX'),
     ),
   },
+  'home.highlights': { group: 'homepage', isPublic: true, schema: homeHighlightsSchema },
   'review.autoApprove': { group: 'reviews', isPublic: false, schema: z.boolean() },
   'notifications.adminEmail': { group: 'notifications', isPublic: false, schema: optionalEmail },
   'shipping.steadfastEnabled': { group: 'shipping', isPublic: false, schema: z.boolean() },

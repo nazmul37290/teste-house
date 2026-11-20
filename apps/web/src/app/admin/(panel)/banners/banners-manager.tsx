@@ -71,15 +71,19 @@ function BannerForm({ editing, onDone }: { editing: Banner | null; onDone: () =>
       <Field
         label="Title"
         htmlFor="b-title"
-        hint="For your own reference in this list."
+        hint="Also read aloud by screen readers, so describe the offer (e.g. Winter honey sale, 10% off)."
         error={fieldError('title')}
       >
         <Input id="b-title" name="title" required maxLength={100} defaultValue={editing?.title} />
       </Field>
-      <MediaPicker label="Image (wide, e.g. 1600 × 600)" value={image} onChange={setImage} />
+      <MediaPicker
+        label="Image, 1600 × 600 (8:3). The hero slider crops other shapes to fit"
+        value={image}
+        onChange={setImage}
+      />
       {!image ? <p className="text-xs text-danger">An image is required.</p> : null}
       <MediaPicker
-        label="Mobile image (optional, e.g. 1000 × 1000)"
+        label="Phone image (optional), 1000 × 1000 square"
         value={mobile}
         onChange={setMobile}
       />

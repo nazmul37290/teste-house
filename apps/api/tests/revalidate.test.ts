@@ -12,6 +12,7 @@ describe('tagsForWrite', () => {
     expect(tagsForWrite('DELETE', '/banners/x')).toEqual(['homepage']);
     expect(tagsForWrite('PUT', '/homepage-sections/x')).toEqual(['homepage']);
     expect(tagsForWrite('PATCH', '/delivery-zones/x')).toEqual(['store-facts']);
+    expect(tagsForWrite('PUT', '/homepage/highlights')).toEqual(['settings']);
     expect(tagsForWrite('PATCH', '/payment-methods/x')).toEqual(['store-facts']);
   });
 

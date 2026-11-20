@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
 import { buttonClass } from '@/components/ui';
 import { formatTaka } from '@/lib/money';
 import type { RecentReview, StoreFacts } from '@/lib/storefront-types';
-import { CardIcon, CashIcon, RouteIcon, TruckIcon } from './icons';
+import type { HomeHighlight } from '@shop/shared';
+import { HIGHLIGHT_ICON } from './icons';
 import { Stars } from './stars';
 
 /**
@@ -74,14 +74,13 @@ export function HomeHero({ name }: { name: string }) {
   );
 }
 
-type Fact = { icon: ReactNode; title: string; text: string };
-
-export function factsFrom(f: StoreFacts | null): Fact[] {
+/** Automatic highlights from payment methods and delivery zones (used while none are saved). */
+export function factsFrom(f: StoreFacts | null): HomeHighlight[] {
   if (!f) return [];
-  const facts: Fact[] = [];
+  const facts: HomeHighlight[] = [];
   if (f.cashOnDelivery) {
     facts.push({
-      icon: <CashIcon />,
+      icon: 'cash',
       title: 'Cash on delivery',
       text:
         f.cashOnDelivery === 'NATIONWIDE'
@@ -91,27 +90,32 @@ export function factsFrom(f: StoreFacts | null): Fact[] {
   }
   if (f.deliveryFrom) {
     facts.push({
-      icon: <TruckIcon />,
+      icon: 'truck',
       title: f.nationwideDelivery ? 'Delivery across Bangladesh' : 'Home delivery',
       text: `From ${formatTaka(f.deliveryFrom)}. Checkout shows the charge for your district.`,
     });
   }
   if (f.onlinePayment) {
     facts.push({
-      icon: <CardIcon />,
+      icon: 'card',
       title: 'Pay online',
       text: 'Pay at checkout through UddoktaPay.',
     });
   }
   facts.push({
-    icon: <RouteIcon />,
+    icon: 'route',
     title: 'Track your order',
     text: 'With your order number and phone number.',
   });
   return facts;
 }
 
-export function FactsStrip({ facts }: { facts: Fact[] }) {
+function HighlightGlyph({ icon }: { icon: HomeHighlight['icon'] }) {
+  const Icon = HIGHLIGHT_ICON[icon] ?? HIGHLIGHT_ICON.check;
+  return <Icon />;
+}
+
+export function FactsStrip({ facts }: { facts: HomeHighlight[] }) {
   if (!facts.length) return null;
   return (
     <ul
@@ -123,11 +127,11 @@ export function FactsStrip({ facts }: { facts: Fact[] }) {
           className="flex gap-3 bg-surface p-4 sm:p-5 sm:last:odd:col-span-2 lg:last:odd:col-span-1"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-petrol-tint text-petrol">
-            {f.icon}
+            <HighlightGlyph icon={f.icon} />
           </span>
           <span>
             <span className="block font-semibold text-ink">{f.title}</span>
-            <span className="block text-sm text-ink-muted">{f.text}</span>
+            {f.text ? <span className="block text-sm text-ink-muted">{f.text}</span> : null}
           </span>
         </li>
       ))}

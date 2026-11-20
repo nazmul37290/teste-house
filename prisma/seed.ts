@@ -109,6 +109,8 @@ async function seedSettings() {
     { key: 'seo.defaultTitle', value: 'My Food Store', group: 'seo', isPublic: true },
     { key: 'seo.defaultDescription', value: '', group: 'seo', isPublic: true },
     { key: 'gtm.containerId', value: '', group: 'tracking', isPublic: true },
+    // Empty: the home page builds its highlights from payment methods and delivery zones.
+    { key: 'home.highlights', value: [], group: 'homepage', isPublic: true },
     { key: 'review.autoApprove', value: false, group: 'reviews', isPublic: false },
     { key: 'notifications.adminEmail', value: '', group: 'notifications', isPublic: false },
     { key: 'shipping.steadfastEnabled', value: false, group: 'shipping', isPublic: false },

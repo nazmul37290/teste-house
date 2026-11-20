@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
-import { Carousel } from '@/components/carousel';
 import { PlainText, SectionHeading } from '@/components/shop/bits';
 import {
   FactsStrip,
@@ -11,6 +10,7 @@ import {
   HomeHero,
   RecentReviews,
 } from '@/components/shop/home';
+import { HeroSlider } from '@/components/shop/hero-slider';
 import { JsonLd } from '@/components/shop/json-ld';
 import { ProductRow } from '@/components/shop/product-card';
 import { ShopImage } from '@/components/shop/shop-image';
@@ -234,23 +234,20 @@ export default async function HomePage() {
     <div className="space-y-14 sm:space-y-20">
       <JsonLd data={siteLd} />
       <div className="space-y-4 sm:space-y-5">
-        <HomeHero name={name} />
-        <FactsStrip facts={factsFrom(facts)} />
+        {home.hero.length ? (
+          <>
+            <h1 className="sr-only">{name}: pantry favourites, delivered to your door</h1>
+            <HeroSlider banners={home.hero} />
+          </>
+        ) : (
+          <HomeHero name={name} />
+        )}
+        <FactsStrip
+          facts={
+            settings['home.highlights']?.length ? settings['home.highlights'] : factsFrom(facts)
+          }
+        />
       </div>
-      {home.hero.length ? (
-        <section aria-label="Offers">
-          <Carousel label="Offers" itemClass="auto-cols-[100%]" arrows="inside" gapClass="gap-4">
-            {home.hero.map((b, i) => (
-              <BannerLink
-                key={b.id}
-                banner={b}
-                priority={i === 0}
-                sizes="(min-width: 1152px) 1152px, 100vw"
-              />
-            ))}
-          </Carousel>
-        </section>
-      ) : null}
       <div id="shop" className="scroll-mt-44 space-y-14 sm:space-y-20">
         {home.sections.map((s, i) => (
           <Section key={`${s.type}-${i}`} section={s} first={i === 0 && !home.hero.length} />
