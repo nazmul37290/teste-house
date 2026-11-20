@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api-client';
 import { ApiError } from './api-types';
+import { customerAuthClient } from './auth-client';
 
 /**
  * Wishlist in the browser (ACC-7). Signed in: the server list. Guest: product ids in localStorage,
@@ -39,6 +40,9 @@ let shared: Promise<State> | null = null;
 function load(): Promise<State> {
   shared ??= (async () => {
     try {
+      // Ask for the session first: guests get 200 + null here instead of a 401 on the list.
+      const { data: session } = await customerAuthClient.getSession();
+      if (!session) return { ids: readLocal(), signedIn: false };
       let ids = await api<string[]>('/me/wishlist/ids');
       const local = readLocal();
       if (local.length) {

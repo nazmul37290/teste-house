@@ -11,3 +11,6 @@ apps/api/src/generated
 .turbo
 uploads
 *.tsbuildinfo
+
+# Playwright MCP screenshots and logs
+.playwright-mcp/

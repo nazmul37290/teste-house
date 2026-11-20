@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AnalyticsItem } from '@shop/shared';
 import { trackEcommerce } from '@/lib/analytics';
 import { useWishlist } from '@/lib/wishlist-client';
+import { toast } from '@/components/toast';
 
 /** Heart toggle for one product (cards and the product page). */
 export function WishlistButton({
@@ -29,6 +30,9 @@ export function WishlistButton({
       const adding = !saved;
       await toggle(productId);
       if (adding && item) trackEcommerce('add_to_wishlist', { items: [item] });
+      toast(adding ? 'Saved to your wishlist' : 'Removed from your wishlist', 'info');
+    } catch {
+      toast('Could not update your wishlist. Try again.', 'error');
     } finally {
       setBusy(false);
     }
@@ -38,8 +42,8 @@ export function WishlistButton({
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
       <path
         d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.8 5c2 0 3.4 1.1 4.2 2.4C11.8 6.1 13.2 5 15.2 5c3.5 0 5.6 3.6 4.3 6.8C19.5 16.4 12 21 12 21z"
-        fill={saved ? '#dc2626' : 'none'}
-        stroke={saved ? '#dc2626' : 'currentColor'}
+        fill={saved ? 'var(--color-danger)' : 'none'}
+        stroke={saved ? 'var(--color-danger)' : 'currentColor'}
         strokeWidth="1.8"
       />
     </svg>
@@ -52,7 +56,7 @@ export function WishlistButton({
         onClick={() => void onClick()}
         disabled={busy}
         aria-pressed={saved}
-        className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2.5 text-sm font-medium disabled:opacity-50"
+        className="inline-flex h-10 items-center gap-2 rounded-control border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-neutral-50 disabled:opacity-50"
       >
         {heart}
         {saved ? 'Saved to wishlist' : 'Save to wishlist'}
@@ -67,7 +71,7 @@ export function WishlistButton({
       aria-pressed={saved}
       aria-label={label}
       title={label}
-      className="rounded-full bg-white/90 p-1.5 text-neutral-700 shadow-sm hover:text-red-600 disabled:opacity-50"
+      className="rounded-full border border-line bg-surface/95 p-1.5 text-ink-muted transition-colors hover:text-danger disabled:opacity-50"
     >
       {heart}
     </button>

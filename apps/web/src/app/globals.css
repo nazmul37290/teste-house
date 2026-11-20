@@ -1,1 +1,126 @@
 @import 'tailwindcss';
+
+/*
+ * Teste House design tokens (docs/design.md, "Design system"). Brand ink comes from the logo
+ * (#003442). The neutral scale is tinted toward it so every screen, admin included, sits in the
+ * same family. Haldi (turmeric) is the only warm accent and is used sparingly, never as text on
+ * a light background (it fails contrast there).
+ */
+@theme {
+  --color-petrol: #003442;
+  --color-petrol-soft: #0f4c5c;
+  --color-petrol-tint: #e3eef0;
+  --color-haldi: #e8a317;
+  --color-haldi-soft: #fbefd2;
+  --color-rice: #f6f7f4;
+  --color-surface: #ffffff;
+  --color-line: #dce3e4;
+  --color-ink: #14262b;
+  --color-ink-muted: #4e6066;
+
+  --color-success: #1e7a4c;
+  --color-success-soft: #e3f3ea;
+  --color-warning: #a15c07;
+  --color-warning-soft: #fdf1df;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+
+  /* Petrol-tinted greys replace Tailwind's neutral scale (500 and up pass AA on white). */
+  --color-neutral-50: #f4f6f5;
+  --color-neutral-100: #e9eeee;
+  --color-neutral-200: #dce3e4;
+  --color-neutral-300: #c4cfd1;
+  --color-neutral-400: #93a3a7;
+  --color-neutral-500: #5f7075;
+  --color-neutral-600: #4e6066;
+  --color-neutral-700: #3b4e54;
+  --color-neutral-800: #24383e;
+  --color-neutral-900: #14262b;
+  --color-neutral-950: #0b1a1e;
+
+  --font-sans: var(--font-body), 'Hind Siliguri', system-ui, sans-serif;
+  --font-display: var(--font-heading), 'Young Serif', Georgia, serif;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-feature: 1.25rem;
+
+  /* One shadow, only for raised layers (drawer, sticky header, popovers). */
+  --shadow-raised: 0 10px 30px -12px rgb(0 52 66 / 0.28);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-rice);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  /* Visible keyboard focus everywhere; the mouse does not draw rings. */
+  :focus-visible {
+    outline: 2px solid var(--color-petrol);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-haldi-soft);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* Display headings: the serif carries the brand voice; only H1/H2 and hero text use it. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  /* Horizontal scroll rows (carousels, category shelf): snap, no visible scrollbar. */
+  .snap-row {
+    display: grid;
+    grid-auto-flow: column;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .snap-row::-webkit-scrollbar {
+    display: none;
+  }
+  .snap-row > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* Motion answers the shopper's action only: toasts and drawers slide in, nothing animates on load. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.toast-in {
+  animation: toast-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
