@@ -27,6 +27,11 @@ const NEW_ADDRESS = 'new';
  */
 export function CheckoutForm() {
   const router = useRouter();
+  // Load the confirmation page's code ahead of time (it renders the same for any number), so it
+  // opens at once after "Place order". No effect in development, where pages compile on demand.
+  useEffect(() => {
+    router.prefetch('/order/ORD-000000');
+  }, [router]);
   const { cart } = useCart();
   // begin_checkout once, when the cart has loaded with items.
   const checkoutTracked = useRef(false);
@@ -53,6 +58,8 @@ export function CheckoutForm() {
   const [message, setMessage] = useState<{ tone: 'error' | 'warn'; text: string } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [placing, setPlacing] = useState(false);
+  /** Set once the order exists: the page shows that instead of the (now empty) cart. */
+  const [placed, setPlaced] = useState<{ number: string; toGateway: boolean } | null>(null);
   // One key per checkout: a double click or a retry after a network error never makes two orders.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
@@ -190,6 +197,10 @@ export function CheckoutForm() {
       } catch {
         // Private mode: the confirmation page falls back to tracking.
       }
+      const toGateway = Boolean(order.payment && 'redirectUrl' in order.payment);
+      // Show the result first: the cart refresh below empties the cart, which would otherwise
+      // flash "Your cart is empty" while the next page loads.
+      setPlaced({ number: order.orderNumber, toGateway });
       void cartApi.refresh().catch(() => undefined);
       // Online payment: off to the gateway. Paid or not is decided by our server, never this redirect.
       if (order.payment && 'redirectUrl' in order.payment) {
@@ -228,6 +239,25 @@ export function CheckoutForm() {
     }
   }
 
+  if (placed) {
+    return (
+      <div
+        role="status"
+        className="mt-6 flex flex-col items-center rounded-card border border-line bg-surface p-8 text-center"
+      >
+        <span
+          aria-hidden
+          className="size-8 animate-spin rounded-full border-[3px] border-petrol-tint border-t-petrol"
+        />
+        <p className="mt-4 font-display text-2xl text-petrol">Order {placed.number} placed</p>
+        <p className="mt-1 text-sm text-ink-muted">
+          {placed.toGateway
+            ? 'Taking you to the payment page…'
+            : 'Opening your order confirmation…'}
+        </p>
+      </div>
+    );
+  }
   if (!cart) return <p className="mt-6 text-sm text-neutral-500">Loading…</p>;
   if (!cart.items.length) {
     return (

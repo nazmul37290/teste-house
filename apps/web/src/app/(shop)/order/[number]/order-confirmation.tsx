@@ -58,7 +58,7 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
     <div className="space-y-6">
       <div className="rounded-card bg-success-soft p-6 text-center">
         <p className="text-sm font-medium text-success">Thank you!</p>
-        <h1 className="mt-1 text-2xl font-semibold text-neutral-900">
+        <h1 className="mt-1 font-display text-[28px] leading-tight text-petrol">
           Order {order.orderNumber} received
         </h1>
         <p className="mt-2 text-sm text-neutral-700">
