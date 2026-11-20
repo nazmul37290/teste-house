@@ -32,14 +32,14 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
   if (order === undefined) return null;
   if (!order) {
     return (
-      <div className="rounded-lg border border-neutral-200 p-6 text-center">
+      <div className="rounded-card border border-line bg-surface p-6 sm:p-5 text-center">
         <h1 className="text-xl font-semibold">Order {orderNumber}</h1>
         <p className="mt-2 text-sm text-neutral-600">
           Track this order with its number and your mobile number.
         </p>
         <Link
           href={`/track?order=${encodeURIComponent(orderNumber)}`}
-          className="mt-4 inline-block rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white"
+          className="mt-4 inline-block rounded-control bg-petrol px-4 py-2.5 text-sm font-medium text-white"
         >
           Track order
         </Link>
@@ -56,8 +56,8 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-emerald-50 p-6 text-center">
-        <p className="text-sm font-medium text-emerald-800">Thank you!</p>
+      <div className="rounded-card bg-success-soft p-6 text-center">
+        <p className="text-sm font-medium text-success">Thank you!</p>
         <h1 className="mt-1 text-2xl font-semibold text-neutral-900">
           Order {order.orderNumber} received
         </h1>
@@ -72,7 +72,7 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
       {order.paymentMethod.code !== 'COD' &&
       order.paymentStatus !== 'PAID' &&
       order.contactPhone ? (
-        <section className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
+        <section className="space-y-3 rounded-card border border-warning/30 bg-warning-soft p-4 text-sm">
           <p className="font-medium">Payment not completed yet</p>
           <p>
             {order.payment && 'error' in order.payment
@@ -83,7 +83,7 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
         </section>
       ) : null}
 
-      <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
+      <section className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-5">
         <ItemRows items={order.items} />
         <Totals {...order} />
         <p className="text-sm">
@@ -105,18 +105,18 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
       <div className="flex flex-wrap gap-3">
         <Link
           href={`/track?order=${encodeURIComponent(order.orderNumber)}`}
-          className="rounded-md border border-neutral-300 px-4 py-2.5 text-sm font-medium"
+          className="rounded-control border border-neutral-300 px-4 py-2.5 text-sm font-medium"
         >
           Track this order
         </Link>
         <Link
           href="/"
-          className="rounded-md border border-neutral-300 px-4 py-2.5 text-sm font-medium"
+          className="rounded-control border border-neutral-300 px-4 py-2.5 text-sm font-medium"
         >
           Continue shopping
         </Link>
       </div>
-      <div className="rounded-lg border border-neutral-200 p-4 text-sm">
+      <div className="rounded-card border border-line bg-surface p-4 sm:p-5 text-sm">
         <p className="font-medium">Create an account to follow your orders</p>
         <p className="mt-1 text-neutral-600">
           Your details are filled in. Orders placed with a verified email appear in your account.

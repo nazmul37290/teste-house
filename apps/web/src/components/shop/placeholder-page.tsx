@@ -8,8 +8,8 @@ export async function PlaceholderPage({ title }: { title: string }) {
   const name = await storeName();
   return (
     <article className="mx-auto max-w-2xl space-y-4 py-8">
-      <h1 className="text-2xl font-bold text-neutral-900">{title}</h1>
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <h1 className="font-display text-[28px] leading-tight text-petrol sm:text-[34px]">{title}</h1>
+      <p className="rounded-control border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
         This page is being prepared. {name} will publish the full {title.toLowerCase()} here before
         taking orders.
       </p>

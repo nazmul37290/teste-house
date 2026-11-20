@@ -29,7 +29,7 @@ export function ReviewCard({ review: r }: { review: ReviewItem }) {
               href={img.urls['1600']}
               target="_blank"
               rel="noopener noreferrer"
-              className="block h-20 w-20 overflow-hidden rounded-md bg-neutral-100"
+              className="block h-20 w-20 overflow-hidden rounded-control bg-neutral-100"
             >
               <ShopImage image={img} sizes="80px" className="h-20 w-20 object-cover" />
             </a>

@@ -117,12 +117,12 @@ export function AddressesManager({ addresses }: { addresses: SavedAddress[] }) {
       <div className="space-y-3">
         {remove.status ? <Alert tone={remove.status.tone}>{remove.status.text}</Alert> : null}
         {addresses.length === 0 ? (
-          <p className="rounded-lg border border-neutral-200 p-6 text-center text-sm text-neutral-500">
+          <p className="rounded-card border border-line bg-surface p-6 sm:p-5 text-center text-sm text-neutral-500">
             No saved addresses yet. Saved addresses make checkout faster.
           </p>
         ) : null}
         {addresses.map((a) => (
-          <div key={a.id} className="rounded-lg border border-neutral-200 p-4 text-sm">
+          <div key={a.id} className="rounded-card border border-line bg-surface p-4 sm:p-5 text-sm">
             <p className="font-medium">
               {a.label ?? a.recipientName}{' '}
               {a.isDefault ? <Badge tone="green">Default</Badge> : null}
@@ -140,7 +140,7 @@ export function AddressesManager({ addresses }: { addresses: SavedAddress[] }) {
               </button>
               <button
                 type="button"
-                className="text-red-700 underline"
+                className="text-danger underline"
                 disabled={remove.busy}
                 onClick={() => {
                   if (window.confirm('Delete this address?')) {

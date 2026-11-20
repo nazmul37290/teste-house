@@ -46,7 +46,7 @@ export function CartButton() {
         className="relative flex shrink-0 flex-col items-center gap-0.5 rounded-control px-2 py-1 text-[11px] font-semibold text-ink-muted transition-colors hover:text-petrol sm:flex-row sm:gap-1.5 sm:text-sm"
         aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}
       >
-        <span className="relative">
+        <span className="relative sm:mr-1">
           <BagIcon />
           {count > 0 ? (
             <span className="absolute -right-2 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-haldi px-1 text-[11px] font-bold leading-none text-petrol ring-2 ring-surface">

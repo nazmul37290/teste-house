@@ -39,7 +39,7 @@ export default async function AccountOrderPage({
       </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_18rem]">
-        <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
+        <section className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-5">
           <ItemRows items={order.items} />
           <Totals {...order} />
           <p className="text-sm text-neutral-600">
@@ -47,9 +47,9 @@ export default async function AccountOrderPage({
           </p>
         </section>
         <div className="space-y-4">
-          <section className="rounded-lg border border-neutral-200 p-4 text-sm">
+          <section className="rounded-card border border-line bg-surface p-4 sm:p-5 text-sm">
             <h3 className="mb-2 font-semibold">Progress</h3>
-            <ol className="space-y-1 border-l-2 border-neutral-200 pl-4">
+            <ol className="space-y-1 border-l-2 border-line pl-4">
               {order.timeline.map((t, i) => (
                 <li key={i}>
                   <span className="font-medium">{STATUS_LABEL[t.status]}</span>
@@ -59,13 +59,13 @@ export default async function AccountOrderPage({
             </ol>
           </section>
           {order.shipments?.length ? (
-            <section className="rounded-lg border border-neutral-200 p-4">
+            <section className="rounded-card border border-line bg-surface p-4 sm:p-5">
               <h3 className="mb-2 font-semibold">Delivery</h3>
               <ShipmentTimeline shipments={order.shipments} />
             </section>
           ) : null}
           {a ? (
-            <section className="rounded-lg border border-neutral-200 p-4 text-sm">
+            <section className="rounded-card border border-line bg-surface p-4 sm:p-5 text-sm">
               <h3 className="mb-2 font-semibold">Delivery address</h3>
               <p>
                 {a.recipientName}, {a.phone}

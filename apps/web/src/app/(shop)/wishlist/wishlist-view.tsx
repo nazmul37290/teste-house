@@ -30,7 +30,7 @@ export function WishlistView() {
   if (!cards) return <p className="mt-6 text-sm text-neutral-500">Loading…</p>;
   if (!cards.length) {
     return (
-      <div className="mt-6 rounded-lg border border-neutral-200 p-8 text-center text-sm">
+      <div className="mt-6 rounded-card border border-line p-8 text-center text-sm">
         <p className="text-neutral-600">
           Nothing saved yet. Tap the heart on a product to save it here.
         </p>

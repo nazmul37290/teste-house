@@ -60,11 +60,11 @@ export function OrderActions({
   };
 
   return (
-    <section className="space-y-3 rounded-lg border border-neutral-200 p-4">
+    <section className="space-y-3 rounded-card border border-line bg-surface p-4 sm:p-5">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <a
         href={`/api/v1/me/orders/${orderNumber}/invoice`}
-        className="block rounded-md border border-neutral-300 px-4 py-2 text-center text-sm font-medium"
+        className="block rounded-control border border-neutral-300 px-4 py-2 text-center text-sm font-medium"
       >
         Download invoice (PDF)
       </a>
@@ -82,7 +82,7 @@ export function OrderActions({
           type="button"
           disabled={busy}
           onClick={cancel}
-          className="w-full text-sm text-red-700 underline disabled:opacity-50"
+          className="w-full text-sm text-danger underline disabled:opacity-50"
         >
           Cancel this order
         </button>

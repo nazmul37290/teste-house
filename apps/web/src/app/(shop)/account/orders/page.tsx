@@ -22,7 +22,7 @@ export default async function OrdersPage({
 
   if (!items.length && page === 1) {
     return (
-      <div className="rounded-lg border border-neutral-200 p-8 text-center text-sm">
+      <div className="rounded-card border border-line p-8 text-center text-sm">
         <p className="text-neutral-600">You have no orders yet.</p>
         <p className="mt-2 text-neutral-500">
           Ordered as a guest? Orders with your verified email appear here automatically.
@@ -36,7 +36,7 @@ export default async function OrdersPage({
 
   return (
     <div className="space-y-4">
-      <ul className="divide-y divide-neutral-100 rounded-lg border border-neutral-200">
+      <ul className="divide-y divide-line rounded-card border border-line">
         {items.map((o) => (
           <li key={o.orderNumber}>
             <Link

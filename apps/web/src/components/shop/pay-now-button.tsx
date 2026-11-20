@@ -42,12 +42,12 @@ export function PayNowButton({
         type="button"
         onClick={() => void pay()}
         disabled={busy}
-        className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-control bg-petrol px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
       >
         {busy ? 'Opening payment…' : label}
       </button>
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}

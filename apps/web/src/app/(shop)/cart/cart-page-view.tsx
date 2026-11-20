@@ -25,7 +25,7 @@ export function CartPageView() {
   }
   if (cart.items.length === 0) {
     return (
-      <div className="mt-6 rounded-lg border border-neutral-200 p-8 text-center">
+      <div className="mt-6 rounded-card border border-line p-8 text-center">
         <p className="text-neutral-600">Your cart is empty.</p>
         <Link href="/" className="mt-4 inline-block text-sm font-medium underline">
           Continue shopping
@@ -35,26 +35,28 @@ export function CartPageView() {
   }
   return (
     <div className="mt-6 grid gap-6 md:grid-cols-[1fr_16rem]">
-      <div className="min-w-0 rounded-lg border border-neutral-200 px-4">
-        {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+      <div className="min-w-0 rounded-card border border-line px-4">
+        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
         <CartLines cart={cart} change={change} />
       </div>
-      <aside className="h-fit space-y-3 rounded-lg border border-neutral-200 p-4">
+      <aside className="h-fit space-y-3 rounded-card border border-line bg-surface p-4 sm:p-5">
         <div className="flex justify-between text-sm">
-          <span>Subtotal ({cart.itemCount} items)</span>
+          <span>
+            Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})
+          </span>
           <span className="font-semibold">{formatTaka(cart.subtotal)}</span>
         </div>
         <p className="text-xs text-neutral-500">
           Delivery charge and any coupon are added at checkout.
         </p>
         {cart.hasProblems ? (
-          <p className="text-xs font-medium text-red-700">
+          <p className="text-xs font-medium text-danger">
             Fix the items marked in red to continue.
           </p>
         ) : (
           <Link
             href="/checkout"
-            className="block rounded-md bg-neutral-900 px-4 py-2.5 text-center text-sm font-medium text-white"
+            className="block rounded-control bg-petrol px-4 py-2.5 text-center text-sm font-medium text-white"
           >
             Go to checkout
           </Link>

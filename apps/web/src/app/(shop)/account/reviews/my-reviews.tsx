@@ -40,13 +40,16 @@ export function MyReviews({ mine, toReview }: { mine: MyReview[]; toReview: ToRe
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Review your purchases</h2>
+        <h2 className="text-lg font-semibold text-ink">Review your purchases</h2>
         {toReview.length === 0 ? (
           <p className="text-sm text-neutral-500">Nothing to review right now.</p>
         ) : (
           <ul className="space-y-3">
             {toReview.map((p) => (
-              <li key={p.id} className="rounded-lg border border-neutral-200 p-3 text-sm">
+              <li
+                key={p.id}
+                className="rounded-card border border-line bg-surface p-3 sm:p-5 text-sm"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <Link href={`/product/${p.slug}`} className="font-medium underline">
                     {p.name}
@@ -69,13 +72,16 @@ export function MyReviews({ mine, toReview }: { mine: MyReview[]; toReview: ToRe
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Your reviews</h2>
+        <h2 className="text-lg font-semibold text-ink">Your reviews</h2>
         {mine.length === 0 ? (
           <p className="text-sm text-neutral-500">You have not written any reviews yet.</p>
         ) : (
           <ul className="space-y-3">
             {mine.map((r) => (
-              <li key={r.id} className="space-y-2 rounded-lg border border-neutral-200 p-3 text-sm">
+              <li
+                key={r.id}
+                className="space-y-2 rounded-card border border-line bg-surface p-3 sm:p-5 text-sm"
+              >
                 <div className="flex flex-wrap items-center gap-3">
                   <Link href={`/product/${r.product.slug}`} className="font-medium underline">
                     {r.product.name}
@@ -92,7 +98,7 @@ export function MyReviews({ mine, toReview }: { mine: MyReview[]; toReview: ToRe
                   </button>
                   <button
                     type="button"
-                    className="text-red-700 underline"
+                    className="text-danger underline"
                     onClick={() => {
                       if (window.confirm('Delete this review?')) {
                         void api(`/me/reviews/${r.id}`, { method: 'DELETE' }).then(done);

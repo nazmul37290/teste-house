@@ -170,9 +170,10 @@ function Box({
   tone?: 'ok' | 'warn' | 'neutral';
   children?: React.ReactNode;
 }) {
-  const bg = tone === 'ok' ? 'bg-emerald-50' : tone === 'warn' ? 'bg-amber-50' : 'bg-neutral-50';
+  const bg =
+    tone === 'ok' ? 'bg-success-soft' : tone === 'warn' ? 'bg-warning-soft' : 'bg-neutral-50';
   return (
-    <div className={`space-y-4 rounded-lg p-6 text-center ${bg}`}>
+    <div className={`space-y-4 rounded-card p-6 text-center ${bg}`}>
       <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
       <p className="text-sm text-neutral-700">{text}</p>
       {children ? <div className="flex justify-center">{children}</div> : null}

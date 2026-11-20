@@ -21,7 +21,7 @@ export function Totals({
         <dd>{formatTaka(subtotal)}</dd>
       </div>
       {discountTotal !== '0.00' ? (
-        <div className="flex justify-between text-emerald-700">
+        <div className="flex justify-between text-success">
           <dt>Discount{couponCode ? ` (${couponCode})` : ''}</dt>
           <dd>− {formatTaka(discountTotal)}</dd>
         </div>
@@ -30,7 +30,7 @@ export function Totals({
         <dt>Delivery</dt>
         <dd>{deliveryCharge === '0.00' ? 'Free' : formatTaka(deliveryCharge)}</dd>
       </div>
-      <div className="flex justify-between border-t border-neutral-200 pt-2 text-base font-semibold">
+      <div className="flex justify-between border-t border-line pt-2 text-base font-semibold">
         <dt>Total</dt>
         <dd>{formatTaka(grandTotal)}</dd>
       </div>
@@ -45,7 +45,7 @@ export function ItemRows({
   items: { productName: string; variantName: string; quantity: number; lineTotal: string }[];
 }) {
   return (
-    <ul className="divide-y divide-neutral-100 text-sm">
+    <ul className="divide-y divide-line text-sm">
       {items.map((i, n) => (
         <li key={n} className="flex justify-between gap-3 py-2">
           <span className="min-w-0">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Alert, AuthCard } from '@/components/ui';
+import { Alert } from '@/components/ui';
+import { AuthShell } from '@/components/auth-shell';
 
 export const metadata: Metadata = { title: 'Email verification', robots: { index: false } };
 
@@ -12,7 +13,7 @@ export default async function EmailVerifiedPage({
 }) {
   const { error } = await searchParams;
   return (
-    <AuthCard title={error ? 'Could not verify your email' : 'Email verified'}>
+    <AuthShell title={error ? 'Could not verify your email' : 'Email verified'}>
       <div className="space-y-4">
         {error ? (
           <Alert>
@@ -29,6 +30,6 @@ export default async function EmailVerifiedPage({
           Go to my account
         </Link>
       </div>
-    </AuthCard>
+    </AuthShell>
   );
 }

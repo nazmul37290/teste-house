@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Alert, AuthCard } from '@/components/ui';
+import { Alert } from '@/components/ui';
+import { AuthShell } from '@/components/auth-shell';
 import { ResetPasswordForm } from './reset-password-form';
 
 export const metadata: Metadata = { title: 'Choose a new password', robots: { index: false } };
@@ -13,7 +14,7 @@ export default async function ResetPasswordPage({
 }) {
   const { token, error } = await searchParams;
   return (
-    <AuthCard title="Choose a new password">
+    <AuthShell title="Choose a new password">
       {error || !token ? (
         <div className="space-y-4">
           <Alert>This link is invalid or has expired. Reset links work once and for 1 hour.</Alert>
@@ -24,6 +25,6 @@ export default async function ResetPasswordPage({
       ) : (
         <ResetPasswordForm token={token} />
       )}
-    </AuthCard>
+    </AuthShell>
   );
 }

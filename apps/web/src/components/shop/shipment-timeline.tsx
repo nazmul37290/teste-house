@@ -25,7 +25,7 @@ export function ShipmentTimeline({ shipments }: { shipments: Shipment[] }) {
               </>
             ) : null}
           </p>
-          <ol className="space-y-1 border-l-2 border-neutral-200 pl-4">
+          <ol className="space-y-1 border-l-2 border-line pl-4">
             {s.events.map((e, j) => (
               <li key={j}>
                 <span className="font-medium">{courierStatusText(e.status)}</span>

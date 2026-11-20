@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { AuthCard } from '@/components/ui';
-import { storeName } from '@/lib/api-server';
+import { AuthShell } from '@/components/auth-shell';
 import { safeNextPath } from '@/lib/format';
 import { LoginForm } from './login-form';
 
@@ -15,7 +14,10 @@ export default async function LoginPage({
   const { next } = await searchParams;
   const target = safeNextPath(next, '/account');
   return (
-    <AuthCard title="Sign in" subtitle={await storeName()}>
+    <AuthShell
+      title="Sign in"
+      subtitle="Welcome back. Sign in to see your orders and saved addresses."
+    >
       <LoginForm next={target} />
       <div className="mt-6 space-y-2 text-center text-sm text-neutral-600">
         <p>
@@ -33,6 +35,6 @@ export default async function LoginPage({
           </Link>
         </p>
       </div>
-    </AuthCard>
+    </AuthShell>
   );
 }

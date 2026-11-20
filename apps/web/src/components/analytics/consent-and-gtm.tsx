@@ -91,7 +91,7 @@ export function ConsentAndGtm({ containerId }: { containerId: string | null }) {
     <div
       role="dialog"
       aria-label="Cookie choices"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white p-4 shadow-lg"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white p-4 shadow-lg"
     >
       <div className="mx-auto max-w-4xl space-y-3 text-sm">
         <p className="text-neutral-700">
@@ -123,14 +123,14 @@ export function ConsentAndGtm({ containerId }: { containerId: string | null }) {
           <button
             type="button"
             onClick={() => save({ analytics: true, marketing: true })}
-            className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white"
+            className="rounded-control bg-petrol px-4 py-2 font-medium text-white"
           >
             Accept all
           </button>
           <button
             type="button"
             onClick={() => save({ analytics: false, marketing: false })}
-            className="rounded-md border border-neutral-300 px-4 py-2 font-medium"
+            className="rounded-control border border-neutral-300 px-4 py-2 font-medium"
           >
             Only necessary
           </button>
@@ -138,7 +138,7 @@ export function ConsentAndGtm({ containerId }: { containerId: string | null }) {
             <button
               type="button"
               onClick={() => save(choice)}
-              className="rounded-md border border-neutral-300 px-4 py-2 font-medium"
+              className="rounded-control border border-neutral-300 px-4 py-2 font-medium"
             >
               Save my choice
             </button>

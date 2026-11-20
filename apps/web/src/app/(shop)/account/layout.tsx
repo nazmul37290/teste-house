@@ -9,7 +9,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   if (!customer) redirect('/login?next=/account');
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-900">Hello, {customer.name}</h1>
+      <h1 className="font-display text-[28px] leading-tight text-petrol">Hello, {customer.name}</h1>
       <AccountTabs />
       <div className="mt-6">{children}</div>
     </div>

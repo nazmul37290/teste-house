@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { AuthCard } from '@/components/ui';
+import { AuthShell } from '@/components/auth-shell';
 import { ForgotPasswordForm } from './forgot-password-form';
 
 export const metadata: Metadata = { title: 'Forgot password', robots: { index: false } };
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthCard
+    <AuthShell
       title="Forgot your password?"
       subtitle="We will email you a link to choose a new one."
     >
@@ -17,6 +17,6 @@ export default function ForgotPasswordPage() {
           Back to sign in
         </Link>
       </p>
-    </AuthCard>
+    </AuthShell>
   );
 }

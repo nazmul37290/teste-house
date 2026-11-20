@@ -65,25 +65,25 @@ export function TrackForm({ initialOrder }: { initialOrder: string }) {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-control bg-petrol px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
         >
           {busy ? 'Looking…' : 'Track'}
         </button>
       </form>
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
       {order ? (
-        <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
+        <section className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-semibold">Order {order.orderNumber}</h2>
             <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium">
               {STATUS_LABEL[order.status]}
             </span>
           </div>
-          <ol className="space-y-1 border-l-2 border-neutral-200 pl-4 text-sm">
+          <ol className="space-y-1 border-l-2 border-line pl-4 text-sm">
             {order.timeline.map((t, i) => (
               <li key={i}>
                 <span className="font-medium">{STATUS_LABEL[t.status]}</span>

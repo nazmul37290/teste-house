@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { AuthCard } from '@/components/ui';
-import { storeName } from '@/lib/api-server';
+import { AuthShell } from '@/components/auth-shell';
 import { safeNextPath } from '@/lib/format';
 import { RegisterForm } from './register-form';
 
@@ -19,7 +18,10 @@ export default async function RegisterPage({
   const defaults = { name: clip(name, 100), phone: clip(phone, 20), email: clip(email, 120) };
   const target = safeNextPath(next, '/account');
   return (
-    <AuthCard title="Create an account" subtitle={await storeName()}>
+    <AuthShell
+      title="Create an account"
+      subtitle="Keep your order history and saved addresses, and save products to a wishlist."
+    >
       <RegisterForm next={target} defaults={defaults} />
       <p className="mt-6 text-center text-sm text-neutral-600">
         Already have an account?{' '}
@@ -27,6 +29,6 @@ export default async function RegisterPage({
           Sign in
         </Link>
       </p>
-    </AuthCard>
+    </AuthShell>
   );
 }

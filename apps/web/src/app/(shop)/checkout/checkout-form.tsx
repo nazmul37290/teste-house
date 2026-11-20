@@ -231,7 +231,7 @@ export function CheckoutForm() {
   if (!cart) return <p className="mt-6 text-sm text-neutral-500">Loading…</p>;
   if (!cart.items.length) {
     return (
-      <div className="mt-6 rounded-lg border border-neutral-200 p-8 text-center">
+      <div className="mt-6 rounded-card border border-line p-8 text-center">
         <p className="text-neutral-600">Your cart is empty.</p>
         <Link href="/" className="mt-4 inline-block text-sm font-medium underline">
           Continue shopping
@@ -244,8 +244,13 @@ export function CheckoutForm() {
   return (
     <form onSubmit={placeOrder} className="mt-6 grid gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="min-w-0 space-y-6">
-        <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
-          <h2 className="font-semibold">Contact</h2>
+        <section className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-5">
+          <h2 className="flex items-center gap-3 text-lg font-semibold text-ink">
+            <span className="flex size-7 items-center justify-center rounded-full bg-petrol text-sm text-white">
+              1
+            </span>
+            Contact
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Full name" htmlFor="co-name" error={err('contact.name')}>
               <Input
@@ -291,14 +296,19 @@ export function CheckoutForm() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-lg border border-neutral-200 p-4">
-          <h2 className="font-semibold">Delivery address</h2>
+        <section className="space-y-4 rounded-card border border-line bg-surface p-4 sm:p-5">
+          <h2 className="flex items-center gap-3 text-lg font-semibold text-ink">
+            <span className="flex size-7 items-center justify-center rounded-full bg-petrol text-sm text-white">
+              2
+            </span>
+            Delivery address
+          </h2>
           {saved.length ? (
             <div className="space-y-2">
               {saved.map((a) => (
                 <label
                   key={a.id}
-                  className="flex items-start gap-2 rounded-md border border-neutral-200 p-3 text-sm"
+                  className="flex items-start gap-2 rounded-control border border-line p-3 text-sm"
                 >
                   <input
                     type="radio"
@@ -317,7 +327,7 @@ export function CheckoutForm() {
                   </span>
                 </label>
               ))}
-              <label className="flex items-center gap-2 rounded-md border border-neutral-200 p-3 text-sm">
+              <label className="flex items-center gap-2 rounded-control border border-line p-3 text-sm">
                 <input
                   type="radio"
                   name="addressChoice"
@@ -346,12 +356,17 @@ export function CheckoutForm() {
           </Field>
         </section>
 
-        <section className="space-y-3 rounded-lg border border-neutral-200 p-4">
-          <h2 className="font-semibold">Payment</h2>
+        <section className="space-y-3 rounded-card border border-line bg-surface p-4 sm:p-5">
+          <h2 className="flex items-center gap-3 text-lg font-semibold text-ink">
+            <span className="flex size-7 items-center justify-center rounded-full bg-petrol text-sm text-white">
+              3
+            </span>
+            Payment
+          </h2>
           {!district ? (
             <p className="text-sm text-neutral-500">Choose your district to see payment options.</p>
           ) : quote && quote.paymentMethods.length === 0 ? (
-            <p className="text-sm text-red-700">
+            <p className="text-sm text-danger">
               No payment method is available for {district}. Cash on Delivery may be limited to some
               areas.
             </p>
@@ -372,8 +387,8 @@ export function CheckoutForm() {
         </section>
       </div>
 
-      <aside className="h-fit space-y-4 rounded-lg border border-neutral-200 p-4 lg:sticky lg:top-24">
-        <h2 className="font-semibold">Your order</h2>
+      <aside className="h-fit space-y-4 rounded-card border border-line bg-surface p-5 lg:sticky lg:top-40">
+        <h2 className="font-display text-xl text-petrol">Your order</h2>
         <ItemRows
           items={
             quote?.lines ??
@@ -386,7 +401,7 @@ export function CheckoutForm() {
           }
         />
         {cart.hasProblems ? (
-          <p className="text-sm text-red-700">
+          <p className="text-sm text-danger">
             Some items need attention.{' '}
             <Link href="/cart" className="underline">
               Open your cart
@@ -406,13 +421,13 @@ export function CheckoutForm() {
           <button
             type="button"
             onClick={() => setCoupon(couponInput.trim().toUpperCase() || undefined)}
-            className="shrink-0 rounded-md border border-neutral-300 px-3 text-sm font-medium"
+            className="shrink-0 rounded-control border border-neutral-300 px-3 text-sm font-medium"
           >
             Apply
           </button>
         </div>
         {quote?.coupon ? (
-          <p className={`text-xs ${quote.coupon.applied ? 'text-emerald-700' : 'text-red-700'}`}>
+          <p className={`text-xs ${quote.coupon.applied ? 'text-success' : 'text-danger'}`}>
             {quote.coupon.applied ? `Coupon ${quote.coupon.code} applied.` : quote.coupon.message}
             {quote.coupon.applied ? (
               <button
@@ -450,7 +465,7 @@ export function CheckoutForm() {
         {message ? (
           <p
             role="alert"
-            className={`rounded-md p-3 text-sm ${message.tone === 'warn' ? 'bg-amber-50 text-amber-900' : 'bg-red-50 text-red-800'}`}
+            className={`rounded-control p-3 text-sm ${message.tone === 'warn' ? 'bg-warning-soft text-warning' : 'bg-danger-soft text-danger'}`}
           >
             {message.text}
           </p>
@@ -458,7 +473,7 @@ export function CheckoutForm() {
         <button
           type="submit"
           disabled={!quote || !method || placing || cart.hasProblems}
-          className="w-full rounded-md bg-neutral-900 px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-control bg-petrol px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {placing
             ? 'Placing order…'

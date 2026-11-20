@@ -170,14 +170,18 @@ export function Badge({
 export function AuthCard({
   title,
   subtitle,
+  brand,
   children,
 }: {
   title: string;
   subtitle?: string;
+  /** Logo above the card (AuthShell passes the store logo). */
+  brand?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-rice px-4 py-12">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-rice px-4 py-12">
+      {brand}
       <div className="w-full max-w-md rounded-card border border-line bg-surface p-6 sm:p-8">
         <h1 className="font-display text-[28px] leading-tight text-petrol">{title}</h1>
         {subtitle ? <p className="mt-2 text-sm text-ink-muted">{subtitle}</p> : null}
