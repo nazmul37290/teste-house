@@ -19,32 +19,34 @@ export function CartLines({
   onNavigate?: () => void;
 }) {
   return (
-    <ul className="divide-y divide-neutral-100">
+    <ul className="divide-y divide-line">
       {cart.items.map((line) => (
-        <li key={line.id} className="flex gap-3 py-3">
+        <li key={line.id} className="flex gap-3 py-4">
           <Link
             href={`/product/${line.productSlug}`}
             onClick={onNavigate}
-            className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-neutral-100"
+            className="size-18 shrink-0 overflow-hidden rounded-control border border-line bg-surface"
           >
             {line.image ? (
-              <ShopImage image={line.image} sizes="64px" className="h-16 w-16 object-cover" />
+              <ShopImage image={line.image} sizes="72px" className="size-18 object-cover" />
             ) : null}
           </Link>
           <div className="min-w-0 flex-1">
             <Link
               href={`/product/${line.productSlug}`}
               onClick={onNavigate}
-              className="line-clamp-2 text-sm font-medium text-neutral-900 hover:underline"
+              className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink hover:text-petrol"
             >
               {line.productName}
             </Link>
-            <p className="text-xs text-neutral-500">{line.variantName}</p>
+            <p className="text-[13px] text-ink-muted">{line.variantName}</p>
             {line.problem ? (
-              <p className="mt-1 text-xs font-medium text-red-700">{PROBLEM_TEXT[line.problem]}</p>
+              <p className="mt-1 text-[13px] font-semibold text-danger">
+                {PROBLEM_TEXT[line.problem]}
+              </p>
             ) : null}
             <div className="mt-2 flex items-center gap-3">
-              <div className="flex items-center rounded-md border border-neutral-300">
+              <div className="flex h-8 items-center rounded-control border border-line bg-surface">
                 <button
                   type="button"
                   aria-label={`One less ${line.productName}`}
@@ -56,11 +58,11 @@ export function CartLines({
                       return next;
                     })
                   }
-                  className="px-2.5 py-1 text-sm disabled:opacity-40"
+                  className="h-full px-2.5 text-base text-petrol hover:bg-neutral-50 disabled:opacity-40"
                 >
                   −
                 </button>
-                <span className="min-w-8 text-center text-sm" aria-live="polite">
+                <span className="min-w-8 text-center text-sm font-semibold" aria-live="polite">
                   {line.quantity}
                 </span>
                 <button
@@ -68,7 +70,7 @@ export function CartLines({
                   aria-label={`One more ${line.productName}`}
                   disabled={busy || line.quantity >= line.maxQuantity}
                   onClick={() => void change(() => cartApi.setQuantity(line.id, line.quantity + 1))}
-                  className="px-2.5 py-1 text-sm disabled:opacity-40"
+                  className="h-full px-2.5 text-base text-petrol hover:bg-neutral-50 disabled:opacity-40"
                 >
                   +
                 </button>
@@ -83,16 +85,16 @@ export function CartLines({
                     return next;
                   })
                 }
-                className="text-xs text-neutral-500 underline hover:text-neutral-900"
+                className="text-[13px] text-ink-muted underline-offset-2 hover:text-danger hover:underline"
               >
                 Remove
               </button>
             </div>
           </div>
           <div className="text-right text-sm">
-            <p className="font-medium">{formatTaka(line.lineTotal)}</p>
+            <p className="font-bold text-ink">{formatTaka(line.lineTotal)}</p>
             {line.quantity > 1 ? (
-              <p className="text-xs text-neutral-500">{formatTaka(line.unitPrice)} each</p>
+              <p className="text-xs text-ink-muted">{formatTaka(line.unitPrice)} each</p>
             ) : null}
           </div>
         </li>

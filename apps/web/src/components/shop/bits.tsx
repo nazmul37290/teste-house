@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { buttonClass } from '@/components/ui';
 import { formatTaka } from '@/lib/money';
 
 /** Current price, with the regular price struck through when on sale. */
@@ -18,14 +19,14 @@ export function Price({
     <span className="inline-flex flex-wrap items-baseline gap-x-2">
       <span
         className={
-          size === 'lg' ? 'text-2xl font-bold text-neutral-900' : 'font-semibold text-neutral-900'
+          size === 'lg' ? 'text-[28px] font-bold leading-none text-petrol' : 'font-bold text-ink'
         }
       >
-        {from ? <span className="text-xs font-normal text-neutral-500">from </span> : null}
+        {from ? <span className="text-xs font-medium text-ink-muted">from </span> : null}
         {formatTaka(price)}
       </span>
       {regularPrice ? (
-        <span className="text-sm text-neutral-500 line-through">
+        <span className="text-sm text-ink-muted line-through">
           <span className="sr-only">Regular price </span>
           {formatTaka(regularPrice)}
         </span>
@@ -36,22 +37,24 @@ export function Price({
 
 export function Breadcrumbs({ items }: { items: { name: string; href: string }[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-neutral-500">
+    <nav aria-label="Breadcrumb" className="text-sm text-ink-muted">
       <ol className="flex flex-wrap items-center gap-1">
         <li>
-          <Link href="/" className="hover:underline">
+          <Link href="/" className="hover:text-petrol">
             Home
           </Link>
         </li>
         {items.map((item, i) => (
           <li key={item.href} className="flex items-center gap-1">
-            <span aria-hidden>/</span>
+            <span aria-hidden className="text-neutral-300">
+              /
+            </span>
             {i === items.length - 1 ? (
-              <span aria-current="page" className="text-neutral-800">
+              <span aria-current="page" className="text-ink">
                 {item.name}
               </span>
             ) : (
-              <Link href={item.href} className="hover:underline">
+              <Link href={item.href} className="hover:text-petrol">
                 {item.name}
               </Link>
             )}
@@ -69,7 +72,7 @@ export function PlainText({ text }: { text: string }) {
     .map((b) => b.trim())
     .filter(Boolean);
   return (
-    <div className="space-y-3 text-neutral-700">
+    <div className="max-w-[68ch] space-y-3 text-ink">
       {blocks.map((block, i) => {
         const lines = block.split('\n').map((l) => l.trim());
         if (lines.every((l) => l.startsWith('- '))) {
@@ -107,24 +110,16 @@ export function Pagination({
   return (
     <nav aria-label="Pages" className="flex items-center justify-center gap-4 text-sm">
       {page > 1 ? (
-        <Link
-          rel="prev"
-          href={href(page - 1)}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 hover:bg-neutral-100"
-        >
-          ← Previous
+        <Link rel="prev" href={href(page - 1)} className={buttonClass('secondary', 'md')}>
+          Previous page
         </Link>
       ) : null}
-      <span className="text-neutral-600">
+      <span className="text-ink-muted">
         Page {page} of {pages}
       </span>
       {page < pages ? (
-        <Link
-          rel="next"
-          href={href(page + 1)}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 hover:bg-neutral-100"
-        >
-          Next →
+        <Link rel="next" href={href(page + 1)} className={buttonClass('secondary', 'md')}>
+          Next page
         </Link>
       ) : null}
     </nav>
@@ -133,8 +128,8 @@ export function Pagination({
 
 export function SectionHeading({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-4">
-      <h2 className="text-xl font-semibold text-neutral-900">{title}</h2>
+    <div className="mb-5 flex items-end justify-between gap-4">
+      <h2 className="font-display text-2xl leading-tight text-petrol sm:text-[28px]">{title}</h2>
       {action}
     </div>
   );

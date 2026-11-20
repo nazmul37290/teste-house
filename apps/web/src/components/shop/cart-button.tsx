@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { moneyToNumber } from '@shop/shared';
+import { buttonClass } from '@/components/ui';
 import { cartLineItem, trackEcommerce } from '@/lib/analytics';
 import { onCartOpen, useCart } from '@/lib/cart-client';
 import { formatTaka } from '@/lib/money';
 import { CartLines } from './cart-lines';
+import { BagIcon, CloseIcon } from './icons';
 
 /** Header cart button with item count; opens a drawer (CHK-1). */
 export function CartButton() {
@@ -41,15 +43,18 @@ export function CartButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative shrink-0 rounded-md px-2 py-1 text-sm font-medium text-neutral-700 hover:text-neutral-900"
+        className="relative flex shrink-0 flex-col items-center gap-0.5 rounded-control px-2 py-1 text-[11px] font-semibold text-ink-muted transition-colors hover:text-petrol sm:flex-row sm:gap-1.5 sm:text-sm"
         aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}
       >
+        <span className="relative">
+          <BagIcon />
+          {count > 0 ? (
+            <span className="absolute -right-2 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-haldi px-1 text-[11px] font-bold leading-none text-petrol ring-2 ring-surface">
+              {count}
+            </span>
+          ) : null}
+        </span>
         Cart
-        {count > 0 ? (
-          <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-neutral-900 px-1.5 text-xs text-white">
-            {count}
-          </span>
-        ) : null}
       </button>
       <dialog
         ref={dialog}
@@ -57,55 +62,74 @@ export function CartButton() {
         onClick={(e) => {
           if (e.target === dialog.current) setOpen(false); // click on the backdrop
         }}
-        className="m-0 ml-auto h-dvh max-h-dvh w-full max-w-md bg-white p-0 backdrop:bg-black/40"
+        className="drawer-in m-0 ml-auto h-dvh max-h-dvh w-full max-w-md bg-surface p-0 text-ink shadow-raised backdrop:bg-petrol/45"
         aria-label="Shopping cart"
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-            <h2 className="text-base font-semibold">Your cart</h2>
+          <div className="flex items-center justify-between border-b border-line px-5 py-4">
+            <h2 className="font-display text-xl text-petrol">
+              Your cart
+              {count > 0 ? (
+                <span className="ml-2 font-sans text-base text-ink-muted">({count})</span>
+              ) : null}
+            </h2>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-1 text-sm text-neutral-600 hover:text-neutral-900"
+              aria-label="Close cart"
+              className="rounded-full p-2 text-ink-muted transition-colors hover:bg-neutral-100 hover:text-ink"
             >
-              Close
+              <CloseIcon />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-4">
-            {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+          <div className="flex-1 overflow-y-auto px-5">
+            {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
             {cart && cart.items.length > 0 ? (
               <CartLines cart={cart} change={change} onNavigate={() => setOpen(false)} />
             ) : (
-              <p className="py-10 text-center text-sm text-neutral-500">
-                {cart ? 'Your cart is empty.' : 'Loading…'}
-              </p>
+              <div className="flex flex-col items-center py-16 text-center">
+                {cart ? (
+                  <>
+                    <span className="flex size-14 items-center justify-center rounded-full bg-petrol-tint text-petrol">
+                      <BagIcon className="size-6" />
+                    </span>
+                    <p className="mt-4 font-semibold">Your cart is empty</p>
+                    <p className="mt-1 text-sm text-ink-muted">
+                      Add something from the shop and it will wait here.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className={buttonClass('secondary', 'md', 'mt-5')}
+                    >
+                      Keep shopping
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-sm text-ink-muted">Loading your cart…</p>
+                )}
+              </div>
             )}
           </div>
           {cart && cart.items.length > 0 ? (
-            <div className="space-y-3 border-t border-neutral-200 px-4 py-4">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span className="font-semibold">{formatTaka(cart.subtotal)}</span>
+            <div className="space-y-3 border-t border-line bg-rice px-5 py-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Subtotal</span>
+                <span className="text-lg font-bold text-petrol">{formatTaka(cart.subtotal)}</span>
               </div>
-              <p className="text-xs text-neutral-500">
+              <p className="text-[13px] text-ink-muted">
                 Delivery and any coupon are added at checkout.
               </p>
               <div className="flex gap-2">
-                <Link
-                  href="/cart"
-                  className="flex-1 rounded-md border border-neutral-300 px-4 py-2.5 text-center text-sm font-medium"
-                >
+                <Link href="/cart" className={buttonClass('secondary', 'lg', 'flex-1')}>
                   View cart
                 </Link>
                 {cart.hasProblems ? (
-                  <span className="flex-1 cursor-not-allowed rounded-md bg-neutral-900 px-4 py-2.5 text-center text-sm font-medium text-white opacity-50">
+                  <span aria-disabled className={buttonClass('primary', 'lg', 'flex-1')}>
                     Checkout
                   </span>
                 ) : (
-                  <Link
-                    href="/checkout"
-                    className="flex-1 rounded-md bg-neutral-900 px-4 py-2.5 text-center text-sm font-medium text-white"
-                  >
+                  <Link href="/checkout" className={buttonClass('primary', 'lg', 'flex-1')}>
                     Checkout
                   </Link>
                 )}

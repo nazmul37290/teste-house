@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { SearchIcon } from './icons';
 
 type Suggestion = { slug: string; name: string };
 
@@ -80,27 +81,35 @@ export function SearchBox({ initial = '' }: { initial?: string }) {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
-        placeholder="Search honey, tea, dates…"
+        placeholder="Search honey, ghee, tea, dates…"
         autoComplete="off"
         role="combobox"
         aria-expanded={showList}
         aria-controls={`${listId}-list`}
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
-        className="w-full rounded-full border border-neutral-300 bg-neutral-50 px-4 py-2 text-sm focus:border-neutral-900 focus:bg-white focus:outline-none"
+        className="h-11 w-full rounded-control border border-line bg-rice pl-4 pr-14 text-[15px] text-ink transition-colors placeholder:text-ink-muted focus:border-petrol focus:bg-surface focus:outline-none focus:ring-2 focus:ring-petrol/15 [&::-webkit-search-cancel-button]:hidden"
       />
+      <button
+        type="submit"
+        aria-label="Search"
+        className="absolute right-1 top-1 inline-flex size-9 items-center justify-center rounded-[6px] bg-petrol text-white transition-colors hover:bg-petrol-soft"
+      >
+        <SearchIcon className="size-[18px]" />
+      </button>
       {showList ? (
         <ul
           id={`${listId}-list`}
           role="listbox"
-          className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg"
+          className="absolute z-40 mt-1.5 w-full overflow-hidden rounded-card border border-line bg-surface py-1 shadow-raised"
         >
           {items.map((s, i) => (
             <li key={s.slug} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
               <a
                 href={`/product/${s.slug}`}
-                className={`block px-4 py-2 text-sm ${i === active ? 'bg-neutral-100' : 'hover:bg-neutral-50'}`}
+                className={`flex items-center gap-3 px-4 py-2.5 text-[15px] ${i === active ? 'bg-petrol-tint text-petrol' : 'hover:bg-neutral-50'}`}
                 onClick={() => setOpen(false)}
               >
+                <SearchIcon className="size-4 shrink-0 text-ink-muted" />
                 {s.name}
               </a>
             </li>
