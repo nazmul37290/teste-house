@@ -162,8 +162,20 @@ describe('CSV import', () => {
   });
 
   it('round-trips its own export (every row an update, no errors)', async () => {
-    await upload(csvOf(honeyRows(`roundtrip-${u()}`, `RT-${u()}`)), false);
-    const preview = await upload(await exportCsv(), true);
+    const slug = `roundtrip-${u()}`;
+    await upload(csvOf(honeyRows(slug, `RT-${u()}`)), false);
+    // The shared test database grows run after run; the import takes at most 2000 rows, so
+    // round-trip a slice of the export (always including this product) with its own header.
+    const parsed = Papa.parse<Record<string, string>>(stripBom(await exportCsv()), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    const rows = parsed.data;
+    const slice = [
+      ...rows.filter((r) => r.product_slug === slug),
+      ...rows.filter((r) => r.product_slug !== slug).slice(0, 500),
+    ];
+    const preview = await upload(Papa.unparse(slice, { columns: parsed.meta.fields }), true);
     expect(preview.body.data.ok).toBe(true);
     expect(preview.body.data.products.create).toBe(0);
     expect(preview.body.data.rows.every((r: { action: string }) => r.action === 'update')).toBe(

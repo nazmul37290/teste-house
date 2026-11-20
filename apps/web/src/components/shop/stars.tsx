@@ -22,8 +22,8 @@ export function Stars({
             <svg key={n} viewBox="0 0 20 20" className={cls}>
               <defs>
                 <linearGradient id={`star-${n}-${fill}`}>
-                  <stop offset={`${fill * 100}%`} stopColor="#f59e0b" />
-                  <stop offset={`${fill * 100}%`} stopColor="#d4d4d4" />
+                  <stop offset={`${fill * 100}%`} stopColor="var(--color-haldi)" />
+                  <stop offset={`${fill * 100}%`} stopColor="var(--color-neutral-300)" />
                 </linearGradient>
               </defs>
               <path
@@ -35,7 +35,7 @@ export function Stars({
         })}
       </span>
       {count !== undefined ? (
-        <span className={size === 'sm' ? 'text-xs text-neutral-500' : 'text-sm text-neutral-600'}>
+        <span className={size === 'sm' ? 'text-xs text-ink-muted' : 'text-sm text-ink-muted'}>
           {value.toFixed(1)} ({count})
         </span>
       ) : null}

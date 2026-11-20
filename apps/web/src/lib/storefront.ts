@@ -9,7 +9,9 @@ import type {
   ProductDetail,
   ProductPage,
   ProductCard,
+  RecentReview,
   ReviewPage,
+  StoreFacts,
 } from './storefront-types';
 
 const API = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
@@ -37,6 +39,14 @@ async function orNull<T>(p: Promise<T>): Promise<T | null> {
 }
 
 export const getHomepage = cache(() => shopFetch<Homepage>('/homepage', ['homepage']));
+/** Approved reviews refresh with the catalog tag (a moderation recomputes the product rating). */
+export const getRecentReviews = cache(() =>
+  shopFetch<RecentReview[]>('/reviews/recent', ['reviews'], 600).catch(() => []),
+);
+/** Payment and delivery facts; refreshed when zones or payment methods change. */
+export const getStoreFacts = cache(() =>
+  shopFetch<StoreFacts>('/store-facts', ['store-facts']).catch(() => null),
+);
 export const getCategories = cache(() => shopFetch<CategoryNode[]>('/categories', []));
 export const getCategory = cache((slug: string) =>
   orNull(shopFetch<CategoryDetail>(`/categories/${slug}`, [`category:${slug}`])),

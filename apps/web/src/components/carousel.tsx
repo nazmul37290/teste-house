@@ -6,19 +6,23 @@ import { cx } from '@/components/ui';
 /**
  * Horizontal row with native scroll snap (swipe on phones, trackpad on desktop) and previous /
  * next buttons on wider screens. No autoplay: it moves only when the shopper moves it.
- * `itemClass` sets each slide's width, e.g. 'w-[46%] sm:w-[31%] lg:w-[23%]'.
+ * `itemClass` sets the column (slide) width on the row, e.g. 'auto-cols-[46%] lg:auto-cols-[23%]'
+ * (grid columns, so percentages resolve against the row, not the slide).
  */
 export function Carousel({
   label,
   children,
   itemClass,
   gapClass = 'gap-3 sm:gap-4',
+  arrows = 'above',
   className,
 }: {
   label: string;
   children: ReactNode[];
   itemClass: string;
   gapClass?: string;
+  /** above: next to the section heading; inside: over the slides (banners). */
+  arrows?: 'above' | 'inside';
   className?: string;
 }) {
   const row = useRef<HTMLDivElement>(null);
@@ -60,7 +64,12 @@ export function Carousel({
       aria-label={label}
     >
       {edge.start && edge.end ? null : (
-        <div className="absolute -top-12 right-0 flex gap-2">
+        <div
+          className={cx(
+            'absolute z-10 flex gap-2',
+            arrows === 'above' ? '-top-12 right-0' : 'bottom-3 right-3',
+          )}
+        >
           <button
             type="button"
             className={arrow}
@@ -87,10 +96,11 @@ export function Carousel({
         className={cx(
           'snap-row -mx-4 scroll-px-4 px-4 pb-1 sm:mx-0 sm:scroll-px-0 sm:px-0',
           gapClass,
+          itemClass,
         )}
       >
         {children.map((child, i) => (
-          <div key={i} className={itemClass}>
+          <div key={i} className="min-w-0">
             {child}
           </div>
         ))}

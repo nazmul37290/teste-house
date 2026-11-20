@@ -57,6 +57,13 @@ export function storefrontRouter(deps: Deps): Router {
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ data: await storefront.suggest(svc, q) });
   });
+  router.get('/reviews/recent', async (_req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ data: await reviews.recentReviews(deps.prisma) });
+  });
+  router.get('/store-facts', async (_req, res) => {
+    res.json({ data: await storefront.storeFacts(deps.prisma, Object.keys(deps.gateways)) });
+  });
   router.get('/homepage', async (_req, res) => {
     res.json({ data: await storefront.getHomepage(svc) });
   });

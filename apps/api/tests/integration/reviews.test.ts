@@ -262,6 +262,58 @@ describe('moderation', () => {
   });
 });
 
+describe('recent reviews (home page)', () => {
+  it('lists approved reviews with text, newest first, first name and product only', async () => {
+    const p = await makeProduct(ctx, [{ price: '100' }]);
+    const approve = (id: string) =>
+      request(ctx.app).post(`/api/v1/admin/reviews/${id}/approve`).set(h);
+
+    const withText = await (
+      await buyer(p.variantIds[0]!)
+    ).api.post('/me/reviews', {
+      productId: p.id,
+      rating: 5,
+      body: 'Fresh and well packed.',
+    });
+    const noText = await (
+      await buyer(p.variantIds[0]!)
+    ).api.post('/me/reviews', {
+      productId: p.id,
+      rating: 4,
+    });
+    const pending = await (
+      await buyer(p.variantIds[0]!)
+    ).api.post('/me/reviews', {
+      productId: p.id,
+      rating: 3,
+      body: 'Not approved yet.',
+    });
+    await approve(withText.body.data.id);
+    await approve(noText.body.data.id);
+
+    const res = await request(ctx.app).get('/api/v1/reviews/recent');
+    expect(res.status).toBe(200);
+    const ids = res.body.data.map((r: { id: string }) => r.id);
+    expect(ids[0]).toBe(withText.body.data.id);
+    expect(ids).not.toContain(noText.body.data.id);
+    expect(ids).not.toContain(pending.body.data.id);
+    expect(res.body.data.length).toBeLessThanOrEqual(6);
+    expect(res.body.data[0]).toMatchObject({
+      rating: 5,
+      body: 'Fresh and well packed.',
+      author: 'Shop',
+      product: { slug: p.slug },
+    });
+    expect(res.body.data[0]).not.toHaveProperty('customerId');
+    expect(res.body.data[0]).not.toHaveProperty('customer');
+
+    // Hidden products drop out.
+    await prisma.product.update({ where: { id: p.id }, data: { status: 'ARCHIVED' } });
+    const after = await request(ctx.app).get('/api/v1/reviews/recent');
+    expect(after.body.data.map((r: { id: string }) => r.id)).not.toContain(withText.body.data.id);
+  });
+});
+
 describe('rate limits', () => {
   it('allows 10 review submissions per hour per customer', async () => {
     const c = as((await registerCustomer(ctx)).cookie);

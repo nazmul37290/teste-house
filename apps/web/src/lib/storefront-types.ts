@@ -19,6 +19,8 @@ export type ProductCard = {
   variantCount: number;
   variantName: string | null;
   inStock: boolean;
+  /** Single in-stock variant: the card can add it to the cart directly. */
+  quickAddVariantId: string | null;
   ratingAvg: number;
   ratingCount: number;
   badges: { featured: boolean; newArrival: boolean; bestSeller: boolean };
@@ -134,4 +136,29 @@ export type ReviewPage = {
   summary: { average: number; count: number; stars: Record<string, number> };
   items: ReviewItem[];
   meta: { page: number; pageSize: number; total: number };
+};
+
+export type RecentReview = {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  isVerifiedPurchase: boolean;
+  createdAt: string;
+  author: string;
+  product: { name: string; slug: string };
+};
+
+/** What the shop really offers now (GET /store-facts); the home page states only these. */
+export type StoreFacts = {
+  cashOnDelivery: 'DHAKA_ONLY' | 'NATIONWIDE' | null;
+  onlinePayment: boolean;
+  nationwideDelivery: boolean;
+  deliveryFrom: string | null;
+  zones: {
+    name: string;
+    charge: string;
+    estimatedDays: string | null;
+    freeDeliveryFrom: string | null;
+  }[];
 };

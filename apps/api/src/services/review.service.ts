@@ -387,3 +387,27 @@ export const reply = (deps: ReviewDeps, actor: Actor, id: string, text: string) 
 
 export const adminDelete = (deps: ReviewDeps, actor: Actor, id: string) =>
   moderate(deps, actor, id, 'review.delete', (tx) => tx.review.delete({ where: { id } }));
+
+/** Newest approved reviews that have text, for the home page. First names only, no ids of people. */
+export async function recentReviews(prisma: Db, limit = 6) {
+  const rows = await prisma.review.findMany({
+    where: {
+      status: 'APPROVED',
+      AND: [{ body: { not: null } }, { NOT: { body: '' } }],
+      product: { status: 'ACTIVE', deletedAt: null },
+    },
+    select: {
+      id: true,
+      rating: true,
+      title: true,
+      body: true,
+      isVerifiedPurchase: true,
+      createdAt: true,
+      customer: { select: { name: true } },
+      product: { select: { name: true, slug: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+  return rows.map(({ customer, ...r }) => ({ ...r, author: firstName(customer.name) }));
+}

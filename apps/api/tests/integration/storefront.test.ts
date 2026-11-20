@@ -301,3 +301,89 @@ describe('homepage, redirects', () => {
     expect((await get('/redirects/resolve?path=https://evil.example')).status).toBe(400);
   });
 });
+
+describe('store facts', () => {
+  it('states only what checkout allows: COD scope, configured gateways, zone coverage, cheapest charge', async () => {
+    const [cod, online, zones] = await Promise.all([
+      prisma.paymentMethod.findUniqueOrThrow({ where: { code: 'COD' } }),
+      prisma.paymentMethod.findUniqueOrThrow({ where: { code: 'UDDOKTAPAY' } }),
+      prisma.deliveryZone.findMany(),
+    ]);
+    try {
+      await prisma.paymentMethod.update({
+        where: { code: 'COD' },
+        data: { isActive: true, config: { scope: 'NATIONWIDE' } },
+      });
+      // Active in the admin but no gateway set up in this environment: not offered, not claimed.
+      await prisma.paymentMethod.update({
+        where: { code: 'UDDOKTAPAY' },
+        data: { isActive: true },
+      });
+      await prisma.deliveryZone.updateMany({ data: { isActive: true } });
+      await prisma.deliveryZone.update({
+        where: { code: 'inside-dhaka' },
+        data: { charge: '55.00' },
+      });
+      let facts = (await get('/store-facts')).body.data;
+      expect(facts).toMatchObject({
+        cashOnDelivery: 'NATIONWIDE',
+        onlinePayment: false,
+        nationwideDelivery: true,
+        deliveryFrom: '55.00',
+      });
+      expect(facts.zones).toContainEqual(
+        expect.objectContaining({ name: 'Inside Dhaka', charge: '55.00' }),
+      );
+
+      // COD without a scope is inside Dhaka only (checkout's default); a zone turned off means
+      // some districts get no delivery, so no nationwide claim.
+      await prisma.paymentMethod.update({ where: { code: 'COD' }, data: { config: {} } });
+      await prisma.deliveryZone.update({
+        where: { code: 'inside-dhaka' },
+        data: { isActive: false },
+      });
+      facts = (await get('/store-facts')).body.data;
+      expect(facts).toMatchObject({
+        cashOnDelivery: 'DHAKA_ONLY',
+        nationwideDelivery: false,
+        deliveryFrom: '120.00',
+      });
+
+      await prisma.paymentMethod.update({ where: { code: 'COD' }, data: { isActive: false } });
+      expect((await get('/store-facts')).body.data.cashOnDelivery).toBeNull();
+    } finally {
+      for (const m of [cod, online]) {
+        await prisma.paymentMethod.update({
+          where: { id: m.id },
+          data: { isActive: m.isActive, config: m.config ?? {} },
+        });
+      }
+      for (const z of zones) {
+        await prisma.deliveryZone.update({
+          where: { id: z.id },
+          data: { isActive: z.isActive, charge: z.charge },
+        });
+      }
+    }
+  });
+});
+
+describe('quick add on cards', () => {
+  it('gives the variant id only for a single in-stock variant', async () => {
+    const c = await category(`Quick ${u()}`);
+    const one = await product(c.id, `Quick one ${u()}`, [{ price: '100' }]);
+    const soldOut = await product(c.id, `Quick out ${u()}`, [{ price: '100', stock: 0 }]);
+    const two = await product(c.id, `Quick two ${u()}`, [{ price: '100' }, { price: '150' }]);
+    const res = await get(`/products?category=${c.slug}`);
+    const bySlug = new Map(
+      (res.body.data as { slug: string; quickAddVariantId: string | null }[]).map((p) => [
+        p.slug,
+        p.quickAddVariantId,
+      ]),
+    );
+    const variant = await prisma.productVariant.findFirstOrThrow({ where: { productId: one.id } });
+    expect(bySlug.get(one.slug)).toBe(variant.id);
+    expect(bySlug.get(soldOut.slug)).toBeNull();
+    expect(bySlug.get(two.slug)).toBeNull();
+  });
+});

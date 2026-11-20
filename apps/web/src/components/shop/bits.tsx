@@ -19,7 +19,9 @@ export function Price({
     <span className="inline-flex flex-wrap items-baseline gap-x-2">
       <span
         className={
-          size === 'lg' ? 'text-[28px] font-bold leading-none text-petrol' : 'font-bold text-ink'
+          size === 'lg'
+            ? 'whitespace-nowrap text-[28px] font-bold leading-none text-petrol'
+            : 'whitespace-nowrap font-bold text-ink'
         }
       >
         {from ? <span className="text-xs font-medium text-ink-muted">from </span> : null}

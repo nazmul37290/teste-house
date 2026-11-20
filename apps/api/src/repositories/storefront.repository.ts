@@ -167,6 +167,7 @@ export function productCards(prisma: Db, ids: string[]) {
       variants: {
         where: { isActive: true },
         select: {
+          id: true,
           sku: true,
           price: true,
           salePrice: true,

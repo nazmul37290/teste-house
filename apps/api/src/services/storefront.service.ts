@@ -4,6 +4,7 @@ import {
   mediaUrl,
   parsePaisa,
   pricePerUnit,
+  readPaymentMethodConfig,
   sectionConfigSchemas,
   type HomepageSectionType,
   type MeasureUnit,
@@ -65,6 +66,9 @@ function toCard(p: CardRow, base: string) {
     /** Label of the only variant (e.g. "500 g"), shown on the card when there is just one. */
     variantName: p.variants.length === 1 ? p.variants[0]!.name : null,
     inStock: p.variants.some((v) => v.stockQty > 0),
+    /** Set when the product has one variant and it is in stock: the card can add it directly. */
+    quickAddVariantId:
+      p.variants.length === 1 && p.variants[0]!.stockQty > 0 ? p.variants[0]!.id : null,
     ratingAvg: Number(p.ratingAvg.toFixed(2)),
     ratingCount: p.ratingCount,
     badges: { featured: p.isFeatured, newArrival: p.isNewArrival, bestSeller: p.isBestSeller },
@@ -600,5 +604,48 @@ export async function sitemapData(deps: StorefrontDeps) {
   return {
     products: products.map((p) => ({ slug: p.slug, updatedAt: p.updatedAt })),
     categories: categories.map((c) => ({ slug: c.slug, updatedAt: c.updatedAt })),
+  };
+}
+
+// Store facts ------------------------------------------------------------------------------------
+
+/**
+ * What the shop really offers right now, derived from payment methods and delivery zones, so the
+ * storefront never claims more than checkout will allow. `onlineCodes`: gateways that are set up.
+ */
+export async function storeFacts(prisma: Db, onlineCodes: string[]) {
+  const [methods, zones] = await Promise.all([
+    prisma.paymentMethod.findMany({
+      where: { isActive: true },
+      select: { code: true, config: true },
+    }),
+    prisma.deliveryZone.findMany({
+      select: {
+        name: true,
+        charge: true,
+        estimatedDays: true,
+        freeDeliveryThreshold: true,
+        isDefault: true,
+        isActive: true,
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    }),
+  ]);
+  const cod = methods.find((m) => m.code === 'COD');
+  const active = zones.filter((z) => z.isActive);
+  const charges = active.map((z) => parsePaisa(z.charge.toFixed(2)));
+  return {
+    // Same default as checkout: COD without a scope is inside Dhaka only.
+    cashOnDelivery: cod ? (readPaymentMethodConfig(cod.config).scope ?? 'DHAKA_ONLY') : null,
+    onlinePayment: methods.some((m) => onlineCodes.includes(m.code)),
+    // A turned-off zone means "we do not deliver there", so nationwide needs every zone on.
+    nationwideDelivery: active.some((z) => z.isDefault) && active.length === zones.length,
+    deliveryFrom: charges.length ? formatPaisa(Math.min(...charges)) : null,
+    zones: active.map((z) => ({
+      name: z.name,
+      charge: z.charge.toFixed(2),
+      estimatedDays: z.estimatedDays,
+      freeDeliveryFrom: z.freeDeliveryThreshold?.toFixed(2) ?? null,
+    })),
   };
 }

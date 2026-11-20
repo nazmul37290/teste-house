@@ -11,6 +11,8 @@ describe('tagsForWrite', () => {
     expect(tagsForWrite('PUT', '/settings')).toEqual(['settings']);
     expect(tagsForWrite('DELETE', '/banners/x')).toEqual(['homepage']);
     expect(tagsForWrite('PUT', '/homepage-sections/x')).toEqual(['homepage']);
+    expect(tagsForWrite('PATCH', '/delivery-zones/x')).toEqual(['store-facts']);
+    expect(tagsForWrite('PATCH', '/payment-methods/x')).toEqual(['store-facts']);
   });
 
   it('ignores reads, plain uploads and unrelated areas', () => {
