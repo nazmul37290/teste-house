@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: 'Wishlist', robots: { index: false, f
 
 export default function WishlistPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="py-2">
       <h1 className="font-display text-[28px] leading-tight text-petrol">Wishlist</h1>
       <WishlistView />
     </div>

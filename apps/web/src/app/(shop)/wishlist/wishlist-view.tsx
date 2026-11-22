@@ -51,7 +51,7 @@ export function WishlistView() {
           to keep it in your account.
         </p>
       ) : null}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {cards.map((c) => (
           <ProductCard key={c.id} product={c} />
         ))}

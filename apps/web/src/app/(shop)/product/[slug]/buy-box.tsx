@@ -182,7 +182,7 @@ export function BuyBox({
           showBar ? 'translate-y-0' : 'pointer-events-none translate-y-full',
         )}
       >
-        <div className="mx-auto flex max-w-6xl items-center gap-3">
+        <div className="mx-auto flex max-w-shop items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] text-ink-muted">
               {product.name}, {v.name}

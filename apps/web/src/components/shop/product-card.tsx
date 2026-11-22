@@ -109,7 +109,7 @@ export function ProductGrid({
     <ItemListTracker
       listName={listName}
       products={products}
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4"
+      className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
     >
       {products.map((p, i) => (
         <ProductCard key={p.slug} product={p} priority={priorityFirst && i < 2} />
@@ -132,7 +132,10 @@ export function ProductRow({
 }) {
   return (
     <ItemListTracker listName={listName} products={products}>
-      <Carousel label={label} itemClass="auto-cols-[46%] sm:auto-cols-[31%] lg:auto-cols-[23.5%]">
+      <Carousel
+        label={label}
+        itemClass="auto-cols-[46%] sm:auto-cols-[31%] lg:auto-cols-[calc((100%-3rem)/4)] xl:auto-cols-[calc((100%-4rem)/5)] 2xl:auto-cols-[calc((100%-5rem)/6)]"
+      >
         {products.map((p, i) => (
           <ProductCard key={p.slug} product={p} priority={priorityFirst && i < 2} />
         ))}

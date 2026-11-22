@@ -109,7 +109,7 @@ function Section({ section, first }: { section: HomeSection; first: boolean }) {
       return (
         <section>
           <SectionHeading title={section.title ?? 'Shop by category'} />
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6 2xl:grid-cols-8">
             {section.categories.map((c) => (
               <li key={c.slug}>
                 <Link

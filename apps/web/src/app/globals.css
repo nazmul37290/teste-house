@@ -7,6 +7,8 @@
  * a light background (it fails contrast there).
  */
 @theme {
+  /* Page width for the shop (header, footer, main): 1440px, so wide screens fit five or six cards a row. */
+  --container-shop: 90rem;
   --color-petrol: #003442;
   --color-petrol-soft: #0f4c5c;
   --color-petrol-tint: #e3eef0;
