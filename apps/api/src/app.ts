@@ -31,7 +31,18 @@ export function createApp(deps: Deps): Express {
   app.use(
     pinoHttp({
       level: env.NODE_ENV === 'test' ? 'silent' : 'info',
-      redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'],
+      // One short line per request: method, path, status, time. Headers (cookies, user agent, every
+      // response header) are not logged at all, and neither are images and health checks, which
+      // otherwise fill the terminal and the Dokploy log with a line per product photo.
+      autoLogging: { ignore: (req) => /^\/(media|health)(\/|$)/.test(req.url ?? '') },
+      serializers: {
+        req: (req: { id: unknown; method: string; url: string }) => ({
+          id: req.id,
+          method: req.method,
+          url: req.url,
+        }),
+        res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
+      },
     }),
   );
   app.use(helmet());

@@ -79,7 +79,7 @@ Tested in Phase 11 (2026-11-18) on the development database: backup 156 KB, rest
 
 Only unexpected errors (HTTP 5xx, crashes, background jobs that ran out of retries) are sent. Cookies, headers, request bodies, query strings and user details are never sent (`apps/api/src/lib/sentry.ts`, `apps/web/src/lib/sentry-options.ts`). Leave `SENTRY_DSN` empty to turn it off.
 
-**Logs:** the API writes JSON logs (pino) to stdout; read them in Dokploy (Logs tab) per service. Secrets and cookies are redacted from request logs.
+**Logs:** the API writes JSON logs (pino) to stdout; read them in Dokploy (Logs tab) per service. Each request is one short line (method, path, status, time); request and response headers are not logged, and neither are `/media` images and `/health` checks.
 
 ## 4. Load test
 
