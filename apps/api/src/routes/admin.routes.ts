@@ -21,6 +21,8 @@ import {
   updateBannerSchema,
   updateSettingsSchema,
   updateHomeHighlightsSchema,
+  dashboardQuerySchema,
+  type DashboardPeriod,
 } from '@shop/shared';
 import { inventoryController } from '../controllers/inventory.controller';
 import { mediaController } from '../controllers/media.controller';
@@ -42,6 +44,7 @@ import * as reviewAdmin from '../services/review.service';
 import * as courier from '../services/courier.service';
 import * as paymentAdmin from '../services/payment-admin.service';
 import { renderOrderPdf } from '../services/order-pdf.service';
+import * as dashboard from '../services/dashboard.service';
 import * as marketing from '../services/marketing.service';
 import * as shipping from '../services/shipping.service';
 import {
@@ -182,6 +185,16 @@ export function adminRouter(deps: Deps): Router {
   router.delete('/banners/:id', requirePermission('marketing.manage'), async (req, res) => {
     await marketing.deleteBanner(mk, actorFrom(req, deps.env), pid(req));
     res.status(204).end();
+  });
+  // Dashboard: figures need reports.view; recent orders (names) also need orders.view.
+  router.get('/dashboard', requirePermission('reports.view'), async (req, res) => {
+    const { days } = dashboardQuerySchema.parse(req.query);
+    const admin = req.admin!;
+    const includeOrders = hasPermission(admin.permissions, 'orders.view', admin.role.isSystem);
+    res.set('Cache-Control', 'private, no-store');
+    res.json({
+      data: await dashboard.getDashboard(deps.prisma, days as DashboardPeriod, { includeOrders }),
+    });
   });
   router.get('/homepage/highlights', requirePermission('marketing.manage'), async (_req, res) => {
     res.json({ data: await getHomeHighlights(deps.prisma) });
