@@ -26,6 +26,7 @@ Success:
 | 409 | `PRICE_CHANGED` | Client's `expectedGrandTotal` differs from the server's calculation; response carries the new breakdown and no order is created |
 | 422 | `BUSINESS_RULE` | Out of stock, coupon invalid, COD not available, zone inactive |
 | 429 | `RATE_LIMITED` | Rate limit hit (`Retry-After` header) |
+| 503 | `MAINTENANCE` | The shop is in maintenance (`store.mode`); `POST /orders` and `POST /orders/pay` only; `Retry-After: 600` |
 | 500 | `INTERNAL_ERROR` | Unexpected; no internals in the message |
 
 Business-rule errors carry a stable machine code in `error.details[0].reason` (for example `OUT_OF_STOCK`, `COUPON_EXPIRED`, `COD_NOT_AVAILABLE`).

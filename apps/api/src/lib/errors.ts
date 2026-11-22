@@ -7,6 +7,7 @@ export type ErrorCode =
   | 'PRICE_CHANGED'
   | 'BUSINESS_RULE'
   | 'RATE_LIMITED'
+  | 'MAINTENANCE'
   | 'INTERNAL_ERROR';
 
 const STATUS: Record<ErrorCode, number> = {
@@ -18,6 +19,7 @@ const STATUS: Record<ErrorCode, number> = {
   PRICE_CHANGED: 409,
   BUSINESS_RULE: 422,
   RATE_LIMITED: 429,
+  MAINTENANCE: 503,
   INTERNAL_ERROR: 500,
 };
 
@@ -25,7 +27,7 @@ export class AppError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
   readonly details?: unknown;
-  /** Sent as the Retry-After header (RATE_LIMITED). */
+  /** Sent as the Retry-After header (RATE_LIMITED, MAINTENANCE). */
   readonly retryAfterSec?: number;
   constructor(code: ErrorCode, message: string, details?: unknown, retryAfterSec?: number) {
     super(message);

@@ -54,6 +54,9 @@ export type PublicSettings = {
   'store.phone'?: string;
   'store.email'?: string;
   'store.address'?: string;
+  /** 'maintenance': shoppers see /maintenance (proxy.ts); the API refuses new orders. */
+  'store.mode'?: 'live' | 'maintenance';
+  'store.maintenanceMessage'?: string;
   'seo.defaultTitle'?: string;
   'seo.defaultDescription'?: string;
   'gtm.containerId'?: string;
@@ -93,6 +96,18 @@ export const getLegalPage = cache(async (slug: LegalPageSlug): Promise<LegalPage
     return null; // API down: the page shows its placeholder
   }
 });
+
+/** Shop status read fresh (no cache), for the admin's status switch. API down: shown as live. */
+export async function getStoreModeFresh(): Promise<'live' | 'maintenance'> {
+  try {
+    const res = await fetch(`${API}/api/v1/settings/public`, { cache: 'no-store' });
+    return (await parseEnvelope<PublicSettings>(res))['store.mode'] === 'maintenance'
+      ? 'maintenance'
+      : 'live';
+  } catch {
+    return 'live';
+  }
+}
 
 /** Store name from settings, with a neutral fallback (never a hardcoded brand). */
 export async function storeName(): Promise<string> {

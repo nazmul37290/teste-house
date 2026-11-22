@@ -130,6 +130,8 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 | Payments and shipping | Payment method toggles and COD scope, delivery zones and charges (each toggleable), Steadfast enable/disable |
 | Users and roles | Staff accounts, dynamic roles, permission assignment |
 | Settings | Store info, logo, contact, SEO defaults, tracking IDs (GTM container, GA4 measurement ID, Meta Pixel ID) |
+| Shop status | Live or maintenance, switched from a drop-down at the top of the admin menu or in Settings (`settings.manage`), with an optional message. Maintenance: shoppers see a "back soon" page (HTTP 503) and cannot place orders or start payments; signed-in admins still see the shop with a notice; payment returns, webhooks and order confirmation pages keep working so orders in progress finish |
+| Navigation | Admin menu in folding groups: Dashboard, Sales, Catalog, Storefront, Store setup, Team; My security with the account at the bottom |
 | Activity log | Audit trail of admin actions |
 
 ## 12. Roles and permissions (RBAC)

@@ -106,6 +106,9 @@ async function seedSettings() {
     { key: 'store.phone', value: '', group: 'store', isPublic: true },
     { key: 'store.email', value: '', group: 'store', isPublic: true },
     { key: 'store.address', value: '', group: 'store', isPublic: true },
+    // Live by default; the admin switches to maintenance from the sidebar.
+    { key: 'store.mode', value: 'live', group: 'store', isPublic: true },
+    { key: 'store.maintenanceMessage', value: '', group: 'store', isPublic: true },
     { key: 'seo.defaultTitle', value: 'My Food Store', group: 'seo', isPublic: true },
     { key: 'seo.defaultDescription', value: '', group: 'seo', isPublic: true },
     { key: 'gtm.containerId', value: '', group: 'tracking', isPublic: true },

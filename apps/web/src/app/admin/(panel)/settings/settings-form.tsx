@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { Alert, Button, Card, Field, Input, Textarea } from '@/components/ui';
+import { MAINTENANCE_MESSAGE_MAX, type StoreMode } from '@shop/shared';
+import { Alert, Button, Card, Field, Input, Select, Textarea } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError, type Status } from '@/lib/api-types';
 
@@ -13,6 +14,8 @@ export type SettingsValues = {
   'store.phone'?: string;
   'store.email'?: string;
   'store.address'?: string;
+  'store.mode'?: StoreMode;
+  'store.maintenanceMessage'?: string;
   'seo.defaultTitle'?: string;
   'seo.defaultDescription'?: string;
   'gtm.containerId'?: string;
@@ -28,6 +31,7 @@ const TEXT_KEYS = [
   'store.phone',
   'store.email',
   'store.address',
+  'store.maintenanceMessage',
   'seo.defaultTitle',
   'seo.defaultDescription',
   'gtm.containerId',
@@ -49,6 +53,7 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
     for (const key of TEXT_KEYS) body[key] = String(form.get(key) ?? '');
     const logo = String(form.get('store.logo') ?? '').trim();
     body['store.logo'] = logo || null;
+    body['store.mode'] = form.get('store.mode') === 'maintenance' ? 'maintenance' : 'live';
     body['review.autoApprove'] = form.get('review.autoApprove') === 'on';
     body['shipping.steadfastEnabled'] = form.get('shipping.steadfastEnabled') === 'on';
 
@@ -83,6 +88,47 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
   return (
     <form onSubmit={onSubmit} className="max-w-3xl space-y-6">
       {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
+
+      <Card
+        title="Shop status"
+        description="Maintenance closes the shop to shoppers (they see a “back soon” page and cannot order) while you and your staff keep working. Orders already being paid for still finish. You can also switch it from the top of the menu."
+      >
+        <div className="mt-4 space-y-4">
+          <Field label="Status" htmlFor="store.mode" error={err('store.mode')}>
+            <Select
+              id="store.mode"
+              name="store.mode"
+              defaultValue={initial['store.mode'] ?? 'live'}
+              className="sm:max-w-xs"
+            >
+              <option value="live">Live: open for orders</option>
+              <option value="maintenance">Maintenance: closed to shoppers</option>
+            </Select>
+          </Field>
+          <Field
+            label="Message on the maintenance page"
+            htmlFor="store.maintenanceMessage"
+            hint={`Optional, up to ${MAINTENANCE_MESSAGE_MAX} characters. For example when you expect to be back. Leave empty for a standard message.`}
+            error={err('store.maintenanceMessage')}
+          >
+            <Textarea
+              id="store.maintenanceMessage"
+              name="store.maintenanceMessage"
+              rows={2}
+              maxLength={MAINTENANCE_MESSAGE_MAX}
+              defaultValue={initial['store.maintenanceMessage'] ?? ''}
+            />
+          </Field>
+          <a
+            href="/maintenance"
+            target="_blank"
+            rel="noopener"
+            className="inline-block text-sm font-semibold text-petrol hover:underline"
+          >
+            Preview the maintenance page
+          </a>
+        </div>
+      </Card>
 
       <Card title="Store">
         <div className="grid gap-4 sm:grid-cols-2">

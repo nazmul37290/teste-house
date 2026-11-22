@@ -10,6 +10,7 @@ import { requireCsrfHeader } from '../middleware/require-csrf-header';
 import * as orders from '../services/order.service';
 import { ONLINE_METHOD_CODES } from '../services/order.service';
 import * as payments from '../services/payment.service';
+import { assertStoreLive } from '../services/settings.service';
 import { resolveCartId } from './cart.routes';
 
 const idempotencyKey = z.uuid();
@@ -38,6 +39,7 @@ export function orderRouter(deps: Deps): Router {
 
   router.post('/orders', async (req, res) => {
     await enforceRateLimit(deps.redis, `order:${clientIp(req, deps.env)}`, 10, 60);
+    await assertStoreLive(deps.prisma);
     const key = idempotencyKey.safeParse(req.get('Idempotency-Key'));
     if (!key.success) {
       throw new AppError('VALIDATION_ERROR', 'Missing or invalid Idempotency-Key header', [
@@ -68,6 +70,7 @@ export function orderRouter(deps: Deps): Router {
   // "Pay again" for an unpaid online order (order number + phone, like tracking).
   router.post('/orders/pay', async (req, res) => {
     await enforceRateLimit(deps.redis, `pay:${clientIp(req, deps.env)}`, 10, 60);
+    await assertStoreLive(deps.prisma);
     const { orderNumber, phone } = trackOrderSchema.parse(req.body);
     res.json({ data: await payments.payAgain(deps, orderNumber, phone) });
   });

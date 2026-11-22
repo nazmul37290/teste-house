@@ -1,20 +1,24 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { NavLinks } from '@/components/admin/nav-links';
+import { StoreModeSwitch } from '@/components/admin/store-mode-switch';
 import { AdminSignOutButton } from '@/components/admin/sign-out-button';
-import { visibleNav } from '@/lib/admin-nav';
+import { DASHBOARD_ITEM, SECURITY_ITEM, can, visibleNavGroups } from '@/lib/admin-nav';
 import { adminForPage } from '@/lib/admin-page';
-import { getPublicSettings, storeName } from '@/lib/api-server';
+import { getPublicSettings, getStoreModeFresh, storeName } from '@/lib/api-server';
 
 /** Admin shell: checks the session server-side (the proxy only saw a cookie) and filters the menu. */
 export default async function AdminPanelLayout({ children }: { children: ReactNode }) {
   const admin = (await adminForPage())!;
-  const [settings, name] = await Promise.all([
+  const [settings, name, mode] = await Promise.all([
     getPublicSettings().catch(() => ({}) as Record<string, string | null>),
     storeName(),
+    getStoreModeFresh(),
   ]);
   const logo = settings['store.logo'];
-  const items = visibleNav(admin);
+  const groups = visibleNavGroups(admin);
+  const status = <StoreModeSwitch mode={mode} canChange={can(admin, 'settings.manage')} />;
+  const nav = <NavLinks top={[DASHBOARD_ITEM]} groups={groups} />;
   const brand = (
     <Link href="/admin" className="block" aria-label={`${name} admin home`}>
       {logo ? (
@@ -42,8 +46,10 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
             </span>
           </summary>
           <div className="max-h-[75dvh] space-y-3 overflow-y-auto border-t border-line px-3 py-3">
-            <NavLinks items={items} />
+            {status}
+            {nav}
             <div className="space-y-3 border-t border-line pt-3">
+              <NavLinks top={[SECURITY_ITEM]} groups={[]} />
               {who}
               <AdminSignOutButton />
             </div>
@@ -51,12 +57,14 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
         </details>
       </header>
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto border-r border-line bg-surface p-4 lg:flex">
-        <div className="mb-6 px-3">
+        <div className="mb-4 px-3">
           {brand}
           <p className="mt-1 text-xs font-semibold text-ink-muted">Admin</p>
         </div>
-        <NavLinks items={items} />
+        <div className="mb-4">{status}</div>
+        {nav}
         <div className="mt-auto space-y-3 border-t border-line pt-4">
+          <NavLinks top={[SECURITY_ITEM]} groups={[]} />
           {who}
           <AdminSignOutButton />
         </div>

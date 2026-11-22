@@ -11,6 +11,7 @@ import {
 } from '@shop/shared';
 import { Prisma } from '../generated/prisma/client';
 import type { Db } from '../lib/prisma';
+import { AppError } from '../lib/errors';
 import { listSettings, upsertSetting } from '../repositories/settings.repository';
 import { recordAudit, type Actor } from './audit.service';
 
@@ -125,4 +126,26 @@ export async function updateLegalPage(
 ): Promise<LegalPage> {
   await updateSettings(prisma, actor, { [pageKey(slug)]: body } as UpdateSettingsInput);
   return getLegalPage(prisma, slug);
+}
+
+// Shop status -----------------------------------------------------------------------------------
+
+/** 'maintenance' only when the setting says so; a missing or odd row counts as live. */
+export async function getStoreMode(prisma: Db): Promise<'live' | 'maintenance'> {
+  const rows = await listSettings(prisma, { keys: ['store.mode'] });
+  return rows[0]?.value === 'maintenance' ? 'maintenance' : 'live';
+}
+
+/**
+ * New orders and new payment attempts wait while the shop is in maintenance (503 MAINTENANCE).
+ * Payment returns, webhooks and admin work carry on, so orders already in progress complete.
+ */
+export async function assertStoreLive(prisma: Db): Promise<void> {
+  if ((await getStoreMode(prisma)) === 'maintenance')
+    throw new AppError(
+      'MAINTENANCE',
+      'The shop is closed for maintenance. Please try again a little later.',
+      undefined,
+      600,
+    );
 }

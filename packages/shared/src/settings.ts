@@ -62,12 +62,23 @@ const homeHighlightsSchema = z.array(homeHighlightSchema).max(MAX_HOME_HIGHLIGHT
 /** PUT /admin/homepage/highlights (marketing.manage). */
 export const updateHomeHighlightsSchema = z.strictObject({ items: homeHighlightsSchema });
 
+/** Shop status: `maintenance` shows shoppers a maintenance page (HTTP 503) and refuses new orders. */
+export const STORE_MODES = ['live', 'maintenance'] as const;
+export type StoreMode = (typeof STORE_MODES)[number];
+export const MAINTENANCE_MESSAGE_MAX = 300;
+
 export const SETTING_DEFINITIONS = {
   'store.name': { group: 'store', isPublic: true, schema: z.string().trim().min(1).max(100) },
   'store.logo': { group: 'store', isPublic: true, schema: absoluteHttpUrl.nullable() },
   'store.phone': { group: 'store', isPublic: true, schema: optionalMobile },
   'store.email': { group: 'store', isPublic: true, schema: optionalEmail },
   'store.address': { group: 'store', isPublic: true, schema: z.string().trim().max(300) },
+  'store.mode': { group: 'store', isPublic: true, schema: z.enum(STORE_MODES) },
+  'store.maintenanceMessage': {
+    group: 'store',
+    isPublic: true,
+    schema: z.string().trim().max(MAINTENANCE_MESSAGE_MAX),
+  },
   'seo.defaultTitle': { group: 'seo', isPublic: true, schema: z.string().trim().max(70) },
   'seo.defaultDescription': { group: 'seo', isPublic: true, schema: z.string().trim().max(160) },
   'gtm.containerId': {

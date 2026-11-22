@@ -128,6 +128,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 - [ ] Production Dokploy project, domains, Cloudflare, secrets
 - [ ] Production migrate and seed (real Super Admin, real zones and charges)
 - [x] Policy pages editable in the admin (`/admin/pages`)
+- [x] Shop status (live / maintenance) with 503 page, admin preview and order block; admin menu in folding groups
 - [ ] Return policy and legal pages entered (owner, in `/admin/pages`)
 - [ ] Smoke test of one real COD order and one real online payment
 - [ ] Launch, monitor, fix list for the first week

@@ -53,6 +53,7 @@ For the shop owner, on **staging**, before going live. Work through it on a phon
 ## G. Final checks
 
 - [ ] Cookie banner appears (when a GTM, GA4 or Pixel ID is set); choices are remembered. The Pixel sends nothing until "Accept all" or Marketing is chosen.
+- [ ] Shop status: switch to Maintenance from the top of the admin menu; in a private window the shop shows the "back soon" page with your message and an order cannot be placed; while signed in as admin you still see the shop with a notice; switch back to Live and the shop opens again within about 10 seconds.
 - [ ] Legal pages (privacy, terms, returns) have the real text, written in Admin > Policy pages; each shows "Last updated".
 - [ ] Every email shows the right store name and logo.
 - [ ] Phone layout: no sideways scrolling on the home, product, cart and checkout pages.
