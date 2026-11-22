@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getPublicSettings, storeName } from '@/lib/api-server';
 import { getCategories } from '@/lib/storefront';
-import { CookieSettingsLink } from '@/components/analytics/consent-and-gtm';
+import { CookieSettingsLink } from '@/components/analytics/consent-and-tracking';
 import { CartButton } from './cart-button';
 import { HeartIcon, MailIcon, PhoneIcon, PinIcon, UserIcon } from './icons';
 import { SearchBox } from './search-box';
@@ -26,7 +26,7 @@ export async function ShopHeader() {
     <StickyHeader>
       {phone ? (
         <div className="bg-petrol text-[13px] text-white/85">
-          <div className="mx-auto flex h-8 max-w-6xl items-center justify-end px-4">
+          <div className="mx-auto flex h-8 max-w-shop items-center justify-end px-4">
             <a href={`tel:${phone}`} className="inline-flex items-center gap-1.5 hover:text-white">
               <PhoneIcon className="size-3.5" />
               Order by phone: {phone}
@@ -34,7 +34,7 @@ export async function ShopHeader() {
           </div>
         </div>
       ) : null}
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 md:flex-nowrap">
+      <div className="mx-auto flex max-w-shop flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 md:flex-nowrap">
         <Link href="/" className="shrink-0" aria-label={`${name} home`}>
           {/* The logo is an admin-set absolute URL (settings); plain img keeps it outside the image loader. */}
           {logo ? (
@@ -60,7 +60,7 @@ export async function ShopHeader() {
       </div>
       {top.length ? (
         <nav aria-label="Categories" className="border-t border-line">
-          <ul className="snap-row mx-auto max-w-6xl auto-cols-max justify-start gap-1 px-2 text-sm font-medium text-ink-muted sm:px-3">
+          <ul className="snap-row mx-auto max-w-shop auto-cols-max justify-start gap-1 px-2 text-sm font-medium text-ink-muted sm:px-3">
             {top.map((c) => (
               <li key={c.slug}>
                 <Link
@@ -93,7 +93,7 @@ export async function ShopFooter() {
   const top = categories.filter((c) => c.depth === 1 && c.productCount > 0).slice(0, 6);
   return (
     <footer className="mt-20 bg-petrol text-sm text-white">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-shop grid-cols-2 gap-x-6 gap-y-10 px-4 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="col-span-2 space-y-5 lg:col-span-1">
           {/* The settings logo is dark ink; the filter turns it white for the petrol band. */}
           {logo ? (
@@ -187,7 +187,7 @@ export async function ShopFooter() {
         </FooterColumn>
       </div>
       <div className="border-t border-white/10">
-        <p className="mx-auto max-w-6xl px-4 py-5 text-[13px] text-white/60">
+        <p className="mx-auto max-w-shop px-4 py-5 text-[13px] text-white/60">
           © {new Date().getUTCFullYear()} {name}. Prices in Bangladeshi Taka.
         </p>
       </div>

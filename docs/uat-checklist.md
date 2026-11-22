@@ -52,8 +52,8 @@ For the shop owner, on **staging**, before going live. Work through it on a phon
 
 ## G. Final checks
 
-- [ ] Cookie banner appears (when the GTM id is set); choices are remembered.
-- [ ] Legal pages (privacy, terms, returns) have the real text.
+- [ ] Cookie banner appears (when a GTM, GA4 or Pixel ID is set); choices are remembered. The Pixel sends nothing until "Accept all" or Marketing is chosen.
+- [ ] Legal pages (privacy, terms, returns) have the real text, written in Admin > Policy pages; each shows "Last updated".
 - [ ] Every email shows the right store name and logo.
 - [ ] Phone layout: no sideways scrolling on the home, product, cart and checkout pages.
 

@@ -109,6 +109,8 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 - [x] GTM provider, `track()` helper, all ecommerce events
 - [x] Consent banner with Consent Mode v2
+- [x] GA4 (direct) and Meta Pixel IDs in admin settings; events sent to both through the same helper; Pixel only after marketing consent (verified in a browser with test IDs: consent order, Pixel `PageView`/`ViewContent`, GA4 `view_item`)
+- [ ] Owner: real GA4 and Pixel IDs; check GA4 DebugView and Meta Test events, including one `PageView` per page change
 - [ ] Verify in GTM preview and GA4 DebugView; `purchase` dedup check (dataLayer and dedup verified in a browser; GTM preview / DebugView need the owner's container)
 - [ ] SEO audit: Lighthouse, structured data validation, sitemap check (structured data, sitemap, metadata, robots done; Lighthouse needs permission to run)
 
@@ -125,6 +127,7 @@ Use plan mode for anything that touches the database schema, auth, checkout or p
 
 - [ ] Production Dokploy project, domains, Cloudflare, secrets
 - [ ] Production migrate and seed (real Super Admin, real zones and charges)
-- [ ] Return policy and legal pages entered
+- [x] Policy pages editable in the admin (`/admin/pages`)
+- [ ] Return policy and legal pages entered (owner, in `/admin/pages`)
 - [ ] Smoke test of one real COD order and one real online payment
 - [ ] Launch, monitor, fix list for the first week

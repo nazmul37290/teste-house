@@ -3,8 +3,9 @@ import { Hind_Siliguri, Young_Serif } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { getPublicSettings, storeName } from '@/lib/api-server';
 import { SITE_URL } from '@/lib/site';
-import { ConsentAndGtm } from '@/components/analytics/consent-and-gtm';
-import { CONSENT_DEFAULT_SCRIPT } from '@/lib/consent';
+import { hasTracking, trackingBootScript, trackingIds } from '@shop/shared';
+import { ConsentAndTracking } from '@/components/analytics/consent-and-tracking';
+import { CONSENT_STORAGE_KEY } from '@/lib/consent';
 import { Toaster } from '@/components/toast';
 import './globals.css';
 
@@ -36,23 +37,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  // GTM container from settings; ConsentAndGtm itself stays off under /admin.
-  const gtm = (await getPublicSettings().catch(() => null))?.['gtm.containerId']?.trim() || null;
+  // Tracking IDs from settings (GTM, GA4, Meta Pixel); ConsentAndTracking stays off under /admin.
+  const ids = trackingIds((await getPublicSettings().catch(() => null)) ?? {});
   return (
     <html lang="en" className={`${body.variable} ${heading.variable}`}>
-      {gtm ? (
+      {hasTracking(ids) ? (
         <head>
           {/* Consent Mode default (all denied) before anything else touches the dataLayer. */}
           <script
             id="consent-default"
-            dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULT_SCRIPT }}
+            dangerouslySetInnerHTML={{ __html: trackingBootScript(ids, CONSENT_STORAGE_KEY) }}
           />
         </head>
       ) : null}
       <body className="min-h-screen bg-rice font-sans text-ink antialiased">
         {children}
         <Toaster />
-        <ConsentAndGtm containerId={gtm} />
+        <ConsentAndTracking ids={ids} />
       </body>
     </html>
   );

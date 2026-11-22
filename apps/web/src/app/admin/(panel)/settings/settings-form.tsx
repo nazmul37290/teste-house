@@ -16,6 +16,8 @@ export type SettingsValues = {
   'seo.defaultTitle'?: string;
   'seo.defaultDescription'?: string;
   'gtm.containerId'?: string;
+  'ga4.measurementId'?: string;
+  'meta.pixelId'?: string;
   'review.autoApprove'?: boolean;
   'notifications.adminEmail'?: string;
   'shipping.steadfastEnabled'?: boolean;
@@ -29,6 +31,8 @@ const TEXT_KEYS = [
   'seo.defaultTitle',
   'seo.defaultDescription',
   'gtm.containerId',
+  'ga4.measurementId',
+  'meta.pixelId',
   'notifications.adminEmail',
 ] as const;
 
@@ -176,20 +180,55 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
         </div>
       </Card>
 
-      <Card title="Tracking">
-        <Field
-          label="Google Tag Manager ID"
-          htmlFor="gtm.containerId"
-          hint="For example GTM-ABC1234. Leave empty to turn tracking off."
-          error={err('gtm.containerId')}
-        >
-          <Input
-            id="gtm.containerId"
-            name="gtm.containerId"
-            defaultValue={initial['gtm.containerId'] ?? ''}
-            placeholder="GTM-XXXXXXX"
-          />
-        </Field>
+      <Card
+        title="Tracking"
+        description="Fill in only the tools you use; an empty box turns that tool off. Visitors see a cookie banner as soon as one is set, and nothing is tracked in the admin."
+      >
+        <div className="space-y-4">
+          <Field
+            label="Google Analytics 4 measurement ID"
+            htmlFor="ga4.measurementId"
+            hint="In Google Analytics: Admin, Data streams, your web stream. For example G-ABC123XYZ9. If your GTM container already has a GA4 tag, leave this empty, or every visit is counted twice."
+            error={err('ga4.measurementId')}
+          >
+            <Input
+              id="ga4.measurementId"
+              name="ga4.measurementId"
+              defaultValue={initial['ga4.measurementId'] ?? ''}
+              placeholder="G-XXXXXXXXXX"
+              autoComplete="off"
+            />
+          </Field>
+          <Field
+            label="Meta (Facebook) Pixel ID"
+            htmlFor="meta.pixelId"
+            hint="In Meta Events Manager: Data sources, your Pixel. The number only. It loads after a visitor allows marketing cookies."
+            error={err('meta.pixelId')}
+          >
+            <Input
+              id="meta.pixelId"
+              name="meta.pixelId"
+              defaultValue={initial['meta.pixelId'] ?? ''}
+              placeholder="123456789012345"
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </Field>
+          <Field
+            label="Google Tag Manager ID"
+            htmlFor="gtm.containerId"
+            hint="Optional, for tags you manage in GTM. For example GTM-ABC1234."
+            error={err('gtm.containerId')}
+          >
+            <Input
+              id="gtm.containerId"
+              name="gtm.containerId"
+              defaultValue={initial['gtm.containerId'] ?? ''}
+              placeholder="GTM-XXXXXXX"
+              autoComplete="off"
+            />
+          </Field>
+        </div>
       </Card>
 
       <Card title="Notifications and other options">

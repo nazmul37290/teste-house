@@ -1,28 +1,25 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { hasTracking, type TrackingIds } from '@shop/shared';
 import { useEffect, useState } from 'react';
+import {
+  CONSENT_STORAGE_KEY as STORAGE_KEY,
+  loadMetaPixel,
+  readConsent as readChoice,
+  type ConsentChoice,
+} from '@/lib/consent';
 
 /**
- * Google Tag Manager with Consent Mode v2 (requirements section 15, docs/design.md section 10).
- * Order matters: dataLayer and the consent defaults (everything denied) are set before GTM loads; a
- * saved choice is applied straight after. Nothing loads under /admin, and nothing at all when no
- * container id is set (then there is nothing to ask consent for, so no banner either).
+ * Tracking with Consent Mode v2 (requirements section 15, docs/design.md section 10): a GTM
+ * container, GA4 directly, and the Meta Pixel, each only when its ID is set in the admin. Order
+ * matters: the head script (packages/shared trackingBootScript) has already set dataLayer, the
+ * consent defaults (everything denied), a saved choice and GA4's config; this loads the scripts
+ * once the page is interactive. The Pixel loads only after the visitor allows marketing cookies.
+ * Nothing loads under /admin, and with no ID set there is nothing to ask consent for, so no banner.
  */
 
-import { CONSENT_STORAGE_KEY as STORAGE_KEY } from '@/lib/consent';
 export const OPEN_CONSENT_EVENT = 'shop:open-consent';
-
-type Choice = { analytics: boolean; marketing: boolean };
-
-function readChoice(): Choice | null {
-  try {
-    const v = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Choice | null;
-    return v && typeof v.analytics === 'boolean' && typeof v.marketing === 'boolean' ? v : null;
-  } catch {
-    return null;
-  }
-}
 
 function gtag(...args: unknown[]) {
   window.dataLayer = window.dataLayer ?? [];
@@ -32,39 +29,58 @@ function gtag(...args: unknown[]) {
   void args;
 }
 
-const consentState = (c: Choice) => ({
+const consentState = (c: ConsentChoice) => ({
   analytics_storage: c.analytics ? 'granted' : 'denied',
   ad_storage: c.marketing ? 'granted' : 'denied',
   ad_user_data: c.marketing ? 'granted' : 'denied',
   ad_personalization: c.marketing ? 'granted' : 'denied',
 });
 
-let loaded = false;
-
-function loadGtm(containerId: string) {
-  if (loaded) return;
-  loaded = true;
-  window.dataLayer = window.dataLayer ?? [];
-  window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+const loaded = new Set<string>();
+function loadScript(src: string) {
+  if (loaded.has(src)) return;
+  loaded.add(src);
   const s = document.createElement('script');
   s.async = true;
-  s.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`;
+  s.src = src;
   document.head.appendChild(s);
 }
 
-export function ConsentAndGtm({ containerId }: { containerId: string | null }) {
+function loadGtm(containerId: string) {
+  if (loaded.has(containerId)) return;
+  loaded.add(containerId);
+  window.dataLayer = window.dataLayer ?? [];
+  window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+  loadScript(`https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`);
+}
+
+/** The Pixel follows the marketing choice: loaded on the first yes, paused and resumed after. */
+function applyPixel(pixelId: string | null, marketing: boolean) {
+  if (!pixelId) return;
+  if (marketing) {
+    if (window.fbq) window.fbq('consent', 'grant');
+    else loadMetaPixel(pixelId);
+  } else window.fbq?.('consent', 'revoke');
+}
+
+export function ConsentAndTracking({ ids }: { ids: TrackingIds }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
   const [showBanner, setShowBanner] = useState(false);
   const [details, setDetails] = useState(false);
-  const [choice, setChoice] = useState<Choice>({ analytics: false, marketing: false });
+  const [choice, setChoice] = useState<ConsentChoice>({ analytics: false, marketing: false });
+  const enabled = hasTracking(ids);
+  const { gtm, ga4, pixel } = ids;
 
   useEffect(() => {
-    if (!containerId || isAdmin) return;
-    loadGtm(containerId);
+    if (!enabled || isAdmin) return;
+    if (gtm) loadGtm(gtm);
+    if (ga4) loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4)}`);
     const saved = readChoice();
-    if (saved) setChoice(saved);
-    else setShowBanner(true);
+    if (saved) {
+      setChoice(saved);
+      applyPixel(pixel, saved.marketing);
+    } else setShowBanner(true);
     const reopen = () => {
       setChoice(readChoice() ?? { analytics: false, marketing: false });
       setDetails(true);
@@ -72,17 +88,18 @@ export function ConsentAndGtm({ containerId }: { containerId: string | null }) {
     };
     window.addEventListener(OPEN_CONSENT_EVENT, reopen);
     return () => window.removeEventListener(OPEN_CONSENT_EVENT, reopen);
-  }, [containerId, isAdmin]);
+  }, [enabled, isAdmin, gtm, ga4, pixel]);
 
-  if (!containerId || isAdmin || !showBanner) return null;
+  if (!enabled || isAdmin || !showBanner) return null;
 
-  function save(c: Choice) {
+  function save(c: ConsentChoice) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
     } catch {
       // Private mode: the choice applies to this visit only.
     }
     gtag('consent', 'update', consentState(c));
+    applyPixel(pixel, c.marketing);
     setShowBanner(false);
     setDetails(false);
   }

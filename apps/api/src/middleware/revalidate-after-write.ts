@@ -8,6 +8,8 @@ import type { Deps } from '../deps';
  */
 const TAGS_BY_PREFIX: [prefix: string, tags: string[]][] = [
   ['/settings', ['settings']],
+  // Policy pages are settings rows; the storefront fetches them with the settings tag.
+  ['/pages', ['settings']],
   ['/banners', ['homepage']],
   ['/homepage-sections', ['homepage']],
   // Highlights are a public setting.

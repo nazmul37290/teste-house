@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   analyticsItem,
   itemsValue,
+  metaPixelEvent,
+  trackingBootScript,
+  trackingIds,
   moneyToNumber,
   purchasePayload,
   purchaseSentKey,
@@ -71,5 +74,90 @@ describe('analytics payloads', () => {
       ],
     });
     expect(purchaseSentKey('ORD-000123')).toBe('shop:purchased:ORD-000123');
+  });
+});
+
+describe('Meta Pixel events', () => {
+  const items = [
+    analyticsItem({ sku: 'HNY-500', name: 'Honey', price: '450.00', quantity: 2 }),
+    analyticsItem({ sku: 'TEA-1', name: 'Tea', price: '120.50' }),
+  ];
+
+  it('maps GA4 names to standard events with ids, contents, value and BDT', () => {
+    expect(metaPixelEvent('add_to_cart', { items })).toEqual({
+      name: 'AddToCart',
+      params: {
+        content_ids: ['HNY-500', 'TEA-1'],
+        contents: [
+          { id: 'HNY-500', quantity: 2 },
+          { id: 'TEA-1', quantity: 1 },
+        ],
+        content_type: 'product',
+        currency: 'BDT',
+        value: 1020.5,
+      },
+    });
+    expect(metaPixelEvent('begin_checkout', { items })?.params).toMatchObject({ num_items: 3 });
+    expect(metaPixelEvent('begin_checkout', { items })?.params).not.toHaveProperty('content_type');
+  });
+
+  it('sends Purchase with the server value and the order number as eventID', () => {
+    expect(
+      metaPixelEvent('purchase', { items, value: 1080.5, transaction_id: 'ORD-000042' }),
+    ).toMatchObject({
+      name: 'Purchase',
+      params: { value: 1080.5, currency: 'BDT', num_items: 3 },
+      options: { eventID: 'ORD-000042' },
+    });
+  });
+
+  it('search and sign-up; events without a Meta equivalent are dropped', () => {
+    expect(metaPixelEvent('search', { search_term: 'ghee' })).toEqual({
+      name: 'Search',
+      params: { search_string: 'ghee' },
+    });
+    expect(metaPixelEvent('sign_up', { method: 'phone' })).toEqual({
+      name: 'CompleteRegistration',
+      params: {},
+    });
+    expect(metaPixelEvent('view_item_list', { items })).toBeNull();
+    expect(metaPixelEvent('login', { method: 'email' })).toBeNull();
+  });
+});
+
+describe('tracking setup', () => {
+  it('keeps only well-formed IDs', () => {
+    expect(
+      trackingIds({
+        'gtm.containerId': 'GTM-AB12CD',
+        'ga4.measurementId': 'G-XYZ123ABC',
+        'meta.pixelId': '1234567890123',
+      }),
+    ).toEqual({ gtm: 'GTM-AB12CD', ga4: 'G-XYZ123ABC', pixel: '1234567890123' });
+    expect(
+      trackingIds({
+        'gtm.containerId': '',
+        'ga4.measurementId': "G-1');alert(1)//",
+        'meta.pixelId': null,
+      }),
+    ).toEqual({ gtm: null, ga4: null, pixel: null });
+  });
+
+  it('sets the consent default before GA4 config, and GA4 config only when set', () => {
+    const withGa4 = trackingBootScript(
+      { gtm: null, ga4: 'G-XYZ123ABC', pixel: '1234567890' },
+      'shop:consent',
+    );
+    expect(withGa4.indexOf("gtag('consent','default'")).toBeLessThan(
+      withGa4.indexOf("gtag('config'"),
+    );
+    expect(withGa4).toContain("analytics_storage:'denied'");
+    expect(withGa4).toContain('window.__shopTracking={"ga4":"G-XYZ123ABC","pixel":"1234567890"}');
+    const gtmOnly = trackingBootScript(
+      { gtm: 'GTM-AB12CD', ga4: null, pixel: null },
+      'shop:consent',
+    );
+    expect(gtmOnly).not.toContain("gtag('config'");
+    expect(gtmOnly).toContain('localStorage.getItem("shop:consent")');
   });
 });

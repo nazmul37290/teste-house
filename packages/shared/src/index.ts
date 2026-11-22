@@ -15,3 +15,4 @@ export * from './checkout-schemas';
 export * from './order-admin-schemas';
 export * from './review-schemas';
 export * from './analytics';
+export * from './legal-pages';

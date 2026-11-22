@@ -101,9 +101,11 @@ interface MailTransport {
 - DNS for the sending domain: SPF, DKIM, DMARC.
 - A `NotificationChannel` abstraction wraps email so an SMS channel can be added later without changing callers.
 
-## 4. Google Tag Manager
+## 4. Google Tag Manager, GA4 and Meta Pixel
 
-- Container ID from setting `gtm.containerId` (public setting).
+- IDs from the public settings `gtm.containerId`, `ga4.measurementId`, `meta.pixelId` (admin: Settings, Tracking). They are public identifiers, not secrets. Any combination works; GA4 runs either directly or as a tag inside GTM, never both.
+- GA4 direct: gtag.js (`https://www.googletagmanager.com/gtag/js?id=G-...`), `gtag('js')` and `gtag('config')` after the Consent Mode default; ecommerce events with `gtag('event', name, { currency, value, items, ... })` as in Google's GA4 ecommerce guide (checked 2026-11-22).
+- Meta Pixel: base code from developers.facebook.com/docs/meta-pixel/get-started; standard events and parameters from the Pixel reference; consent with `fbq('consent', 'grant'|'revoke')`; `eventID` (order number) as the fourth `fbq('track')` argument on Purchase, ready for the Conversions API (Phase 2). Checked 2026-11-22.
 - Event contract, consent and `purchase` deduplication are in `design.md` section 10. Do not push events from more than one place per action; use the helpers in `apps/web/src/lib/analytics.ts` only.
 - In GTM: a GA4 Configuration (Google tag) with the measurement id, and a GA4 Event tag with trigger "Custom Event" matching the event names above and "Send Ecommerce data" from the data layer. Consent: built-in consent checks on (the page sets Consent Mode v2 defaults).
 

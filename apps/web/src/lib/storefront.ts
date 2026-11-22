@@ -124,5 +124,7 @@ export async function getSitemapData() {
   return shopFetch<{
     products: { slug: string; updatedAt: string }[];
     categories: { slug: string; updatedAt: string }[];
+    /** Written policy pages only. */
+    pages?: { path: string; updatedAt: string | null }[];
   }>('/sitemap-data', [], 3600);
 }

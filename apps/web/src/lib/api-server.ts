@@ -1,5 +1,5 @@
 import 'server-only';
-import type { HomeHighlight } from '@shop/shared';
+import type { HomeHighlight, LegalPageSlug } from '@shop/shared';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type { Attribute, Brand, Category, Tag } from './admin-types';
@@ -57,6 +57,8 @@ export type PublicSettings = {
   'seo.defaultTitle'?: string;
   'seo.defaultDescription'?: string;
   'gtm.containerId'?: string;
+  'ga4.measurementId'?: string;
+  'meta.pixelId'?: string;
 };
 
 /** Public settings (store name, logo, SEO defaults). Shared by everyone, revalidated every minute. */
@@ -68,6 +70,27 @@ export const getPublicSettings = cache(async (): Promise<PublicSettings> => {
     return await parseEnvelope<PublicSettings>(res);
   } catch {
     return {}; // API down: render with fallbacks rather than failing every page
+  }
+});
+
+export type LegalPage = {
+  slug: LegalPageSlug;
+  title: string;
+  path: string;
+  /** Plain text in the policy page format (packages/shared legal-pages.ts); '' while unwritten. */
+  body: string;
+  updatedAt: string | null;
+};
+
+/** A policy page (GET /pages/:slug); saving it in the admin refreshes the `settings` tag. */
+export const getLegalPage = cache(async (slug: LegalPageSlug): Promise<LegalPage | null> => {
+  try {
+    const res = await fetch(`${API}/api/v1/pages/${slug}`, {
+      next: { revalidate: 300, tags: ['settings'] },
+    });
+    return await parseEnvelope<LegalPage>(res);
+  } catch {
+    return null; // API down: the page shows its placeholder
   }
 });
 

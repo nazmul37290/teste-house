@@ -109,6 +109,12 @@ async function seedSettings() {
     { key: 'seo.defaultTitle', value: 'My Food Store', group: 'seo', isPublic: true },
     { key: 'seo.defaultDescription', value: '', group: 'seo', isPublic: true },
     { key: 'gtm.containerId', value: '', group: 'tracking', isPublic: true },
+    { key: 'ga4.measurementId', value: '', group: 'tracking', isPublic: true },
+    { key: 'meta.pixelId', value: '', group: 'tracking', isPublic: true },
+    // Policy pages: empty until the owner writes them in /admin/pages.
+    { key: 'page.privacy', value: '', group: 'pages', isPublic: false },
+    { key: 'page.terms', value: '', group: 'pages', isPublic: false },
+    { key: 'page.returns', value: '', group: 'pages', isPublic: false },
     // Empty: the home page builds its highlights from payment methods and delivery zones.
     { key: 'home.highlights', value: [], group: 'homepage', isPublic: true },
     { key: 'review.autoApprove', value: false, group: 'reviews', isPublic: false },

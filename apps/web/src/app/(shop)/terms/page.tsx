@@ -1,11 +1,7 @@
-import type { Metadata } from 'next';
-import { PlaceholderPage } from '@/components/shop/placeholder-page';
+import { PolicyPage, policyMetadata } from '@/components/shop/policy-page';
 
-export const metadata: Metadata = {
-  title: 'Terms and conditions',
-  robots: { index: false, follow: true },
-};
+export const generateMetadata = () => policyMetadata('terms');
 
 export default function TermsPage() {
-  return <PlaceholderPage title="Terms and conditions" />;
+  return <PolicyPage slug="terms" />;
 }

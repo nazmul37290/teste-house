@@ -5,8 +5,8 @@ import { SITE_URL } from '@/lib/site';
 
 /**
  * Home, visible categories and products (from GET /sitemap-data; data cached for an hour). One file
- * is fine up to 50,000 URLs; split with generateSitemaps when the catalog gets near that. Legal pages
- * are left out while they are placeholders (noindex). Rendered per request: the build has no API.
+ * is fine up to 50,000 URLs; split with generateSitemaps when the catalog gets near that. Policy
+ * pages are listed once written; while they are placeholders they are noindex and left out. Rendered per request: the build has no API.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
@@ -26,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: p.updatedAt,
         changeFrequency: 'weekly' as const,
         priority: 0.8,
+      })),
+      ...(data.pages ?? []).map((p) => ({
+        url: `${SITE_URL}${p.path}`,
+        lastModified: p.updatedAt ?? undefined,
+        changeFrequency: 'monthly' as const,
+        priority: 0.2,
       })),
     ];
   } catch {

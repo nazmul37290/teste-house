@@ -14,6 +14,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { AppError } from '../lib/errors';
 import type { Db } from '../lib/prisma';
 import * as repo from '../repositories/storefront.repository';
+import { listLegalPages } from './settings.service';
 
 /**
  * Public catalog (no auth). Only visible data leaves here: ACTIVE, not deleted, active variants,
@@ -601,9 +602,12 @@ export async function sitemapData(deps: StorefrontDeps) {
     }),
     visibleCategories(deps.prisma),
   ]);
+  // Policy pages are listed once written; until then they are noindex placeholders.
+  const pages = (await listLegalPages(deps.prisma)).filter((p) => p.body);
   return {
     products: products.map((p) => ({ slug: p.slug, updatedAt: p.updatedAt })),
     categories: categories.map((c) => ({ slug: c.slug, updatedAt: c.updatedAt })),
+    pages: pages.map((p) => ({ path: p.path, updatedAt: p.updatedAt })),
   };
 }
 

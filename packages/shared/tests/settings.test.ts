@@ -44,4 +44,25 @@ describe('settings', () => {
     expect(PUBLIC_SETTING_KEYS).not.toContain('notifications.adminEmail');
     expect(PUBLIC_SETTING_KEYS).not.toContain('review.autoApprove');
   });
+
+  it('accepts GA4 and Pixel IDs in their own formats, or empty', () => {
+    expect(
+      updateSettingsSchema.parse({
+        'ga4.measurementId': ' g-ab12cd34ef ',
+        'meta.pixelId': '123456789012345',
+      }),
+    ).toMatchObject({ 'ga4.measurementId': 'G-AB12CD34EF', 'meta.pixelId': '123456789012345' });
+    expect(updateSettingsSchema.safeParse({ 'ga4.measurementId': 'UA-1234-1' }).success).toBe(
+      false,
+    );
+    expect(updateSettingsSchema.safeParse({ 'meta.pixelId': 'abc' }).success).toBe(false);
+    expect(updateSettingsSchema.parse({ 'meta.pixelId': '' })).toMatchObject({
+      'meta.pixelId': '',
+    });
+  });
+
+  it('policy pages are not public settings', () => {
+    expect(PUBLIC_SETTING_KEYS).toContain('ga4.measurementId');
+    expect(PUBLIC_SETTING_KEYS).not.toContain('page.privacy');
+  });
 });

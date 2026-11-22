@@ -22,6 +22,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/admin/payment-methods', label: 'Payment methods', permission: 'payments.toggle' },
   { href: '/admin/staff', label: 'Staff', permission: 'users.manage' },
   { href: '/admin/roles', label: 'Roles', permission: 'roles.manage' },
+  { href: '/admin/pages', label: 'Policy pages', permission: 'settings.manage' },
   { href: '/admin/settings', label: 'Settings', permission: 'settings.manage' },
   { href: '/admin/security', label: 'My security' },
 ];

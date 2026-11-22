@@ -20,6 +20,8 @@ import {
   idParamSchema,
   updateBannerSchema,
   updateSettingsSchema,
+  legalPageSlugSchema,
+  updateLegalPageSchema,
   updateHomeHighlightsSchema,
   dashboardQuerySchema,
   type DashboardPeriod,
@@ -49,6 +51,9 @@ import * as marketing from '../services/marketing.service';
 import * as shipping from '../services/shipping.service';
 import {
   getAllSettings,
+  getLegalPage,
+  listLegalPages,
+  updateLegalPage,
   getHomeHighlights,
   updateHomeHighlights,
   updateSettings,
@@ -456,6 +461,20 @@ export function adminRouter(deps: Deps): Router {
     res.json({
       data: { values: await updateSettings(deps.prisma, actorFrom(req, deps.env), input) },
     });
+  });
+
+  // Policy pages (privacy, terms, returns): plain text the owner writes; shown at fixed paths.
+  const pageSlug = (req: Request) => z.object({ slug: legalPageSlugSchema }).parse(req.params).slug;
+  router.get('/pages', requirePermission('settings.manage'), async (_req, res) => {
+    res.json({ data: await listLegalPages(deps.prisma) });
+  });
+  router.get('/pages/:slug', requirePermission('settings.manage'), async (req, res) => {
+    res.json({ data: await getLegalPage(deps.prisma, pageSlug(req)) });
+  });
+  router.put('/pages/:slug', requirePermission('settings.manage'), async (req, res) => {
+    const slug = pageSlug(req);
+    const { body } = updateLegalPageSchema.parse(req.body);
+    res.json({ data: await updateLegalPage(deps.prisma, actorFrom(req, deps.env), slug, body) });
   });
 
   return router;

@@ -1,8 +1,11 @@
 import {
+  LEGAL_PAGES,
+  LEGAL_PAGE_SLUGS,
   PUBLIC_SETTING_KEYS,
   SETTING_DEFINITIONS,
   SETTING_KEYS,
   type HomeHighlight,
+  type LegalPageSlug,
   type SettingKey,
   type UpdateSettingsInput,
 } from '@shop/shared';
@@ -21,8 +24,11 @@ export async function getPublicSettings(prisma: Db): Promise<SettingsMap> {
   return toMap(await listSettings(prisma, { keys: PUBLIC_SETTING_KEYS, publicOnly: true }));
 }
 
+/** The settings screen: everything except the policy pages, which have their own screen. */
+const SETTINGS_SCREEN_KEYS = SETTING_KEYS.filter((k) => SETTING_DEFINITIONS[k].group !== 'pages');
+
 export async function getAllSettings(prisma: Db) {
-  const rows = await listSettings(prisma, { keys: SETTING_KEYS });
+  const rows = await listSettings(prisma, { keys: SETTINGS_SCREEN_KEYS });
   return {
     values: toMap(rows),
     updatedAt: Object.fromEntries(rows.map((r) => [r.key, r.updatedAt])),
@@ -82,4 +88,41 @@ export async function updateHomeHighlights(
 ): Promise<HomeHighlight[]> {
   await updateSettings(prisma, actor, { 'home.highlights': items } as UpdateSettingsInput);
   return getHomeHighlights(prisma);
+}
+
+// Policy pages (privacy, terms, returns) -----------------------------------------------------------
+
+const pageKey = (slug: LegalPageSlug) => `page.${slug}` as const;
+
+export type LegalPage = {
+  slug: LegalPageSlug;
+  title: string;
+  path: string;
+  body: string;
+  /** Last save; null while the page has never been written. */
+  updatedAt: Date | null;
+};
+
+export async function listLegalPages(prisma: Db): Promise<LegalPage[]> {
+  const rows = await listSettings(prisma, { keys: LEGAL_PAGE_SLUGS.map(pageKey) });
+  return LEGAL_PAGE_SLUGS.map((slug) => {
+    const row = rows.find((r) => r.key === pageKey(slug));
+    const body = typeof row?.value === 'string' ? row.value : '';
+    return { slug, ...LEGAL_PAGES[slug], body, updatedAt: body ? (row?.updatedAt ?? null) : null };
+  });
+}
+
+export async function getLegalPage(prisma: Db, slug: LegalPageSlug): Promise<LegalPage> {
+  return (await listLegalPages(prisma)).find((p) => p.slug === slug)!;
+}
+
+/** Saves the text (validated by updateLegalPageSchema); audited like every other setting. */
+export async function updateLegalPage(
+  prisma: Db,
+  actor: Actor,
+  slug: LegalPageSlug,
+  body: string,
+): Promise<LegalPage> {
+  await updateSettings(prisma, actor, { [pageKey(slug)]: body } as UpdateSettingsInput);
+  return getLegalPage(prisma, slug);
 }

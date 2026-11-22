@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { legalPageBodySchema } from './legal-pages';
 import { normalizePhone } from './phone';
 
 /**
@@ -80,6 +81,33 @@ export const SETTING_DEFINITIONS = {
         .regex(/^GTM-[A-Z0-9]{4,12}$/, 'Use the form GTM-XXXXXXX'),
     ),
   },
+  // Direct tags, for owners who do not use a GTM container. They are public IDs (they appear in the
+  // page source), not secrets. Use GA4 here or a GA4 tag inside GTM, never both: that counts twice.
+  'ga4.measurementId': {
+    group: 'tracking',
+    isPublic: true,
+    schema: emptyOr(
+      z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^G-[A-Z0-9]{4,15}$/, 'Use the form G-XXXXXXXXXX'),
+    ),
+  },
+  'meta.pixelId': {
+    group: 'tracking',
+    isPublic: true,
+    schema: emptyOr(
+      z
+        .string()
+        .trim()
+        .regex(/^\d{10,20}$/, 'The Pixel ID is the number shown in Meta Events Manager'),
+    ),
+  },
+  // Policy pages (legal-pages.ts). Not public settings: each page is fetched on its own.
+  'page.privacy': { group: 'pages', isPublic: false, schema: legalPageBodySchema },
+  'page.terms': { group: 'pages', isPublic: false, schema: legalPageBodySchema },
+  'page.returns': { group: 'pages', isPublic: false, schema: legalPageBodySchema },
   'home.highlights': { group: 'homepage', isPublic: true, schema: homeHighlightsSchema },
   'review.autoApprove': { group: 'reviews', isPublic: false, schema: z.boolean() },
   'notifications.adminEmail': { group: 'notifications', isPublic: false, schema: optionalEmail },

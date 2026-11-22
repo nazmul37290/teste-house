@@ -27,7 +27,7 @@ Out of scope for v1: blog, Bangla language, multi-currency, multi-vendor, mobile
 | Initial catalog | About 50 products, entered via admin |
 | Batch / expiry | Optional per variant |
 | Store name / logo | Provided later; read from settings |
-| Legal pages | Added later; placeholder pages and footer links now |
+| Policy pages | Privacy policy, terms and conditions, return and refund policy at `/privacy`, `/terms`, `/returns`, linked in the footer. The owner writes the text in the admin (`/admin/pages`, `settings.manage`); until a page is written it says it is being prepared and is `noindex` |
 | Hosting | Existing VPS and domain, Dokploy, Docker. Scale later if needed |
 
 ## 3. Catalog
@@ -129,7 +129,7 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 | Marketing | Coupons, banners, homepage sections, redirects |
 | Payments and shipping | Payment method toggles and COD scope, delivery zones and charges (each toggleable), Steadfast enable/disable |
 | Users and roles | Staff accounts, dynamic roles, permission assignment |
-| Settings | Store info, logo, contact, GTM ID, SEO defaults |
+| Settings | Store info, logo, contact, SEO defaults, tracking IDs (GTM container, GA4 measurement ID, Meta Pixel ID) |
 | Activity log | Audit trail of admin actions |
 
 ## 12. Roles and permissions (RBAC)
@@ -166,10 +166,11 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 
 ## 15. GTM and analytics
 
-- GTM container ID is a setting; snippet loads site-wide except `/admin`.
+- Three optional tracking tools, each turned on by entering its ID in the admin settings: a GTM container, GA4 (direct gtag.js) and the Meta (Facebook) Pixel. They load site-wide except `/admin`. Use GA4 either directly or as a tag inside GTM, not both (that counts twice).
+- The same events go to GA4 (and the GTM dataLayer) and, translated to Meta standard events (`ViewContent`, `AddToCart`, `InitiateCheckout`, `AddPaymentInfo`, `Purchase`, `AddToWishlist`, `Search`, `CompleteRegistration`), to the Pixel.
 - GA4 ecommerce `dataLayer` events: `view_item_list`, `select_item`, `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_shipping_info`, `add_payment_info`, `purchase` (once per order, deduplicated by transaction ID), plus `add_to_wishlist`, `search`, `sign_up`, `login`.
 - Item payload: item ID (SKU), name, brand, category, variant, price, quantity, currency `BDT`.
-- Cookie consent banner controls analytics and marketing tags (Consent Mode v2).
+- Cookie consent banner controls analytics and marketing tags (Consent Mode v2). The Meta Pixel loads only after the visitor allows marketing cookies.
 - Phase 2: server-side GTM / Meta Conversions API.
 
 ## 16. Non-functional
@@ -183,6 +184,5 @@ Status flow: `PENDING -> CONFIRMED -> PROCESSING -> HANDED_TO_COURIER -> IN_TRAN
 
 ## 17. Open items
 
-- Return and refund policy rules (can be written together with the legal pages).
-- Legal page text (privacy, terms).
+- Return and refund policy rules, and the privacy and terms text: the owner writes them in `/admin/pages` (the system shows the text only; no return workflow is built).
 - Store name and logo.
