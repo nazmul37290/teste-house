@@ -30,7 +30,7 @@ jobs:
       DATABASE_URL_TEST: postgresql://ci:ci@localhost:5432/ci_test
       REDIS_URL_TEST: redis://localhost:6379/1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
