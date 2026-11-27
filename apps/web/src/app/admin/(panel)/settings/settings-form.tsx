@@ -6,6 +6,7 @@ import { MAINTENANCE_MESSAGE_MAX, type StoreMode } from '@shop/shared';
 import { Alert, Button, Card, Field, Input, Select, Textarea } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import { ApiError, type Status } from '@/lib/api-types';
+import { LogoField } from './logo-field';
 
 /** Keys and rules come from packages/shared/src/settings.ts; the API validates every value. */
 export type SettingsValues = {
@@ -132,6 +133,7 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
 
       <Card title="Store">
         <div className="grid gap-4 sm:grid-cols-2">
+          <LogoField initial={initial['store.logo'] ?? null} error={err('store.logo')} />
           <Field label="Store name" htmlFor="store.name" error={err('store.name')}>
             <Input
               id="store.name"
@@ -139,20 +141,6 @@ export function SettingsForm({ initial }: { initial: SettingsValues }) {
               defaultValue={initial['store.name'] ?? ''}
               required
               maxLength={100}
-            />
-          </Field>
-          <Field
-            label="Logo URL"
-            htmlFor="store.logo"
-            hint="Full https:// address. Upload arrives with the media library."
-            error={err('store.logo')}
-          >
-            <Input
-              id="store.logo"
-              name="store.logo"
-              type="url"
-              defaultValue={initial['store.logo'] ?? ''}
-              placeholder="https://…"
             />
           </Field>
           <Field

@@ -86,7 +86,8 @@ export function adminRouter(deps: Deps): Router {
   const media = mediaController(deps);
   router.get(
     '/media',
-    requirePermission('media.upload', 'products.view', 'marketing.manage'),
+    // settings.manage: the logo picker in Settings.
+    requirePermission('media.upload', 'products.view', 'marketing.manage', 'settings.manage'),
     media.list,
   );
   router.post('/media', requirePermission('media.upload'), singleUpload('file'), media.upload);

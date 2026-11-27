@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { MediaUploader } from '@/components/admin/media-uploader';
+import { toast } from '@/components/toast';
 import { Alert, Button, Card, Input } from '@/components/ui';
 import { api } from '@/lib/api-client';
 import type { MediaItem } from '@/lib/admin-types';
@@ -24,6 +25,17 @@ export function MediaLibrary({
   const hasNext = meta.page * meta.pageSize < meta.total;
   const link = (p: number) =>
     `/admin/media?${new URLSearchParams({ page: String(p), ...(q ? { q } : {}) })}`;
+
+  /** The largest stored size (1600 px wide, or the original if smaller). */
+  async function copyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Link copied');
+    } catch {
+      // No clipboard access (old browser or blocked): show it to copy by hand.
+      window.prompt('Copy this link:', url);
+    }
+  }
 
   async function run(action: () => Promise<unknown>, success: string) {
     setStatus(null);
@@ -111,7 +123,15 @@ export function MediaLibrary({
                   <p className="text-xs text-neutral-400">
                     {m.width}×{m.height}
                   </p>
-                  <div className="mt-2 flex gap-3 text-xs">
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                    <button
+                      type="button"
+                      className="font-semibold text-petrol underline"
+                      onClick={() => void copyLink(m.urls['1600'])}
+                      title="Copy the link to the largest size of this image"
+                    >
+                      Copy link
+                    </button>
                     <button type="button" className="underline" onClick={() => setEditing(m.id)}>
                       Edit alt
                     </button>

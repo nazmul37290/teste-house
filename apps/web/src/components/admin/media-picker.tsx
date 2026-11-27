@@ -6,7 +6,13 @@ import { api } from '@/lib/api-client';
 import type { MediaItem } from '@/lib/admin-types';
 import { MediaUploader } from './media-uploader';
 
-export type PickedImage = { id: string; url: string; altText: string } | null;
+/** `urls`: every stored width, when the image was just picked from the library. */
+export type PickedImage = {
+  id: string;
+  url: string;
+  altText: string;
+  urls?: MediaItem['urls'];
+} | null;
 
 /**
  * Pick one image from the media library or upload a new one. Controlled: `value` is the current
@@ -16,10 +22,13 @@ export function MediaPicker({
   value,
   onChange,
   label = 'Image',
+  previewClassName = 'h-16 w-16 object-cover',
 }: {
   value: PickedImage;
   onChange: (v: PickedImage) => void;
   label?: string;
+  /** Size and fit of the preview; a wide logo wants e.g. 'h-16 w-48 object-contain'. */
+  previewClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -41,7 +50,7 @@ export function MediaPicker({
   }, [open, q]);
 
   const choose = (m: MediaItem) => {
-    onChange({ id: m.id, url: m.urls['200'], altText: m.altText });
+    onChange({ id: m.id, url: m.urls['200'], altText: m.altText, urls: m.urls });
     setOpen(false);
   };
 
@@ -53,10 +62,12 @@ export function MediaPicker({
           <img
             src={value.url}
             alt={value.altText}
-            className="h-16 w-16 rounded border object-cover"
+            className={`rounded border bg-white ${previewClassName}`}
           />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed text-xs text-neutral-400">
+          <div
+            className={`flex items-center justify-center rounded border border-dashed text-xs text-neutral-400 ${previewClassName}`}
+          >
             None
           </div>
         )}

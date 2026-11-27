@@ -5,6 +5,7 @@ import { AppError } from '../lib/errors';
 import { detectImageKind, ImageRejectedError, processImage } from '../lib/image';
 import type { Db } from '../lib/prisma';
 import * as repo from '../repositories/media.repository';
+import { findSettingValue } from '../repositories/settings.repository';
 import { recordAudit, type Actor } from './audit.service';
 
 export type MediaServiceDeps = { prisma: Db; storage: StorageDriver; publicMediaUrl: string };
@@ -120,9 +121,20 @@ export async function updateMediaAlt(
   return toMediaDto(row, deps.publicMediaUrl);
 }
 
-/** Refused while any product, category, brand, banner or review still uses the image. */
+/**
+ * Refused while any product, category, brand, banner or review still uses the image, or while it is
+ * the store logo (the `store.logo` setting holds the image's URL, not its id).
+ */
 export async function deleteMedia(deps: MediaServiceDeps, actor: Actor, id: string): Promise<void> {
   const media = await existing(deps.prisma, id);
+  const logo = await findSettingValue(deps.prisma, 'store.logo');
+  if (typeof logo === 'string' && logo.includes(`/${media.path}-`)) {
+    throw new AppError(
+      'CONFLICT',
+      'This image is the store logo. Choose another logo in Settings first.',
+      [{ reason: 'MEDIA_IN_USE' }],
+    );
+  }
   if ((await repo.countMediaReferences(deps.prisma, id)) > 0) {
     throw new AppError(
       'CONFLICT',

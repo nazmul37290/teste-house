@@ -117,4 +117,23 @@ describe('media upload', () => {
     });
     expect(audit?.action).toBe('media.delete');
   });
+
+  it('the image used as the store logo cannot be deleted until another logo is chosen', async () => {
+    const h = adminHeaders(owner.cookie);
+    const logo = (await upload(owner.cookie, await photo(900, 300), { altText: 'Store logo' })).body
+      .data;
+    const set = (value: string | null) =>
+      request(ctx.app).put('/api/v1/admin/settings').set(h).send({ 'store.logo': value });
+    expect((await set(logo.urls['500'])).status).toBe(200);
+    try {
+      const blocked = await request(ctx.app).delete(`/api/v1/admin/media/${logo.id}`).set(h);
+      expect(blocked.status).toBe(409);
+      expect(blocked.body.error.message).toContain('store logo');
+    } finally {
+      await set(null);
+    }
+    expect((await request(ctx.app).delete(`/api/v1/admin/media/${logo.id}`).set(h)).status).toBe(
+      204,
+    );
+  });
 });
