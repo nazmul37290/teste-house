@@ -5,6 +5,11 @@
  *
  *   pnpm db:seed-demo
  *
+ * On a demo server (production build), only with an explicit, one-off switch on the command line:
+ *
+ *   ALLOW_DEMO_SEED=yes node dist/seed-demo.js
+ *
+ * Never put ALLOW_DEMO_SEED in the server's environment settings: a real shop must not get these.
  * Brand names are invented; placeholder images are generated, not photos.
  */
 import type { CreateVariantInput } from '@shop/shared';
@@ -19,8 +24,9 @@ import { uploadMedia } from '../services/media.service';
 import { createProduct, setProductImages } from '../services/product.service';
 
 const env = loadEnv();
-if (env.NODE_ENV === 'production') {
-  console.error('seed-demo is for development only.');
+if (env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'yes') {
+  console.error('seed-demo adds invented demo products. It is for development only.');
+  console.error('On a demo server, run it once with: ALLOW_DEMO_SEED=yes node dist/seed-demo.js');
   process.exit(1);
 }
 const deps = createDeps(env);
@@ -586,7 +592,7 @@ async function main() {
   });
   if (!admin)
     throw new Error(
-      'No Super Admin found: run pnpm db:seed first (with SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD).',
+      'No Super Admin found: create one first (development: pnpm db:seed with SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD; server: node dist/create-super-admin.js).',
     );
   const actor: Actor = {
     adminUserId: admin.id,
