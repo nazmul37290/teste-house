@@ -2,8 +2,9 @@ import path from 'node:path';
 import type { NextConfig } from 'next';
 
 // The API's address inside the network (Dokploy: http://<api service>:4000). Never exposed to browsers.
-// Read when the app is BUILT: the rewrite below is stored in the build, so in Docker it must be a
-// build argument (docker/Dockerfile.web), not only a runtime variable.
+// The rewrite below is fixed when the app is built (Next.js stores it in the build). In production
+// src/proxy.ts forwards /api/v1/* first, using the runtime value, so a Docker image built without
+// this variable still works; the rewrite remains for `next dev`.
 const apiInternalUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
 
 const config: NextConfig = {

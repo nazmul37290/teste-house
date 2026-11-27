@@ -4,7 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 const API = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
 
 /**
- * Two jobs:
+ * Three jobs:
+ * 0. Same-origin API: /api/v1/* is forwarded to the API (API_INTERNAL_URL, read at runtime). The
+ *    next.config.ts rewrite does the same but is fixed when the app is built, so a Docker image
+ *    built without the variable would point at localhost; this runtime forward always wins.
  * 1. Optimistic sign-in check for /admin and /account (docs/auth.md section 8): is there a session
  *    cookie at all? It never proves the session is valid; pages and the API check that.
  * 2. Shop status (docs/design.md section 17): in maintenance, shoppers get the maintenance page with
@@ -13,6 +16,10 @@ const API = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
  */
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // First: the API answers for itself (auth, maintenance, permissions).
+  if (pathname.startsWith('/api/v1/'))
+    return NextResponse.rewrite(new URL(`${pathname}${search}`, API));
 
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') return NextResponse.next();
@@ -103,5 +110,8 @@ async function isAdmin(request: NextRequest): Promise<boolean> {
   }
 }
 
-// Everything except Next internals, the API rewrite and files (paths with an extension).
-export const config = { matcher: ['/((?!_next/|api/|.*\\.[a-zA-Z0-9]+$).*)'] };
+// Every API call (also paths with an extension, like export.csv), plus every page except Next
+// internals, the web app's own /api routes and files (paths with an extension).
+export const config = {
+  matcher: ['/api/v1/:path*', '/((?!_next/|api/|.*\\.[a-zA-Z0-9]+$).*)'],
+};

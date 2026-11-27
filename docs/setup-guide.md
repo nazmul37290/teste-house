@@ -490,9 +490,7 @@ In the Dokploy dashboard:
    ```
    NEXT_PUBLIC_SITE_URL=https://yourshop.com.bd
    NEXT_PUBLIC_API_URL=https://api.yourshop.com.bd
-   API_INTERNAL_URL=http://<api service name>:4000
    ```
-   `API_INTERNAL_URL` must be a build argument too: Next.js writes the `/api/v1/*` forwarding target into the build. Without it, sign-in, cart and checkout calls from the browser fail.
 4. **Environment variables** (runtime):
    ```
    API_INTERNAL_URL=http://<api service name>:4000
