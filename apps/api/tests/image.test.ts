@@ -62,6 +62,17 @@ describe('processImage', () => {
     await expect(processImage(fakePng, 'png')).rejects.toBeInstanceOf(ImageRejectedError);
   });
 
+  it('rejects oversized images with their size, not as "not readable"', async () => {
+    // 7000 x 7000 = 49 megapixels (limit 40); one colour, so the file itself stays small.
+    const big = await sharp({
+      create: { width: 7000, height: 7000, channels: 3, background: '#003442' },
+    })
+      .png()
+      .toBuffer();
+    await expect(processImage(big, 'png')).rejects.toThrow(ImageRejectedError);
+    await expect(processImage(big, 'png')).rejects.toThrow('too large (7000 × 7000 px)');
+  });
+
   it('rejects tiny images', async () => {
     await expect(processImage(await solid(80, 300).png().toBuffer(), 'png')).rejects.toThrow(
       /at least 100 px/,

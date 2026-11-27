@@ -42,13 +42,20 @@ export class ImageRejectedError extends Error {}
 export async function processImage(input: Buffer, kind: ImageKind): Promise<ProcessedImage> {
   let meta: Metadata;
   try {
-    meta = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS }).metadata();
+    // Header only (no pixels are decoded), so no pixel limit here: the size check below can then
+    // say what is wrong instead of "not readable". Decoding further down keeps the limit.
+    meta = await sharp(input, { limitInputPixels: false }).metadata();
   } catch {
     throw new ImageRejectedError('The file is not a readable image');
   }
   // The decoder must agree with the magic bytes (a PNG header on JPEG data is rejected).
   if (meta.format !== kind)
     throw new ImageRejectedError('The file content does not match an allowed image type');
+  if ((meta.width ?? 0) * (meta.height ?? 0) > MAX_INPUT_PIXELS) {
+    throw new ImageRejectedError(
+      `The image is too large (${meta.width} × ${meta.height} px). Use at most 40 megapixels, for example 2000 × 2000 px, and upload it again.`,
+    );
+  }
 
   // Dimensions after the EXIF orientation is applied (a portrait phone photo stays portrait).
   const { width, height } = meta.autoOrient;
