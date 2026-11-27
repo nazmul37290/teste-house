@@ -160,7 +160,7 @@ Reviewed item by item in Phase 11: `docs/security-review.md` (status, evidence, 
 
 - HTTPS only, HSTS, Helmet headers, strict CORS, Cloudflare WAF and bot protection.
 - Zod validation on all inputs, reject unknown fields; Prisma only (no string-built SQL).
-- Auth via Better Auth (`auth.md`); real client IP from `cf-connecting-ip` only, and the origin accepts traffic only from Cloudflare so that header cannot be spoofed.
+- Auth via Better Auth (`auth.md`); real client IP from the one header named by `CLIENT_IP_HEADER` (Cloudflare `cf-connecting-ip`, or `x-shop-client-ip` set by Caddy), and the app is reachable only through that proxy so the header cannot be spoofed (`auth.md` section 6).
 - Redis-backed rate limits: login, register, forgot-password, verify-email resend, coupon check, order create, review submit, search suggest.
 - Server-side pricing, stock and coupon logic; idempotency on orders; signed or token-verified webhooks.
 - No secrets in Git; credentials only in environment variables; separate values per environment.
@@ -185,7 +185,7 @@ Reviewed item by item in Phase 11: `docs/security-review.md` (status, evidence, 
 
 | Group | Variables |
 |---|---|
-| Core | `NODE_ENV`, `APP_URL`, `API_URL`, `COOKIE_DOMAIN`, `CORS_ORIGINS` |
+| Core | `NODE_ENV`, `APP_URL`, `API_URL`, `COOKIE_DOMAIN`, `CORS_ORIGINS`, `CLIENT_IP_HEADER` (production; default `cf-connecting-ip`) |
 | Database | `DATABASE_URL`, `REDIS_URL` |
 | Auth | `BETTER_AUTH_SECRET` (signs cookies, encrypts 2FA secrets; at least 32 chars), `BETTER_AUTH_URL` (public web origin) |
 | Mail | `MAIL_PROVIDER` (`mailgun` or `smtp`), `MAIL_FROM`, `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_BASE_URL`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` |

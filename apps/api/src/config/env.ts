@@ -40,6 +40,16 @@ const schema = z.object({
   STEADFAST_SECRET_KEY: z.string().optional(),
   STEADFAST_WEBHOOK_TOKEN: z.string().optional(),
 
+  // Production only: the request header holding the visitor's real IP, set by the proxy in front
+  // (Cloudflare: cf-connecting-ip; our Caddy: x-shop-client-ip). The proxy must overwrite it, and
+  // the app must not be reachable around that proxy, or the header could be forged.
+  CLIENT_IP_HEADER: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9-]{1,64}$/, 'A plain header name, e.g. cf-connecting-ip')
+    .default('cf-connecting-ip'),
+
   UDDOKTAPAY_BASE_URL: z.string().optional(),
   UDDOKTAPAY_API_KEY: z.string().optional(),
 

@@ -23,7 +23,7 @@ sudo apt install -y fail2ban unattended-upgrades
 sudo dpkg-reconfigure -plow unattended-upgrades
 ```
 
-Cloudflare: SSL mode **Full (strict)**, Always Use HTTPS, WAF managed rules, Bot Fight Mode. The app reads the visitor IP from `cf-connecting-ip`, which is only trustworthy when all web traffic really comes through Cloudflare (firewall rule above).
+Cloudflare: SSL mode **Full (strict)**, Always Use HTTPS, WAF managed rules, Bot Fight Mode. The app reads the visitor IP from the header named by `CLIENT_IP_HEADER` (`cf-connecting-ip` behind Cloudflare, the default). On the shared Hostinger VPS, Caddy terminates TLS and forwards to Dokploy's Traefik on `127.0.0.1:8081`; Caddy sets `X-Shop-Client-IP` and the api/worker run with `CLIENT_IP_HEADER=x-shop-client-ip`. Either way the header is only trustworthy when nothing reaches the app around that proxy.
 
 Dokploy: the Postgres and Redis services must have **no published ports**. Every environment gets its own generated secrets.
 

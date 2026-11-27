@@ -131,7 +131,7 @@ Better Auth paths above are its standard endpoints under `basePath` (names confi
 
 ## 4. Rate limits
 
-All limits are fixed windows in Redis (`apps/api/src/lib/rate-limit.ts`) unless noted; over the limit the answer is `429 RATE_LIMITED` with `Retry-After`. "IP" is the client IP from Cloudflare in production (`cf-connecting-ip`).
+All limits are fixed windows in Redis (`apps/api/src/lib/rate-limit.ts`) unless noted; over the limit the answer is `429 RATE_LIMITED` with `Retry-After`. "IP" is the client IP from the header named by `CLIENT_IP_HEADER` in production (Cloudflare `cf-connecting-ip` by default; `x-shop-client-ip` behind Caddy on the VPS), see `auth.md` section 6.
 
 | Route | Key | Limit |
 |---|---|---|

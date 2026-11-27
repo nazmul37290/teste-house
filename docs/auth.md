@@ -108,7 +108,7 @@ Our `/login` and `/register` endpoints call `auth.api` server-side, which Better
 | Login failures | client IP | locked at 50 failures in 15 minutes (loose on purpose: mobile carriers put many customers behind one IP) |
 | Registrations | client IP | 10 attempts per hour (every attempt counts) |
 
-**Client IP.** In production, `advanced.ipAddress.ipAddressHeaders: ['cf-connecting-ip']`, and Express `trust proxy` is set to match. This is safe only if the origin accepts traffic **only from Cloudflare** (firewall or Cloudflare Tunnel); otherwise anyone can spoof the header. In development, the default `x-forwarded-for` (or `127.0.0.1`) is used.
+**Client IP.** In production the visitor IP comes from one header, `CLIENT_IP_HEADER` (default `cf-connecting-ip`), used both by `advanced.ipAddress.ipAddressHeaders` and by our own rate limits (`lib/client-ip.ts`). The proxy in front must **overwrite** that header: Cloudflare does for `cf-connecting-ip`; on the shared VPS, Caddy sets `x-shop-client-ip` with `header_up X-Shop-Client-IP {remote_host}` (Traefik in between passes it on unchanged). This is safe only if the app cannot be reached around that proxy (Traefik's port 8081 and the app ports closed to the internet); otherwise anyone can forge the header. In development, the default `x-forwarded-for` (or `127.0.0.1`) is used.
 
 ## 7. Express mounting order
 

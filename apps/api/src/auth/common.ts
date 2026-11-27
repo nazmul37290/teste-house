@@ -36,9 +36,9 @@ export function commonAuthOptions({ env, prisma, redis }: AuthDeps, keyPrefix: s
     advanced: {
       database: { generateId: 'uuid' },
       useSecureCookies: env.NODE_ENV === 'production',
-      // Only Cloudflare sets this header in production; the origin must accept Cloudflare traffic only.
+      // In production the proxy in front sets this header (CLIENT_IP_HEADER, docs/auth.md section 6).
       ...(env.NODE_ENV === 'production'
-        ? { ipAddress: { ipAddressHeaders: ['cf-connecting-ip'] } }
+        ? { ipAddress: { ipAddressHeaders: [env.CLIENT_IP_HEADER] } }
         : {}),
     },
   } satisfies Partial<BetterAuthOptions>;
