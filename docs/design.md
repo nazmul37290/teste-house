@@ -192,7 +192,7 @@ Reviewed item by item in Phase 11: `docs/security-review.md` (status, evidence, 
 | Steadfast | `STEADFAST_BASE_URL`, `STEADFAST_API_KEY`, `STEADFAST_SECRET_KEY`, `STEADFAST_WEBHOOK_TOKEN` |
 | UddoktaPay | `UDDOKTAPAY_BASE_URL` (the merchant's installation), `UDDOKTAPAY_API_KEY` (also authenticates the webhook) |
 | Files | `UPLOAD_DIR`, `PUBLIC_MEDIA_URL` |
-| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches), `REVALIDATE_SECRET` (web and api/worker, same value, at least 16 chars), `WEB_INTERNAL_URL` (api/worker: internal address of the web app for revalidation) |
+| Frontend | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_INTERNAL_URL` (target of the `/api/v1/*` rewrite and server-side fetches; set it as a **build argument and** a runtime variable, because Next.js stores the rewrite target in the build), `REVALIDATE_SECRET` (web and api/worker, same value, at least 16 chars), `WEB_INTERNAL_URL` (api/worker: internal address of the web app for revalidation) |
 | Error tracking (optional) | api/worker: `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`; web runtime: `SENTRY_DSN`; web build arguments: `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` (see `operations.md` section 3) |
 | Optional (later) | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
 
